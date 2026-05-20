@@ -1,0 +1,658 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>SystemLab — SOP Portal</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@400&family=Playfair+Display:ital,wght@1,500;1,700&display=swap" rel="stylesheet">
+<style>
+:root {
+  --canvas: #0a0a0a;
+  --card: #191919;
+  --hairline: #212327;
+  --ink: #ffffff;
+  --mute: #7d8187;
+  --body: #dadbdf;
+  --brand-orange: #ff7a17;
+  --brand-green: #22c55e;
+  --brand-blue: #60a5fa;
+  --brand-purple: #a78bfa;
+  --brand-pink: #f472b6;
+  
+  --font-sans: 'Inter', sans-serif;
+  --font-mono: 'JetBrains Mono', monospace;
+  --font-serif: 'Playfair Display', serif;
+}
+* { box-sizing: border-box; margin: 0; padding: 0; }
+body { background: var(--canvas); color: var(--ink); font-family: var(--font-sans); font-size: 14px; -webkit-font-smoothing: antialiased; overflow: hidden; }
+
+/* Login Screen */
+#login-screen { display: flex; align-items: center; justify-content: center; height: 100vh; background: var(--canvas); position: absolute; inset: 0; z-index: 1000; }
+.login-card { background: var(--card); border: 1px solid var(--hairline); border-radius: 8px; padding: 40px; width: 360px; }
+.brand-logo { font-size: 32px; letter-spacing: -0.05em; color: var(--ink); text-align: center; margin-bottom: 32px; font-weight: 800; }
+.brand-logo em { font-family: var(--font-serif); font-style: italic; font-weight: 500; }
+.login-card input { width: 100%; background: var(--canvas); border: 1px solid var(--hairline); color: var(--ink); padding: 12px; margin-bottom: 16px; border-radius: 4px; font-family: var(--font-sans); }
+.login-card input:focus { outline: none; border-color: rgba(255,255,255,0.5); }
+.login-card button { width: 100%; background: var(--ink); color: var(--canvas); border: none; padding: 12px; border-radius: 9999px; font-weight: 500; cursor: pointer; transition: opacity 0.2s; }
+.login-card button:hover { opacity: 0.8; }
+.login-error { color: var(--brand-orange); font-size: 12px; text-align: center; margin-top: 12px; display: none; }
+
+/* App Layout */
+#app { display: none; height: 100vh; grid-template-rows: 48px 1fr; grid-template-columns: 240px 1fr; }
+.topbar { grid-column: 1 / -1; background: var(--canvas); border-bottom: 1px solid var(--hairline); display: flex; align-items: center; justify-content: space-between; padding: 0 24px; }
+.top-search { background: var(--card); border: 1px solid var(--hairline); color: var(--mute); padding: 6px 12px; border-radius: 4px; font-size: 12px; cursor: pointer; display: flex; align-items: center; gap: 8px; }
+.top-search:hover { border-color: rgba(255,255,255,0.2); }
+.top-user { display: flex; align-items: center; gap: 12px; font-size: 13px; }
+.avatar { width: 28px; height: 28px; border-radius: 9999px; background: var(--card); border: 1px solid var(--hairline); display: flex; align-items: center; justify-content: center; font-family: var(--font-mono); font-size: 10px; }
+
+.sidebar { background: var(--card); border-right: 1px solid var(--hairline); padding: 24px 16px; display: flex; flex-direction: column; overflow-y: auto; }
+.nav-eyebrow { font-family: var(--font-mono); font-size: 10px; letter-spacing: 1.2px; text-transform: uppercase; color: var(--mute); margin: 24px 0 12px 8px; }
+.nav-item { display: flex; align-items: center; gap: 12px; padding: 8px 12px; color: var(--body); text-decoration: none; border-radius: 6px; cursor: pointer; font-size: 14px; }
+.nav-item:hover { color: var(--ink); background: rgba(255,255,255,0.05); }
+.nav-item.active { color: var(--ink); background: rgba(255,255,255,0.1); }
+.nav-dot { width: 8px; height: 8px; border-radius: 50%; }
+.nav-count { margin-left: auto; font-family: var(--font-mono); font-size: 10px; color: var(--mute); }
+
+.btn-primary { background: var(--ink); color: var(--canvas); border: none; padding: 10px 16px; border-radius: 9999px; cursor: pointer; font-weight: 500; font-size: 13px; text-align: center; margin-top: auto; }
+.btn-primary:hover { opacity: 0.8; }
+.btn-outline { background: transparent; color: var(--ink); border: 1px solid rgba(255,255,255,0.25); padding: 6px 16px; border-radius: 9999px; cursor: pointer; font-size: 12px; }
+.btn-outline:hover { background: rgba(255,255,255,0.05); }
+.btn-danger { color: var(--brand-orange); border-color: rgba(255,122,23,0.3); }
+
+.main-area { background: var(--canvas); overflow: hidden; position: relative; }
+.view { display: none; height: 100%; overflow-y: auto; padding: 48px; }
+.view.active { display: block; }
+
+/* Dashboard */
+.stat-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 16px; margin-bottom: 48px; }
+.stat-card { background: var(--card); border: 1px solid var(--hairline); border-radius: 8px; padding: 24px; }
+.stat-val { font-size: 32px; letter-spacing: -1.5px; margin-top: 8px; }
+
+/* List View */
+.list-toolbar { display: flex; justify-content: space-between; margin-bottom: 24px; align-items: center; }
+.list-search { background: transparent; border: 1px solid var(--hairline); color: var(--ink); padding: 8px 16px; border-radius: 9999px; outline: none; width: 300px; font-family: var(--font-sans); }
+.list-search:focus { border-color: rgba(255,255,255,0.4); }
+.sop-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 16px; }
+.sop-card { background: var(--card); border: 1px solid var(--hairline); border-radius: 8px; padding: 20px; cursor: pointer; transition: border-color 0.2s; position: relative; }
+.sop-card:hover { border-color: rgba(255,255,255,0.3); }
+.sop-meta { display: flex; justify-content: space-between; font-family: var(--font-mono); font-size: 10px; color: var(--mute); margin-bottom: 12px; text-transform: uppercase; }
+.sop-title { font-size: 16px; font-weight: 500; letter-spacing: -0.5px; margin-bottom: 8px; }
+.sop-actions { position: absolute; bottom: 20px; right: 20px; display: none; gap: 8px; }
+.sop-card:hover .sop-actions { display: flex; }
+
+/* Editor View */
+.editor-layout { display: flex; flex-direction: column; height: 100%; padding: 0; }
+.editor-bar { display: flex; justify-content: space-between; align-items: center; padding: 16px 32px; border-bottom: 1px solid var(--hairline); }
+.editor-title-input { width: 100%; background: transparent; border: none; color: var(--ink); font-size: 32px; font-weight: 500; letter-spacing: -1px; padding: 24px 32px; outline: none; font-family: var(--font-sans); }
+.editor-split { display: flex; flex: 1; overflow: hidden; }
+.editor-pane { flex: 1; border-right: 1px solid var(--hairline); padding: 24px 32px; overflow-y: auto; }
+.preview-pane { flex: 1; padding: 24px 32px; overflow-y: auto; background: var(--canvas); }
+.editor-textarea { width: 100%; height: 100%; background: transparent; border: none; color: var(--body); font-family: var(--font-mono); font-size: 13px; line-height: 1.6; outline: none; resize: none; }
+
+/* Editor Tools */
+.editor-tools { display: flex; gap: 8px; padding: 0 32px 16px; border-bottom: 1px solid var(--hairline); }
+.tool-btn { background: transparent; border: 1px solid var(--hairline); color: var(--mute); padding: 4px 12px; border-radius: 4px; font-size: 12px; cursor: pointer; }
+.tool-btn:hover { color: var(--ink); border-color: rgba(255,255,255,0.2); }
+
+/* Markdown Styles */
+.md-content h1 { font-size: 32px; letter-spacing: -1px; margin-bottom: 24px; font-weight: 500; }
+.md-content h2 { font-size: 24px; letter-spacing: -0.5px; margin: 32px 0 16px; font-weight: 500; }
+.md-content p { font-size: 15px; line-height: 1.6; color: var(--body); margin-bottom: 16px; }
+.md-content ul, .md-content ol { padding-left: 20px; margin-bottom: 16px; color: var(--body); }
+.md-content li { margin-bottom: 8px; }
+.md-content code { font-family: var(--font-mono); font-size: 12px; background: var(--card); padding: 2px 6px; border-radius: 4px; border: 1px solid var(--hairline); }
+.md-content pre { background: var(--card); padding: 16px; border-radius: 8px; border: 1px solid var(--hairline); overflow-x: auto; margin-bottom: 16px; }
+.md-content pre code { background: transparent; border: none; padding: 0; }
+.md-content blockquote { border-left: 2px solid var(--hairline); padding-left: 16px; color: var(--mute); margin-bottom: 16px; }
+.md-content a { color: var(--ink); text-decoration: underline; text-underline-offset: 4px; }
+.md-content hr { border: none; border-top: 1px solid var(--hairline); margin: 32px 0; }
+.md-content .task-list-item { list-style-type: none; margin-left: -20px; }
+.md-content .task-list-item input { margin-right: 8px; }
+
+/* Mermaid & Loom Wrappers */
+.md-mermaid { background: var(--card); border: 1px solid var(--hairline); border-radius: 8px; padding: 24px; margin-bottom: 16px; display: flex; justify-content: center; overflow: auto; }
+.md-loom { border: 1px solid var(--hairline); border-radius: 8px; overflow: hidden; margin-bottom: 16px; background: var(--card); }
+
+/* Modals */
+.modal-overlay { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.8); z-index: 2000; align-items: center; justify-content: center; }
+.modal { background: var(--card); border: 1px solid var(--hairline); border-radius: 8px; padding: 32px; width: 400px; position: relative; }
+.modal h3 { margin-bottom: 24px; font-weight: 500; font-size: 18px; }
+.modal-close { position: absolute; top: 16px; right: 16px; cursor: pointer; color: var(--mute); font-size: 18px; line-height: 1; }
+.modal-close:hover { color: var(--ink); }
+.modal input { width: 100%; background: var(--canvas); border: 1px solid var(--hairline); color: var(--ink); padding: 10px 12px; margin-bottom: 16px; border-radius: 4px; font-family: var(--font-sans); }
+.modal select { width: 100%; background: var(--canvas); border: 1px solid var(--hairline); color: var(--ink); padding: 10px 12px; margin-bottom: 16px; border-radius: 4px; font-family: var(--font-sans); }
+
+/* Command Palette */
+#cmd-palette { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.8); z-index: 3000; align-items: flex-start; justify-content: center; padding-top: 10vh; }
+.cmd-box { background: var(--card); border: 1px solid var(--hairline); border-radius: 8px; width: 500px; overflow: hidden; }
+.cmd-input { width: 100%; background: transparent; border: none; border-bottom: 1px solid var(--hairline); color: var(--ink); font-size: 18px; padding: 16px 24px; outline: none; font-family: var(--font-sans); }
+.cmd-results { max-height: 300px; overflow-y: auto; padding: 8px 0; }
+.cmd-item { padding: 12px 24px; color: var(--body); cursor: pointer; display: flex; align-items: center; gap: 12px; }
+.cmd-item:hover, .cmd-item.selected { background: rgba(255,255,255,0.06); color: var(--ink); }
+
+/* Toast */
+#toast { position: fixed; bottom: 24px; right: 24px; background: var(--ink); color: var(--canvas); padding: 12px 24px; border-radius: 9999px; font-size: 13px; font-weight: 500; z-index: 4000; transform: translateY(100px); transition: transform 0.3s; }
+#toast.show { transform: translateY(0); }
+</style>
+<script src="https://cdn.jsdelivr.net/npm/mermaid/dist/mermaid.min.js"></script>
+</head>
+<body>
+
+<!-- Login -->
+<div id="login-screen">
+  <div class="login-card">
+    <div class="brand-logo"><em>system</em><strong>lab.</strong></div>
+    <div style="font-family: var(--font-mono); font-size:10px; color:var(--mute); text-align:center; margin-bottom: 24px; letter-spacing:1px;">AUTHORIZED ACCESS ONLY</div>
+    <input type="email" id="l-email" placeholder="Email (admin@systemlab.com)">
+    <input type="password" id="l-pass" placeholder="Password (admin)">
+    <button onclick="login()">Enter Workspace</button>
+    <div class="login-error" id="l-err">Invalid credentials. Try admin@systemlab.com / admin</div>
+  </div>
+</div>
+
+<!-- App -->
+<div id="app">
+  <div class="topbar">
+    <div class="brand-logo" style="margin:0; font-size: 20px;"><em>system</em><strong>lab.</strong></div>
+    <div class="top-search" onclick="openCmd()">⌘K Search SOPs...</div>
+    <div class="top-user">
+      <span id="u-name">Jordan Kim</span>
+      <div class="avatar">JK</div>
+      <span style="cursor:pointer; color:var(--mute); font-size:12px;" onclick="logout()">Logout</span>
+    </div>
+  </div>
+
+  <div class="sidebar">
+    <div class="nav-item active" onclick="nav('dashboard')" id="nav-dashboard">Dashboard</div>
+    <div class="nav-item" onclick="nav('all')" id="nav-all">All SOPs</div>
+    
+    <div class="nav-eyebrow">Departments</div>
+    <div id="dept-list"></div>
+    
+    <div style="margin-top: 24px; font-size:12px; color:var(--mute); cursor:pointer; padding: 8px 12px;" onclick="document.getElementById('modal-dept').style.display='flex'">+ Manage Depts</div>
+    
+    <button class="btn-primary" onclick="createSOP()">+ New SOP</button>
+  </div>
+
+  <div class="main-area">
+    <!-- Dashboard -->
+    <div class="view active" id="v-dashboard">
+      <h2 style="font-weight: 500; letter-spacing:-1px; font-size:28px; margin-bottom:32px;">Workspace Overview</h2>
+      <div class="stat-grid">
+        <div class="stat-card"><div class="nav-eyebrow" style="margin:0">Total SOPs</div><div class="stat-val" id="st-total">0</div></div>
+        <div class="stat-card"><div class="nav-eyebrow" style="margin:0">Active</div><div class="stat-val" id="st-active" style="color:var(--brand-green)">0</div></div>
+        <div class="stat-card"><div class="nav-eyebrow" style="margin:0">Drafts</div><div class="stat-val" id="st-draft" style="color:var(--brand-orange)">0</div></div>
+        <div class="stat-card"><div class="nav-eyebrow" style="margin:0">Departments</div><div class="stat-val" id="st-dept">0</div></div>
+      </div>
+      <h3 style="font-weight:500; margin-bottom:16px;">Recent SOPs</h3>
+      <div class="sop-grid" id="recent-grid"></div>
+    </div>
+
+    <!-- All SOPs -->
+    <div class="view" id="v-all">
+      <div class="list-toolbar">
+        <h2 style="font-weight: 500; letter-spacing:-1px; font-size:24px;" id="all-title">All SOPs</h2>
+        <input type="text" class="list-search" placeholder="Filter SOPs..." oninput="renderSOPs(this.value)">
+      </div>
+      <div class="sop-grid" id="sop-grid"></div>
+    </div>
+
+    <!-- Editor -->
+    <div class="view editor-layout" id="v-editor">
+      <div class="editor-bar">
+        <button class="btn-outline" onclick="nav('all')">← Back</button>
+        <div style="display:flex; gap:12px; align-items:center;">
+          <span style="font-family:var(--font-mono); font-size:10px; color:var(--mute);" id="ed-autosave"></span>
+          <select id="ed-dept" style="background:transparent; border:1px solid var(--hairline); color:var(--ink); padding:6px 12px; border-radius:9999px; outline:none; font-size:12px;"></select>
+          <select id="ed-status" style="background:transparent; border:1px solid var(--hairline); color:var(--ink); padding:6px 12px; border-radius:9999px; outline:none; font-size:12px;">
+            <option value="draft">Draft</option>
+            <option value="active">Active</option>
+            <option value="review">Review</option>
+          </select>
+          <button class="btn-primary" onclick="saveSOP()">Save</button>
+        </div>
+      </div>
+      <input type="text" class="editor-title-input" id="ed-title" placeholder="SOP Title..." oninput="triggerAutosave()">
+      <div class="editor-tools">
+        <button class="tool-btn" onclick="insertAtCursor('**bold**')">B</button>
+        <button class="tool-btn" onclick="insertAtCursor('*italic*')">I</button>
+        <button class="tool-btn" onclick="insertAtCursor('- [ ] task')">Checklist</button>
+        <button class="tool-btn" onclick="document.getElementById('modal-flow').style.display='flex'">Flowchart</button>
+        <button class="tool-btn" onclick="document.getElementById('modal-loom').style.display='flex'">Loom</button>
+      </div>
+      <div class="editor-split">
+        <div class="editor-pane">
+          <textarea class="editor-textarea" id="ed-body" placeholder="Write markdown here..." oninput="triggerAutosave()"></textarea>
+        </div>
+        <div class="preview-pane md-content" id="ed-preview"></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Modals -->
+<div class="modal-overlay" id="modal-dept">
+  <div class="modal">
+    <div class="modal-close" onclick="this.parentElement.parentElement.style.display='none'">✕</div>
+    <h3>Manage Departments</h3>
+    <div id="dept-mgr-list" style="margin-bottom:24px;"></div>
+    <h4 style="font-size:12px; font-family:var(--font-mono); color:var(--mute); margin-bottom:12px;">ADD NEW</h4>
+    <input type="text" id="new-dept-name" placeholder="Department Name">
+    <select id="new-dept-color">
+      <option value="var(--brand-orange)">Orange</option>
+      <option value="var(--brand-green)">Green</option>
+      <option value="var(--brand-blue)">Blue</option>
+      <option value="var(--brand-purple)">Purple</option>
+      <option value="var(--brand-pink)">Pink</option>
+      <option value="#ffffff">White</option>
+    </select>
+    <button class="btn-primary" style="width:100%" onclick="addDept()">Add Department</button>
+  </div>
+</div>
+
+<div class="modal-overlay" id="modal-flow">
+  <div class="modal">
+    <div class="modal-close" onclick="this.parentElement.parentElement.style.display='none'">✕</div>
+    <h3>Build Flowchart</h3>
+    <textarea id="flow-steps" style="width:100%; height:100px; background:var(--canvas); border:1px solid var(--hairline); color:var(--ink); padding:12px; margin-bottom:16px; border-radius:4px; font-family:var(--font-mono); resize:none;" placeholder="Enter steps, one per line..."></textarea>
+    <button class="btn-primary" style="width:100%" onclick="insertFlow()">Insert into SOP</button>
+  </div>
+</div>
+
+<div class="modal-overlay" id="modal-loom">
+  <div class="modal">
+    <div class="modal-close" onclick="this.parentElement.parentElement.style.display='none'">✕</div>
+    <h3>Embed Loom</h3>
+    <input type="text" id="loom-url" placeholder="Paste Loom URL...">
+    <button class="btn-primary" style="width:100%" onclick="insertLoom()">Insert Video</button>
+  </div>
+</div>
+
+<div class="modal-overlay" id="modal-confirm">
+  <div class="modal">
+    <h3>Delete SOP?</h3>
+    <p style="color:var(--mute); margin-bottom:24px;">This action cannot be undone.</p>
+    <div style="display:flex; gap:12px; justify-content:flex-end;">
+      <button class="btn-outline" onclick="document.getElementById('modal-confirm').style.display='none'">Cancel</button>
+      <button class="btn-outline btn-danger" id="confirm-del-btn">Delete</button>
+    </div>
+  </div>
+</div>
+
+<!-- Command Palette -->
+<div id="cmd-palette">
+  <div class="cmd-box">
+    <input type="text" class="cmd-input" id="cmd-input" placeholder="Search SOPs..." oninput="renderCmd(this.value)">
+    <div class="cmd-results" id="cmd-results"></div>
+  </div>
+</div>
+
+<!-- Toast -->
+<div id="toast">Saved successfully.</div>
+
+<script>
+// State
+let S = {
+  depts: [
+    { id: 'sales', name: 'Sales & Closing', color: 'var(--brand-orange)' },
+    { id: 'ops', name: 'Operations', color: 'var(--brand-blue)' },
+    { id: 'seo', name: 'SEO', color: 'var(--brand-green)' }
+  ],
+  sops: [],
+  cur: null,
+  deptFilter: null
+};
+
+mermaid.initialize({ startOnLoad: false, theme: 'dark', themeVariables: { fontFamily: 'Inter, sans-serif', primaryColor: '#191919', primaryTextColor: '#ffffff', primaryBorderColor: '#212327', lineColor: '#ffffff', secondaryColor: '#0a0a0a' }});
+
+let saveTimeout;
+
+// Init
+function init() {
+  const saved = localStorage.getItem('systemlab_s');
+  if (saved) {
+    const parsed = JSON.parse(saved);
+    S.depts = parsed.depts || S.depts;
+    S.sops = parsed.sops || [];
+  } else {
+    // Seed data
+    S.sops = [
+      { id: 's1', title: 'Inbound Lead Qualification', deptId: 'sales', status: 'active', body: '## Step 1\nCall the lead.\n\n```mermaid\ngraph TD\n A[Lead] --> B[Qualify]\n```', updated: Date.now() },
+      { id: 's2', title: 'Monthly SEO Audit', deptId: 'seo', status: 'draft', body: '## Requirements\n- Ahrefs\n- Screaming Frog\n', updated: Date.now() - 86400000 }
+    ];
+    persist();
+  }
+  
+  if (localStorage.getItem('systemlab_auth')) {
+    showApp();
+  }
+  
+  // Shortcuts
+  document.addEventListener('keydown', e => {
+    if ((e.metaKey || e.ctrlKey) && e.key === 'k') { e.preventDefault(); openCmd(); }
+    if ((e.metaKey || e.ctrlKey) && e.key === 's' && document.getElementById('v-editor').classList.contains('active')) { e.preventDefault(); saveSOP(); }
+    if (e.key === 'Escape') closeModals();
+  });
+}
+
+function persist() {
+  localStorage.setItem('systemlab_s', JSON.stringify({ depts: S.depts, sops: S.sops }));
+}
+
+function showToast(msg) {
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.classList.add('show');
+  setTimeout(() => t.classList.remove('show'), 2400);
+}
+
+// Auth
+function login() {
+  const e = document.getElementById('l-email').value;
+  const p = document.getElementById('l-pass').value;
+  if (e === 'admin@systemlab.com' && p === 'admin') {
+    localStorage.setItem('systemlab_auth', 'true');
+    showApp();
+  } else {
+    document.getElementById('l-err').style.display = 'block';
+  }
+}
+function logout() {
+  localStorage.removeItem('systemlab_auth');
+  document.getElementById('app').style.display = 'none';
+  document.getElementById('login-screen').style.display = 'flex';
+}
+function showApp() {
+  document.getElementById('login-screen').style.display = 'none';
+  document.getElementById('app').style.display = 'grid';
+  renderSidebar();
+  nav('dashboard');
+}
+
+// Navigation
+function nav(view, deptId = null) {
+  document.querySelectorAll('.view').forEach(el => el.classList.remove('active'));
+  document.querySelectorAll('.nav-item').forEach(el => el.classList.remove('active'));
+  
+  if (view === 'dashboard') {
+    document.getElementById('v-dashboard').classList.add('active');
+    document.getElementById('nav-dashboard').classList.add('active');
+    updateStats();
+    renderRecent();
+  } else if (view === 'all') {
+    S.deptFilter = deptId;
+    document.getElementById('v-all').classList.add('active');
+    if (!deptId) document.getElementById('nav-all').classList.add('active');
+    document.getElementById('all-title').textContent = deptId ? S.depts.find(d=>d.id===deptId).name : 'All SOPs';
+    renderSOPs();
+  } else if (view === 'editor') {
+    document.getElementById('v-editor').classList.add('active');
+  }
+}
+
+function renderSidebar() {
+  const list = document.getElementById('dept-list');
+  list.innerHTML = S.depts.map(d => {
+    const count = S.sops.filter(s => s.deptId === d.id).length;
+    return `<div class="nav-item" onclick="nav('all', '${d.id}')">
+      <div class="nav-dot" style="background:${d.color}"></div>
+      ${d.name}
+      <span class="nav-count">${count}</span>
+    </div>`;
+  }).join('');
+  renderDeptManager();
+}
+
+function updateStats() {
+  document.getElementById('st-total').textContent = S.sops.length;
+  document.getElementById('st-active').textContent = S.sops.filter(s=>s.status==='active').length;
+  document.getElementById('st-draft').textContent = S.sops.filter(s=>s.status==='draft').length;
+  document.getElementById('st-dept').textContent = S.depts.length;
+}
+
+// Lists
+function buildSOPCard(s) {
+  const dept = S.depts.find(d => d.id === s.deptId) || {name:'Unassigned', color:'#888'};
+  const date = new Date(s.updated).toLocaleDateString('en-US', {month:'short', day:'numeric'});
+  return `<div class="sop-card" onclick="openSOP('${s.id}')">
+    <div class="sop-meta">
+      <span style="color:${dept.color}">${dept.name}</span>
+      <span>${s.status}</span>
+    </div>
+    <div class="sop-title">${s.title || 'Untitled SOP'}</div>
+    <div style="font-size:12px; color:var(--mute);">${date}</div>
+    <div class="sop-actions">
+      <button class="btn-outline btn-danger" onclick="event.stopPropagation(); deleteSOP('${s.id}')">Delete</button>
+    </div>
+  </div>`;
+}
+
+function renderRecent() {
+  const sorted = [...S.sops].sort((a,b) => b.updated - a.updated).slice(0, 5);
+  document.getElementById('recent-grid').innerHTML = sorted.map(buildSOPCard).join('');
+}
+
+function renderSOPs(query = '') {
+  const grid = document.getElementById('sop-grid');
+  let filtered = S.sops;
+  if (S.deptFilter) filtered = filtered.filter(s => s.deptId === S.deptFilter);
+  if (query) filtered = filtered.filter(s => s.title.toLowerCase().includes(query.toLowerCase()));
+  
+  filtered.sort((a,b) => b.updated - a.updated);
+  grid.innerHTML = filtered.map(buildSOPCard).join('');
+}
+
+// Editor & Markdown
+function createSOP() {
+  const id = 'sop_' + Date.now();
+  const newSop = { id, title: '', deptId: S.depts[0]?.id, status: 'draft', body: '', updated: Date.now() };
+  S.sops.push(newSop);
+  persist();
+  openSOP(id);
+}
+
+function openSOP(id) {
+  S.cur = id;
+  const sop = S.sops.find(s => s.id === id);
+  document.getElementById('ed-title').value = sop.title;
+  document.getElementById('ed-body').value = sop.body;
+  document.getElementById('ed-status').value = sop.status;
+  
+  const deptSelect = document.getElementById('ed-dept');
+  deptSelect.innerHTML = S.depts.map(d => `<option value="${d.id}" ${d.id===sop.deptId?'selected':''}>${d.name}</option>`).join('');
+  
+  document.getElementById('ed-autosave').textContent = 'Saved';
+  updatePreview();
+  nav('editor');
+}
+
+function triggerAutosave() {
+  document.getElementById('ed-autosave').textContent = 'Saving...';
+  clearTimeout(saveTimeout);
+  updatePreview();
+  saveTimeout = setTimeout(saveSOP, 1200);
+}
+
+function saveSOP() {
+  if (!S.cur) return;
+  const sop = S.sops.find(s => s.id === S.cur);
+  sop.title = document.getElementById('ed-title').value;
+  sop.body = document.getElementById('ed-body').value;
+  sop.deptId = document.getElementById('ed-dept').value;
+  sop.status = document.getElementById('ed-status').value;
+  sop.updated = Date.now();
+  persist();
+  renderSidebar();
+  document.getElementById('ed-autosave').textContent = 'Saved';
+  showToast('SOP Saved');
+}
+
+function deleteSOP(id) {
+  document.getElementById('modal-confirm').style.display = 'flex';
+  document.getElementById('confirm-del-btn').onclick = () => {
+    S.sops = S.sops.filter(s => s.id !== id);
+    persist();
+    renderSidebar();
+    if (document.getElementById('v-dashboard').classList.contains('active')) nav('dashboard');
+    else renderSOPs();
+    document.getElementById('modal-confirm').style.display = 'none';
+    showToast('SOP Deleted');
+  };
+}
+
+function insertAtCursor(text) {
+  const t = document.getElementById('ed-body');
+  const start = t.selectionStart;
+  const end = t.selectionEnd;
+  const val = t.value;
+  t.value = val.substring(0, start) + text + val.substring(end);
+  t.selectionStart = t.selectionEnd = start + text.length;
+  t.focus();
+  triggerAutosave();
+}
+
+function insertFlow() {
+  const steps = document.getElementById('flow-steps').value.split('\n').filter(x=>x.trim());
+  if (!steps.length) return;
+  let flow = '```mermaid\ngraph TD\n';
+  for(let i=0; i<steps.length; i++) {
+    const node = `N${i}[${steps[i].trim()}]`;
+    if (i === 0) flow += `  ${node}\n`;
+    else flow += `  N${i-1} --> ${node}\n`;
+  }
+  flow += '```\n';
+  insertAtCursor(flow);
+  document.getElementById('modal-flow').style.display = 'none';
+  document.getElementById('flow-steps').value = '';
+}
+
+function insertLoom() {
+  const url = document.getElementById('loom-url').value;
+  if (!url) return;
+  insertAtCursor(`\n\`\`\`loom\n${url}\n\`\`\`\n`);
+  document.getElementById('modal-loom').style.display = 'none';
+  document.getElementById('loom-url').value = '';
+}
+
+function mdRender(text) {
+  if (!text) return '';
+  let html = text
+    .replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;') // sanitize
+    .replace(/^### (.*$)/gim, '<h3>$1</h3>')
+    .replace(/^## (.*$)/gim, '<h2>$1</h2>')
+    .replace(/^# (.*$)/gim, '<h1>$1</h1>')
+    .replace(/\*\*(.*?)\*\*/gim, '<strong>$1</strong>')
+    .replace(/\*(.*?)\*/gim, '<em>$1</em>')
+    .replace(/~~(.*?)~~/gim, '<del>$1</del>')
+    .replace(/`(.*?)`/gim, '<code>$1</code>')
+    .replace(/^> (.*$)/gim, '<blockquote>$1</blockquote>')
+    .replace(/\[(.*?)\]\((.*?)\)/gim, '<a href="$2" target="_blank">$1</a>')
+    .replace(/^- \[ \] (.*$)/gim, '<li class="task-list-item"><input type="checkbox" disabled> $1</li>')
+    .replace(/^- \[x\] (.*$)/gim, '<li class="task-list-item"><input type="checkbox" checked disabled> <del>$1</del></li>')
+    .replace(/^- (.*$)/gim, '<li>$1</li>')
+    .replace(/^\d+\. (.*$)/gim, '<li>$1</li>')
+    .replace(/^---$/gim, '<hr>');
+  
+  // Wrap li
+  html = html.replace(/(<li>.*<\/li>)/gis, '<ul>$1</ul>');
+  // cleanup multiple ul
+  html = html.replace(/<\/ul>\s*<ul>/g, '');
+  
+  // Paragraphs
+  html = html.split('\n').map(l => {
+    if (l.trim() === '' || l.startsWith('<h') || l.startsWith('<u') || l.startsWith('<b') || l.startsWith('<h') || l.startsWith('<l')) return l;
+    return `<p>${l}</p>`;
+  }).join('\n');
+
+  // Handle Code blocks (Mermaid / Loom)
+  let blocks = [];
+  html = html.replace(/```(mermaid|loom)?\n([\s\S]*?)```/gim, (match, lang, code) => {
+    const id = 'block_' + Math.random().toString(36).substr(2,9);
+    blocks.push({id, lang, code: code.trim()});
+    return `<div id="${id}"></div>`;
+  });
+
+  setTimeout(() => {
+    blocks.forEach(b => {
+      const el = document.getElementById(b.id);
+      if (!el) return;
+      if (b.lang === 'mermaid') {
+        el.className = 'md-mermaid';
+        mermaid.render(`m_${b.id}`, b.code).then(res => el.innerHTML = res.svg).catch(e => el.innerHTML = `<pre style="color:red">Mermaid Error</pre>`);
+      } else if (b.lang === 'loom') {
+        const lid = b.code.split('/').pop();
+        el.innerHTML = `<div class="md-loom"><iframe src="https://www.loom.com/embed/${lid}" frameborder="0" allowfullscreen style="width:100%; height:440px; display:block;"></iframe></div>`;
+      } else {
+        el.innerHTML = `<pre><code>${b.code}</code></pre>`;
+      }
+    });
+  }, 10);
+
+  return html;
+}
+
+function updatePreview() {
+  const text = document.getElementById('ed-body').value;
+  document.getElementById('ed-preview').innerHTML = mdRender(text);
+}
+
+// Depts
+function renderDeptManager() {
+  const list = document.getElementById('dept-mgr-list');
+  list.innerHTML = S.depts.map(d => `<div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:12px; padding:12px; background:var(--canvas); border:1px solid var(--hairline); border-radius:4px;">
+    <div style="display:flex; align-items:center; gap:8px;">
+      <div style="width:12px; height:12px; border-radius:50%; background:${d.color}"></div>
+      ${d.name}
+    </div>
+    <button class="btn-outline btn-danger" onclick="removeDept('${d.id}')">Remove</button>
+  </div>`).join('');
+}
+function addDept() {
+  const name = document.getElementById('new-dept-name').value;
+  const color = document.getElementById('new-dept-color').value;
+  if (!name) return;
+  const id = name.toLowerCase().replace(/[^a-z0-9]/g, '-');
+  S.depts.push({ id, name, color });
+  persist();
+  renderSidebar();
+  document.getElementById('new-dept-name').value = '';
+}
+function removeDept(id) {
+  if(S.depts.length <= 1) return alert("Must have at least one department.");
+  S.depts = S.depts.filter(d => d.id !== id);
+  // Reassign SOPs
+  S.sops.forEach(s => { if (s.deptId === id) s.deptId = S.depts[0].id; });
+  persist();
+  renderSidebar();
+}
+
+// Command Palette
+function openCmd() {
+  document.getElementById('cmd-palette').style.display = 'flex';
+  document.getElementById('cmd-input').value = '';
+  document.getElementById('cmd-input').focus();
+  renderCmd('');
+}
+function renderCmd(q) {
+  const res = document.getElementById('cmd-results');
+  let filtered = S.sops;
+  if (q) filtered = S.sops.filter(s => s.title.toLowerCase().includes(q.toLowerCase()));
+  
+  res.innerHTML = filtered.map(s => `<div class="cmd-item" onclick="openSOP('${s.id}'); closeModals();">📄 ${s.title || 'Untitled'}</div>`).join('');
+  if(filtered.length === 0) res.innerHTML = `<div class="cmd-item" style="color:var(--mute)">No results found.</div>`;
+}
+
+function closeModals() {
+  document.querySelectorAll('.modal-overlay, #cmd-palette').forEach(el => el.style.display = 'none');
+}
+window.onclick = function(event) {
+  if (event.target.classList.contains('modal-overlay')) event.target.style.display = 'none';
+  if (event.target.id === 'cmd-palette') event.target.style.display = 'none';
+}
+
+init();
+</script>
+</body>
+</html>
