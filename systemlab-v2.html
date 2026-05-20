@@ -1340,10 +1340,10 @@ function printDoc() {
       <body>
         <h1 style="font-size: 32px; border-bottom: 3px solid #000; margin-bottom: 30px;">\${sop.title || 'Untitled SOP'}</h1>
         \${content}
-        <script>
+        <${'script'}>
           // Wait briefly for images/SVGs to load, then print
           setTimeout(() => { window.print(); window.close(); }, 500);
-        </script>
+        </${'script'}>
       </body>
     </html>
   `);
