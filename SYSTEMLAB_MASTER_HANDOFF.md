@@ -82,9 +82,9 @@
 
 - **No build tools** — vanilla HTML + CSS + JS only
 - **No frameworks** — zero React, Vue, Angular
-- **External deps** — only Mermaid.js (CDN) + Google Fonts
-- **State** — global `S` object persisted to `localStorage` (`systemlab_v2` key)
-- **Auth** — client-side login gate persisted to `localStorage` (`systemlab_auth` key)
+- **External deps** — Mermaid.js (CDN), Firebase v10 (CDN), Google Fonts
+- **State** — global `S` object synced in real-time to Firebase Firestore (`onSnapshot`) + cached in `localStorage`
+- **Auth** — "Workspace Passcode" multi-tenant login (anyone with the passcode can access their team's workspace)
 
 ---
 
@@ -111,10 +111,10 @@
 
 ## ✅ Features Built (as of Session 06)
 
-- [x] Auth login screen (`admin@systemlab.com` / `admin`)
+- [x] Auth login screen ("Workspace Passcode" team login system)
 - [x] Logout button in topbar
 - [x] Session persistence (stays logged in on refresh)
-- [x] Full data persistence — all SOPs and departments saved to localStorage
+- [x] Full data persistence — all SOPs and departments synced to Firebase in real-time
 - [x] Autosave every 1.2s while editing
 - [x] Dashboard with stats (Total SOPs, Active, Departments, Drafts)
 - [x] Sidebar with department navigation
@@ -127,7 +127,8 @@
 - [x] Flowchart builder modal (visual step editor)
 - [x] Loom embed modal
 - [x] Department manager modal (add/remove/color picker)
-- [x] Version history drawer (with diff viewer)
+- [x] Version history drawer (with actual local state history and restore)
+- [x] PDF Export (native browser print with optimized CSS)
 - [x] Command palette (`⌘K`)
 - [x] Confirm-delete dialog
 - [x] Toast notifications
@@ -181,12 +182,9 @@ npx netlify-cli deploy --prod --dir=dist
 ## 📋 Next Steps / Backlog
 
 - [ ] Custom domain (e.g. `app.systemlab.io`)
-- [ ] Real backend (Supabase or Firebase) for multi-user collaboration
 - [ ] Role-based access (Admin / Editor / Viewer)
 - [ ] SOP template library
-- [ ] PDF export
 - [ ] Real version diffing
-- [ ] Invite team members flow
 - [ ] Rich text (WYSIWYG) editor mode
 
 ---
@@ -206,4 +204,4 @@ Every session, the agent MUST:
 
 ---
 
-*Last updated: 2026-05-20 by Antigravity AI (Session 06)*
+*Last updated: 2026-05-20 by Antigravity AI (Session 08)*
