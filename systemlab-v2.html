@@ -3,655 +3,1553 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>SystemLab — SOP Portal</title>
+<title>SystemLab — Team Operating System</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@400&family=Playfair+Display:ital,wght@1,500;1,700&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600&family=JetBrains+Mono:wght@400;500&family=Playfair+Display:ital,wght@1,500;1,700&display=swap" rel="stylesheet">
 <style>
-:root {
-  --canvas: #0a0a0a;
-  --card: #191919;
-  --hairline: #212327;
-  --ink: #ffffff;
-  --mute: #7d8187;
-  --body: #dadbdf;
-  --brand-orange: #ff7a17;
-  --brand-green: #22c55e;
-  --brand-blue: #60a5fa;
-  --brand-purple: #a78bfa;
-  --brand-pink: #f472b6;
-  
-  --font-sans: 'Inter', sans-serif;
-  --font-mono: 'JetBrains Mono', monospace;
-  --font-serif: 'Playfair Display', serif;
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --canvas:#0a0a0a;--canvas-soft:#141416;--canvas-card:#191919;--canvas-mid:#222327;
+  --hairline:#212327;--hairline-mid:#2c2f35;
+  --ink:#ffffff;--body:#dadbdf;--mute:#7d8187;--mute2:#4a4d54;
+  --sunset:#ff7a17;--sunset-soft:rgba(255,122,23,0.12);
+  --green:#22c55e;--green-soft:rgba(34,197,94,0.1);
+  --yellow:#eab308;--red:#ef4444;
+  --blue:#60a5fa;--purple:#a78bfa;
+  --sans:'Inter',system-ui,sans-serif;--mono:'JetBrains Mono',monospace;
+  --r-sm:8px;--r-md:10px;--r-pill:9999px;
+  --shadow:0 0 0 1px var(--hairline);
+  --serif:'Playfair Display',serif;
 }
-* { box-sizing: border-box; margin: 0; padding: 0; }
-body { background: var(--canvas); color: var(--ink); font-family: var(--font-sans); font-size: 14px; -webkit-font-smoothing: antialiased; overflow: hidden; }
+html,body{height:100%;overflow:hidden;background:var(--canvas)}
+body{font-family:var(--sans);font-size:14px;line-height:1.5;color:var(--ink);-webkit-font-smoothing:antialiased}
+::-webkit-scrollbar{width:4px;height:4px}
+::-webkit-scrollbar-track{background:transparent}
+::-webkit-scrollbar-thumb{background:var(--hairline-mid);border-radius:2px}
+::-webkit-scrollbar-thumb:hover{background:var(--mute2)}
 
-/* Login Screen */
-#login-screen { display: flex; align-items: center; justify-content: center; height: 100vh; background: var(--canvas); position: absolute; inset: 0; z-index: 1000; }
-.login-card { background: var(--card); border: 1px solid var(--hairline); border-radius: 8px; padding: 40px; width: 360px; }
-.brand-logo { font-size: 32px; letter-spacing: -0.05em; color: var(--ink); text-align: center; margin-bottom: 32px; font-weight: 800; }
-.brand-logo em { font-family: var(--font-serif); font-style: italic; font-weight: 500; }
-.login-card input { width: 100%; background: var(--canvas); border: 1px solid var(--hairline); color: var(--ink); padding: 12px; margin-bottom: 16px; border-radius: 4px; font-family: var(--font-sans); }
-.login-card input:focus { outline: none; border-color: rgba(255,255,255,0.5); }
-.login-card button { width: 100%; background: var(--ink); color: var(--canvas); border: none; padding: 12px; border-radius: 9999px; font-weight: 500; cursor: pointer; transition: opacity 0.2s; }
-.login-card button:hover { opacity: 0.8; }
-.login-error { color: var(--brand-orange); font-size: 12px; text-align: center; margin-top: 12px; display: none; }
+/* BUTTONS */
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:6px;font-family:var(--sans);font-size:13px;font-weight:400;padding:6px 14px;border-radius:var(--r-pill);cursor:pointer;white-space:nowrap;transition:all 0.13s;border:1px solid var(--hairline);background:transparent;color:var(--body);line-height:1.4}
+.btn:hover{background:rgba(255,255,255,0.05);border-color:rgba(255,255,255,0.15);color:var(--ink)}
+.btn-primary{background:var(--ink);color:#000;border-color:var(--ink);font-weight:500}
+.btn-primary:hover{background:#e8e8e8;border-color:#e8e8e8;color:#000}
+.btn-ghost{border-color:transparent;color:var(--mute)}
+.btn-ghost:hover{border-color:var(--hairline);color:var(--body);background:rgba(255,255,255,0.03)}
+.btn-danger{border-color:rgba(239,68,68,0.3);color:var(--red)}
+.btn-danger:hover{background:rgba(239,68,68,0.08);border-color:rgba(239,68,68,0.5)}
+.btn-sm{padding:5px 12px;font-size:12px}
+.btn-xs{padding:3px 9px;font-size:11px}
+.btn-icon{padding:5px;width:28px;height:28px;border-radius:var(--r-sm)}
 
-/* App Layout */
-#app { display: none; height: 100vh; grid-template-rows: 48px 1fr; grid-template-columns: 240px 1fr; }
-.topbar { grid-column: 1 / -1; background: var(--canvas); border-bottom: 1px solid var(--hairline); display: flex; align-items: center; justify-content: space-between; padding: 0 24px; }
-.top-search { background: var(--card); border: 1px solid var(--hairline); color: var(--mute); padding: 6px 12px; border-radius: 4px; font-size: 12px; cursor: pointer; display: flex; align-items: center; gap: 8px; }
-.top-search:hover { border-color: rgba(255,255,255,0.2); }
-.top-user { display: flex; align-items: center; gap: 12px; font-size: 13px; }
-.avatar { width: 28px; height: 28px; border-radius: 9999px; background: var(--card); border: 1px solid var(--hairline); display: flex; align-items: center; justify-content: center; font-family: var(--font-mono); font-size: 10px; }
+/* BADGE */
+.badge{display:inline-flex;align-items:center;gap:3px;font-family:var(--mono);font-size:10px;font-weight:500;letter-spacing:0.06em;text-transform:uppercase;padding:2px 7px;border-radius:var(--r-pill);border:1px solid}
+.badge-active{color:var(--green);border-color:rgba(34,197,94,0.25);background:rgba(34,197,94,0.07)}
+.badge-draft{color:var(--mute);border-color:var(--hairline);background:var(--canvas-soft)}
+.badge-review{color:var(--yellow);border-color:rgba(234,179,8,0.25);background:rgba(234,179,8,0.07)}
+.badge-dot{width:5px;height:5px;border-radius:50%;background:currentColor}
 
-.sidebar { background: var(--card); border-right: 1px solid var(--hairline); padding: 24px 16px; display: flex; flex-direction: column; overflow-y: auto; }
-.nav-eyebrow { font-family: var(--font-mono); font-size: 10px; letter-spacing: 1.2px; text-transform: uppercase; color: var(--mute); margin: 24px 0 12px 8px; }
-.nav-item { display: flex; align-items: center; gap: 12px; padding: 8px 12px; color: var(--body); text-decoration: none; border-radius: 6px; cursor: pointer; font-size: 14px; }
-.nav-item:hover { color: var(--ink); background: rgba(255,255,255,0.05); }
-.nav-item.active { color: var(--ink); background: rgba(255,255,255,0.1); }
-.nav-dot { width: 8px; height: 8px; border-radius: 50%; }
-.nav-count { margin-left: auto; font-family: var(--font-mono); font-size: 10px; color: var(--mute); }
+/* INPUTS */
+input,textarea,select{font-family:var(--sans);font-size:13px;background:var(--canvas-soft);color:var(--ink);border:1px solid var(--hairline);border-radius:var(--r-sm);outline:none;transition:border-color 0.15s;padding:8px 12px}
+input:focus,textarea:focus,select:focus{border-color:rgba(255,255,255,0.22)}
+input::placeholder,textarea::placeholder{color:var(--mute)}
+select option{background:var(--canvas-card)}
 
-.btn-primary { background: var(--ink); color: var(--canvas); border: none; padding: 10px 16px; border-radius: 9999px; cursor: pointer; font-weight: 500; font-size: 13px; text-align: center; margin-top: auto; }
-.btn-primary:hover { opacity: 0.8; }
-.btn-outline { background: transparent; color: var(--ink); border: 1px solid rgba(255,255,255,0.25); padding: 6px 16px; border-radius: 9999px; cursor: pointer; font-size: 12px; }
-.btn-outline:hover { background: rgba(255,255,255,0.05); }
-.btn-danger { color: var(--brand-orange); border-color: rgba(255,122,23,0.3); }
+/* EYEBROW */
+.eyebrow{font-family:var(--mono);font-size:10px;font-weight:400;letter-spacing:1.2px;text-transform:uppercase;color:var(--mute)}
 
-.main-area { background: var(--canvas); overflow: hidden; position: relative; }
-.view { display: none; height: 100%; overflow-y: auto; padding: 48px; }
-.view.active { display: block; }
+/* APP SHELL */
+#app{display:none;grid-template-columns:220px 1fr;grid-template-rows:48px 1fr;height:100vh;overflow:hidden}
 
-/* Dashboard */
-.stat-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 16px; margin-bottom: 48px; }
-.stat-card { background: var(--card); border: 1px solid var(--hairline); border-radius: 8px; padding: 24px; }
-.stat-val { font-size: 32px; letter-spacing: -1.5px; margin-top: 8px; }
+/* LOGIN */
+#login-screen{position:fixed;inset:0;background:var(--canvas);z-index:9999;display:flex;align-items:center;justify-content:center}
+.login-card{width:360px;background:var(--canvas-card);border:1px solid var(--hairline);border-radius:var(--r-md);padding:40px;display:flex;flex-direction:column}
+.login-logo{font-size:28px;letter-spacing:-0.05em;color:var(--ink);text-align:center;margin-bottom:8px;font-weight:600}
+.login-logo em{font-family:var(--serif);font-style:italic;font-weight:500}
+.login-sub{font-family:var(--mono);font-size:10px;color:var(--mute);text-align:center;margin-bottom:32px;letter-spacing:1px;text-transform:uppercase}
+.login-err{color:var(--red);font-size:12px;text-align:center;margin-top:12px;display:none}
 
-/* List View */
-.list-toolbar { display: flex; justify-content: space-between; margin-bottom: 24px; align-items: center; }
-.list-search { background: transparent; border: 1px solid var(--hairline); color: var(--ink); padding: 8px 16px; border-radius: 9999px; outline: none; width: 300px; font-family: var(--font-sans); }
-.list-search:focus { border-color: rgba(255,255,255,0.4); }
-.sop-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 16px; }
-.sop-card { background: var(--card); border: 1px solid var(--hairline); border-radius: 8px; padding: 20px; cursor: pointer; transition: border-color 0.2s; position: relative; }
-.sop-card:hover { border-color: rgba(255,255,255,0.3); }
-.sop-meta { display: flex; justify-content: space-between; font-family: var(--font-mono); font-size: 10px; color: var(--mute); margin-bottom: 12px; text-transform: uppercase; }
-.sop-title { font-size: 16px; font-weight: 500; letter-spacing: -0.5px; margin-bottom: 8px; }
-.sop-actions { position: absolute; bottom: 20px; right: 20px; display: none; gap: 8px; }
-.sop-card:hover .sop-actions { display: flex; }
+/* TOPBAR */
+#topbar{grid-column:1/-1;display:flex;align-items:center;background:var(--canvas);border-bottom:1px solid var(--hairline);z-index:200;height:48px}
+.topbar-brand{display:flex;align-items:center;gap:8px;padding:0 18px;width:220px;flex-shrink:0;border-right:1px solid var(--hairline);height:100%}
+.brand-mark{width:20px;height:20px;background:var(--ink);border-radius:4px;display:grid;grid-template-columns:1fr 1fr;grid-template-rows:1fr 1fr;gap:2px;padding:4px}
+.brand-mark span{background:#000;border-radius:1px}
+.brand-name{font-size:14px;font-weight:600;letter-spacing:-0.04em;color:var(--ink)}
+.brand-tag{font-family:var(--mono);font-size:9px;color:var(--mute);letter-spacing:0.06em;text-transform:uppercase;margin-left:2px;margin-top:1px;display:none}
+.topbar-center{flex:1;display:flex;align-items:center;padding:0 16px;gap:8px}
+.search-bar{display:flex;align-items:center;gap:8px;background:var(--canvas-soft);border:1px solid var(--hairline);border-radius:var(--r-pill);padding:6px 13px;cursor:text;max-width:320px;width:100%;transition:border-color 0.15s}
+.search-bar:hover{border-color:rgba(255,255,255,0.14)}
+.search-bar input{background:transparent;border:none;padding:0;font-size:12px;color:var(--body);flex:1;border-radius:0}
+.search-bar input:focus{border:none}
+.kbd{font-family:var(--mono);font-size:9px;color:var(--mute);background:rgba(255,255,255,0.06);border:1px solid var(--hairline);border-radius:3px;padding:1px 5px;letter-spacing:0.3px}
+.topbar-right{display:flex;align-items:center;gap:6px;padding:0 16px;margin-left:auto}
+.avatar{width:26px;height:26px;border-radius:50%;background:var(--sunset);display:flex;align-items:center;justify-content:center;font-size:10px;font-weight:700;color:#fff;cursor:pointer;letter-spacing:0;flex-shrink:0}
 
-/* Editor View */
-.editor-layout { display: flex; flex-direction: column; height: 100%; padding: 0; }
-.editor-bar { display: flex; justify-content: space-between; align-items: center; padding: 16px 32px; border-bottom: 1px solid var(--hairline); }
-.editor-title-input { width: 100%; background: transparent; border: none; color: var(--ink); font-size: 32px; font-weight: 500; letter-spacing: -1px; padding: 24px 32px; outline: none; font-family: var(--font-sans); }
-.editor-split { display: flex; flex: 1; overflow: hidden; }
-.editor-pane { flex: 1; border-right: 1px solid var(--hairline); padding: 24px 32px; overflow-y: auto; }
-.preview-pane { flex: 1; padding: 24px 32px; overflow-y: auto; background: var(--canvas); }
-.editor-textarea { width: 100%; height: 100%; background: transparent; border: none; color: var(--body); font-family: var(--font-mono); font-size: 13px; line-height: 1.6; outline: none; resize: none; }
+/* SIDEBAR */
+#sidebar{background:var(--canvas);border-right:1px solid var(--hairline);display:flex;flex-direction:column;overflow:hidden;transition:width 0.2s}
+.sidebar-scroll{flex:1;overflow-y:auto;padding:6px 0}
+.sidebar-section{padding:2px 0}
+.sidebar-section+.sidebar-section{border-top:1px solid var(--hairline);margin-top:4px;padding-top:6px}
+.sidebar-label{font-family:var(--mono);font-size:9px;letter-spacing:0.1em;text-transform:uppercase;color:var(--mute2);padding:6px 14px 2px}
+.nav-item{display:flex;align-items:center;gap:8px;padding:5px 14px;cursor:pointer;font-size:13px;color:var(--mute);transition:color 0.1s,background 0.1s;border-left:2px solid transparent;user-select:none;position:relative}
+.nav-item:hover{color:var(--body);background:rgba(255,255,255,0.025)}
+.nav-item.active{color:var(--ink);background:rgba(255,255,255,0.035);border-left-color:var(--ink)}
+.nav-item svg{flex-shrink:0;opacity:0.55}
+.nav-item.active svg{opacity:1}
+.nav-count{margin-left:auto;font-family:var(--mono);font-size:9px;color:var(--mute2);background:var(--canvas-soft);padding:1px 5px;border-radius:3px}
+.dept-dot{width:6px;height:6px;border-radius:50%;flex-shrink:0}
+.sidebar-bottom{padding:10px 12px;border-top:1px solid var(--hairline)}
+.new-btn{display:flex;align-items:center;justify-content:center;gap:7px;width:100%;padding:7px 12px;border-radius:var(--r-pill);background:var(--ink);color:#000;font-size:13px;font-weight:500;cursor:pointer;border:1px solid var(--ink);transition:background 0.13s;font-family:var(--sans)}
+.new-btn:hover{background:#e8e8e8;border-color:#e8e8e8}
 
-/* Editor Tools */
-.editor-tools { display: flex; gap: 8px; padding: 0 32px 16px; border-bottom: 1px solid var(--hairline); }
-.tool-btn { background: transparent; border: 1px solid var(--hairline); color: var(--mute); padding: 4px 12px; border-radius: 4px; font-size: 12px; cursor: pointer; }
-.tool-btn:hover { color: var(--ink); border-color: rgba(255,255,255,0.2); }
+/* MAIN */
+#main{display:flex;flex-direction:column;overflow:hidden;background:var(--canvas)}
+.view{display:none;flex-direction:column;flex:1;overflow:hidden}
+.view.active{display:flex}
 
-/* Markdown Styles */
-.md-content h1 { font-size: 32px; letter-spacing: -1px; margin-bottom: 24px; font-weight: 500; }
-.md-content h2 { font-size: 24px; letter-spacing: -0.5px; margin: 32px 0 16px; font-weight: 500; }
-.md-content p { font-size: 15px; line-height: 1.6; color: var(--body); margin-bottom: 16px; }
-.md-content ul, .md-content ol { padding-left: 20px; margin-bottom: 16px; color: var(--body); }
-.md-content li { margin-bottom: 8px; }
-.md-content code { font-family: var(--font-mono); font-size: 12px; background: var(--card); padding: 2px 6px; border-radius: 4px; border: 1px solid var(--hairline); }
-.md-content pre { background: var(--card); padding: 16px; border-radius: 8px; border: 1px solid var(--hairline); overflow-x: auto; margin-bottom: 16px; }
-.md-content pre code { background: transparent; border: none; padding: 0; }
-.md-content blockquote { border-left: 2px solid var(--hairline); padding-left: 16px; color: var(--mute); margin-bottom: 16px; }
-.md-content a { color: var(--ink); text-decoration: underline; text-underline-offset: 4px; }
-.md-content hr { border: none; border-top: 1px solid var(--hairline); margin: 32px 0; }
-.md-content .task-list-item { list-style-type: none; margin-left: -20px; }
-.md-content .task-list-item input { margin-right: 8px; }
+/* ── DASHBOARD ── */
+.dash-head{padding:24px 28px 18px;border-bottom:1px solid var(--hairline);flex-shrink:0}
+.dash-h1{font-size:24px;font-weight:400;letter-spacing:-0.05em;color:var(--ink);line-height:1;margin-bottom:3px}
+.dash-sub{font-size:12px;color:var(--mute)}
+.stats-row{display:grid;grid-template-columns:repeat(4,1fr);border-bottom:1px solid var(--hairline);flex-shrink:0}
+.stat-cell{padding:14px 22px;border-right:1px solid var(--hairline)}
+.stat-cell:last-child{border-right:none}
+.stat-n{font-size:28px;font-weight:400;letter-spacing:-0.05em;color:var(--ink);line-height:1}
+.stat-lbl{margin-top:3px}
+.dash-body{flex:1;overflow-y:auto;padding:22px 28px;display:grid;grid-template-columns:1fr 290px;gap:24px;align-content:start}
+.panel-hd{font-family:var(--mono);font-size:9px;letter-spacing:0.1em;text-transform:uppercase;color:var(--mute);margin-bottom:10px;display:flex;align-items:center;justify-content:space-between}
+.sop-table{display:flex;flex-direction:column;gap:1px}
+.sop-row{display:flex;align-items:center;gap:10px;padding:8px 10px;border-radius:var(--r-sm);cursor:pointer;transition:background 0.1s;border:1px solid transparent}
+.sop-row:hover{background:var(--canvas-card);border-color:var(--hairline)}
+.sop-row-icon{width:30px;height:30px;border-radius:6px;flex-shrink:0;display:flex;align-items:center;justify-content:center;background:var(--canvas-soft);font-size:14px}
+.sop-row-info{flex:1;min-width:0}
+.sop-row-title{font-size:13px;font-weight:500;letter-spacing:-0.02em;color:var(--ink);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.sop-row-meta{font-size:11px;color:var(--mute);margin-top:1px;display:flex;align-items:center;gap:6px}
+.sop-row-actions{display:flex;gap:3px;opacity:0;transition:opacity 0.1s}
+.sop-row:hover .sop-row-actions{opacity:1}
+.dept-pills{display:flex;flex-direction:column;gap:5px}
+.dept-pill{display:flex;align-items:center;gap:9px;padding:10px 12px;background:var(--canvas-card);border:1px solid var(--hairline);border-radius:var(--r-sm);cursor:pointer;transition:border-color 0.13s}
+.dept-pill:hover{border-color:rgba(255,255,255,0.18)}
+.dept-pill-dot{width:7px;height:7px;border-radius:50%;flex-shrink:0}
+.dept-pill-name{font-size:13px;font-weight:500;letter-spacing:-0.02em;color:var(--ink);flex:1}
+.dept-pill-count{font-family:var(--mono);font-size:9px;color:var(--mute)}
+.activity-feed{display:flex;flex-direction:column}
+.activity-item{display:flex;align-items:flex-start;gap:9px;padding:9px 0;border-bottom:1px solid var(--hairline)}
+.activity-item:last-child{border-bottom:none}
+.act-av{width:22px;height:22px;border-radius:50%;flex-shrink:0;display:flex;align-items:center;justify-content:center;font-size:8px;font-weight:700;color:#fff;margin-top:1px}
+.act-text{font-size:12px;color:var(--mute);line-height:1.4;flex:1}
+.act-text strong{color:var(--body);font-weight:500}
+.act-time{font-family:var(--mono);font-size:9px;color:var(--mute2);margin-top:1px}
 
-/* Mermaid & Loom Wrappers */
-.md-mermaid { background: var(--card); border: 1px solid var(--hairline); border-radius: 8px; padding: 24px; margin-bottom: 16px; display: flex; justify-content: center; overflow: auto; }
-.md-loom { border: 1px solid var(--hairline); border-radius: 8px; overflow: hidden; margin-bottom: 16px; background: var(--card); }
+/* ── SOP LIST / DEPT VIEW ── */
+.listview-head{display:flex;align-items:center;gap:10px;padding:16px 28px;border-bottom:1px solid var(--hairline);flex-shrink:0}
+.listview-dot{width:9px;height:9px;border-radius:50%;flex-shrink:0}
+.listview-title{font-size:20px;font-weight:400;letter-spacing:-0.04em;color:var(--ink)}
+.listview-toolbar{display:flex;align-items:center;gap:7px;padding:10px 28px;border-bottom:1px solid var(--hairline);flex-shrink:0}
+.listview-body{flex:1;overflow-y:auto;padding:18px 28px}
+.sop-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(260px,1fr));gap:10px}
+.sop-card{background:var(--canvas-card);border:1px solid var(--hairline);border-radius:var(--r-md);padding:16px;cursor:pointer;transition:border-color 0.13s,transform 0.1s;display:flex;flex-direction:column;gap:9px}
+.sop-card:hover{border-color:rgba(255,255,255,0.18);transform:translateY(-1px)}
+.sop-card-head{display:flex;align-items:flex-start;justify-content:space-between;gap:6px}
+.sop-card-title{font-size:13px;font-weight:500;letter-spacing:-0.02em;color:var(--ink);line-height:1.3;flex:1}
+.sop-card-emoji{font-size:18px;flex-shrink:0;line-height:1}
+.sop-card-desc{font-size:11px;color:var(--mute);line-height:1.5;flex:1}
+.sop-card-foot{display:flex;align-items:center;justify-content:space-between;padding-top:8px;border-top:1px solid var(--hairline);margin-top:auto}
+.sop-card-meta{font-size:11px;color:var(--mute);display:flex;align-items:center;gap:5px}
+.sop-card-actions{display:flex;gap:3px;opacity:0;transition:opacity 0.1s}
+.sop-card:hover .sop-card-actions{opacity:1}
 
-/* Modals */
-.modal-overlay { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.8); z-index: 2000; align-items: center; justify-content: center; }
-.modal { background: var(--card); border: 1px solid var(--hairline); border-radius: 8px; padding: 32px; width: 400px; position: relative; }
-.modal h3 { margin-bottom: 24px; font-weight: 500; font-size: 18px; }
-.modal-close { position: absolute; top: 16px; right: 16px; cursor: pointer; color: var(--mute); font-size: 18px; line-height: 1; }
-.modal-close:hover { color: var(--ink); }
-.modal input { width: 100%; background: var(--canvas); border: 1px solid var(--hairline); color: var(--ink); padding: 10px 12px; margin-bottom: 16px; border-radius: 4px; font-family: var(--font-sans); }
-.modal select { width: 100%; background: var(--canvas); border: 1px solid var(--hairline); color: var(--ink); padding: 10px 12px; margin-bottom: 16px; border-radius: 4px; font-family: var(--font-sans); }
+/* ── EDITOR ── */
+.ed-bar{display:flex;align-items:center;gap:8px;padding:8px 16px;border-bottom:1px solid var(--hairline);flex-shrink:0;background:var(--canvas)}
+.breadcrumb{display:flex;align-items:center;gap:5px;font-size:12px;color:var(--mute)}
+.breadcrumb .cur{color:var(--body)}
+.breadcrumb .sep{color:var(--mute2)}
+.ed-meta{display:flex;align-items:center;gap:7px;padding:5px 16px;border-bottom:1px solid var(--hairline);flex-shrink:0;background:rgba(255,255,255,0.01)}
+.status-toggle{display:flex;align-items:center;border:1px solid var(--hairline);border-radius:var(--r-pill);overflow:hidden}
+.status-toggle button{background:transparent;border:none;color:var(--mute);font-family:var(--mono);font-size:9px;letter-spacing:0.08em;text-transform:uppercase;padding:4px 10px;cursor:pointer;transition:all 0.12s;font-weight:500}
+.status-toggle button.on{background:rgba(255,255,255,0.09);color:var(--ink)}
+.ed-title-zone{padding:14px 22px 0;flex-shrink:0}
+.ed-title{width:100%;background:transparent;border:none;outline:none;font-family:var(--sans);font-size:28px;font-weight:400;letter-spacing:-0.05em;color:var(--ink);line-height:1.15}
+.ed-title::placeholder{color:rgba(255,255,255,0.12)}
+.ins-bar{display:flex;align-items:center;gap:3px;padding:5px 14px;border-bottom:1px solid var(--hairline);flex-shrink:0;flex-wrap:wrap;background:var(--canvas-soft)}
+.ins-bar-label{font-family:var(--mono);font-size:9px;letter-spacing:0.08em;text-transform:uppercase;color:var(--mute2);margin-right:4px;white-space:nowrap}
+.ins-btn{display:inline-flex;align-items:center;gap:3px;font-family:var(--mono);font-size:9px;letter-spacing:0.05em;text-transform:uppercase;padding:3px 8px;border-radius:var(--r-pill);border:1px solid var(--hairline);background:transparent;color:var(--mute);cursor:pointer;transition:all 0.12s;white-space:nowrap}
+.ins-btn:hover{color:var(--ink);border-color:rgba(255,255,255,0.18);background:var(--canvas-card)}
+.ed-body{flex:1;display:grid;grid-template-columns:1fr 1fr;overflow:hidden;min-height:0}
+.ed-pane{display:flex;flex-direction:column;overflow:hidden}
+.ed-pane+.ed-pane{border-left:1px solid var(--hairline)}
+.pane-head{padding:5px 14px;display:flex;align-items:center;justify-content:space-between;border-bottom:1px solid var(--hairline);background:rgba(255,255,255,0.01);flex-shrink:0}
+.ed-textarea{flex:1;resize:none;border:none;outline:none;width:100%;padding:14px 18px;background:transparent;color:var(--body);font-family:var(--mono);font-size:12px;line-height:1.8}
+.ed-preview-scroll{flex:1;overflow-y:auto;padding:14px 20px}
 
-/* Command Palette */
-#cmd-palette { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.8); z-index: 3000; align-items: flex-start; justify-content: center; padding-top: 10vh; }
-.cmd-box { background: var(--card); border: 1px solid var(--hairline); border-radius: 8px; width: 500px; overflow: hidden; }
-.cmd-input { width: 100%; background: transparent; border: none; border-bottom: 1px solid var(--hairline); color: var(--ink); font-size: 18px; padding: 16px 24px; outline: none; font-family: var(--font-sans); }
-.cmd-results { max-height: 300px; overflow-y: auto; padding: 8px 0; }
-.cmd-item { padding: 12px 24px; color: var(--body); cursor: pointer; display: flex; align-items: center; gap: 12px; }
-.cmd-item:hover, .cmd-item.selected { background: rgba(255,255,255,0.06); color: var(--ink); }
+/* PREVIEW STYLES */
+.md-out h1{font-size:22px;font-weight:400;letter-spacing:-0.05em;color:var(--ink);margin:0 0 12px;line-height:1.1}
+.md-out h2{font-size:15px;font-weight:500;letter-spacing:-0.03em;color:var(--ink);margin:18px 0 7px;padding-bottom:6px;border-bottom:1px solid var(--hairline)}
+.md-out h3{font-size:13px;font-weight:500;color:var(--body);margin:13px 0 5px}
+.md-out p{font-size:13px;color:var(--body);line-height:1.7;margin:0 0 10px}
+.md-out ul,.md-out ol{padding-left:18px;margin:0 0 10px}
+.md-out li{font-size:13px;color:var(--body);margin:3px 0;line-height:1.6}
+.md-out strong{color:var(--ink);font-weight:600}
+.md-out em{color:var(--body);font-style:italic}
+.md-out code{font-family:var(--mono);font-size:11px;background:var(--canvas-soft);padding:1px 5px;border-radius:3px;color:var(--body)}
+.md-out pre{background:var(--canvas-soft);border:1px solid var(--hairline);border-radius:var(--r-sm);padding:12px 14px;margin:10px 0;overflow-x:auto}
+.md-out blockquote{border-left:2px solid var(--hairline);padding:6px 12px;color:var(--mute);margin:10px 0;background:rgba(255,255,255,0.02);border-radius:0 4px 4px 0}
+.md-out blockquote p{margin:0;font-size:12px}
+.md-out hr{border:none;border-top:1px solid var(--hairline);margin:18px 0}
+.md-out table{width:100%;border-collapse:collapse;margin:10px 0;font-size:12px}
+.md-out table th,.md-out table td{padding:7px 10px;border:1px solid var(--hairline);color:var(--body)}
+.md-out table th{background:var(--canvas-soft);color:var(--ink);font-weight:500;font-size:11px;letter-spacing:0.02em}
+.md-out a{color:var(--body);text-underline-offset:2px}
+.md-out .checklist-item{list-style:none;display:flex;align-items:flex-start;gap:7px;margin-left:-18px}
+.md-out .checklist-item span:first-child{flex-shrink:0;margin-top:1px}
 
-/* Toast */
-#toast { position: fixed; bottom: 24px; right: 24px; background: var(--ink); color: var(--canvas); padding: 12px 24px; border-radius: 9999px; font-size: 13px; font-weight: 500; z-index: 4000; transform: translateY(100px); transition: transform 0.3s; }
-#toast.show { transform: translateY(0); }
+/* LOOM / MERMAID BLOCKS */
+.loom-block{background:var(--canvas-soft);border:1px solid var(--hairline);border-radius:var(--r-sm);margin:10px 0;aspect-ratio:16/9;display:flex;align-items:center;justify-content:center;flex-direction:column;gap:8px;cursor:pointer;transition:border-color 0.13s}
+.loom-block:hover{border-color:rgba(255,255,255,0.15)}
+.loom-play{width:44px;height:44px;border-radius:50%;border:1px solid rgba(255,255,255,0.18);display:flex;align-items:center;justify-content:center;transition:background 0.13s}
+.loom-block:hover .loom-play{background:rgba(255,255,255,0.06)}
+.loom-url-label{font-family:var(--mono);font-size:10px;color:var(--mute);letter-spacing:0.3px;max-width:80%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.mermaid-wrap{background:var(--canvas-soft);border:1px solid var(--hairline);border-radius:var(--r-sm);padding:14px;margin:10px 0;overflow:hidden}
+
+/* EDITOR FOOTER */
+.ed-foot{display:flex;align-items:center;gap:10px;padding:7px 16px;border-top:1px solid var(--hairline);flex-shrink:0;background:rgba(255,255,255,0.01)}
+.ed-foot-stats{flex:1;display:flex;align-items:center;gap:12px}
+.save-indicator{display:flex;align-items:center;gap:5px}
+.save-dot{width:5px;height:5px;border-radius:50%;background:var(--green)}
+
+/* FULL EDITOR (single pane canvas mode) */
+.ed-canvas-mode .ed-body{grid-template-columns:1fr}
+.ed-canvas-mode .ed-pane.preview-pane{display:none}
+
+/* ── MODALS ── */
+.modal-overlay{position:fixed;inset:0;background:rgba(0,0,0,0.8);display:flex;align-items:center;justify-content:center;z-index:900;opacity:0;pointer-events:none;transition:opacity 0.18s}
+.modal-overlay.open{opacity:1;pointer-events:all}
+.modal{background:var(--canvas-card);border:1px solid var(--hairline-mid);border-radius:var(--r-md);display:flex;flex-direction:column;transform:translateY(10px) scale(0.98);transition:transform 0.2s cubic-bezier(0.22,1,0.36,1);overflow:hidden;max-height:calc(100vh - 60px)}
+.modal-overlay.open .modal{transform:translateY(0) scale(1)}
+.modal-head{display:flex;align-items:center;justify-content:space-between;padding:14px 18px;border-bottom:1px solid var(--hairline);flex-shrink:0}
+.modal-title{font-size:14px;font-weight:500;letter-spacing:-0.02em}
+.modal-body{flex:1;overflow-y:auto;padding:18px}
+.modal-foot{display:flex;align-items:center;justify-content:flex-end;gap:7px;padding:11px 18px;border-top:1px solid var(--hairline);flex-shrink:0}
+.field-label{font-family:var(--mono);font-size:9px;letter-spacing:0.08em;text-transform:uppercase;color:var(--mute);margin-bottom:5px}
+.field-group{margin-bottom:14px}
+.field-group input,.field-group textarea,.field-group select{width:100%}
+
+/* FLOWCHART BUILDER */
+.flow-nodes{display:flex;flex-direction:column;gap:1px;margin-bottom:12px}
+.flow-node-row{display:flex;align-items:center;gap:7px}
+.flow-node-input{flex:1;padding:7px 11px;font-size:13px}
+.flow-node-del{width:26px;height:26px;display:flex;align-items:center;justify-content:center;background:transparent;border:1px solid var(--hairline);border-radius:6px;color:var(--mute);cursor:pointer;transition:all 0.12s;font-size:12px}
+.flow-node-del:hover{color:var(--red);border-color:rgba(239,68,68,0.35)}
+.flow-arr{display:flex;justify-content:center;color:var(--mute2);font-size:11px;padding:1px 0}
+.flow-preview-box{background:var(--canvas-soft);border:1px solid var(--hairline);border-radius:var(--r-sm);padding:14px;margin-top:12px}
+
+/* DEPT MANAGER */
+.dept-mgr-row{display:flex;align-items:center;gap:9px;padding:9px 12px;background:var(--canvas-soft);border:1px solid var(--hairline);border-radius:var(--r-sm);margin-bottom:6px}
+.dept-mgr-dot{width:7px;height:7px;border-radius:50%;flex-shrink:0}
+.dept-mgr-name{flex:1;font-size:13px;font-weight:500;letter-spacing:-0.02em;color:var(--ink)}
+.dept-mgr-count{font-family:var(--mono);font-size:9px;color:var(--mute)}
+.color-picks{display:flex;gap:5px;flex-wrap:wrap}
+.color-pick{width:18px;height:18px;border-radius:50%;cursor:pointer;border:2px solid transparent;transition:border-color 0.12s,transform 0.1s}
+.color-pick:hover{transform:scale(1.15)}
+.color-pick.sel{border-color:var(--ink)}
+.new-dept-row{display:flex;gap:7px;align-items:flex-end}
+
+/* VERSION DRAWER */
+.drawer-bg{position:fixed;inset:0;background:rgba(0,0,0,0.45);z-index:400;opacity:0;pointer-events:none;transition:opacity 0.2s}
+.drawer-bg.open{opacity:1;pointer-events:all}
+.ver-drawer{position:fixed;top:48px;right:0;bottom:0;width:370px;background:var(--canvas-card);border-left:1px solid var(--hairline);display:flex;flex-direction:column;z-index:500;transform:translateX(100%);transition:transform 0.25s cubic-bezier(0.22,1,0.36,1)}
+.ver-drawer.open{transform:translateX(0)}
+.ver-head{display:flex;align-items:center;justify-content:space-between;padding:12px 16px;border-bottom:1px solid var(--hairline);flex-shrink:0}
+.ver-list{flex:1;overflow-y:auto;padding:4px 0}
+.ver-entry{padding:10px 16px;cursor:pointer;border-left:2px solid transparent;transition:background 0.1s}
+.ver-entry:hover{background:rgba(255,255,255,0.02)}
+.ver-entry.current{border-left-color:var(--ink);background:rgba(255,255,255,0.02)}
+.ver-entry.vsel{background:rgba(255,255,255,0.035)}
+.ver-entry-row{display:flex;align-items:center;justify-content:space-between;gap:8px}
+.ver-tag{font-family:var(--mono);font-size:11px;font-weight:500;color:var(--ink)}
+.ver-author{font-size:11px;color:var(--mute);margin-top:2px}
+.ver-summary{font-size:11px;color:var(--mute);line-height:1.4;margin-top:2px}
+.ver-time{font-family:var(--mono);font-size:9px;color:var(--mute2)}
+.diff-zone{border-top:1px solid var(--hairline);flex-shrink:0;display:flex;flex-direction:column;max-height:190px}
+.diff-head{padding:7px 16px;border-bottom:1px solid var(--hairline);flex-shrink:0}
+.diff-scroll{overflow-y:auto;flex:1}
+.diff-line{display:flex;align-items:flex-start;font-family:var(--mono);font-size:10px;line-height:1.6}
+.diff-ln{width:30px;text-align:right;padding:0 5px;color:var(--mute2);flex-shrink:0;user-select:none}
+.diff-sign{width:13px;flex-shrink:0;text-align:center}
+.diff-txt{flex:1;padding:0 8px 0 2px;white-space:pre-wrap;word-break:break-all;color:var(--body)}
+.diff-add{background:rgba(34,197,94,0.07)}.diff-add .diff-sign{color:rgba(34,197,94,0.8)}
+.diff-rem{background:rgba(239,68,68,0.07)}.diff-rem .diff-sign{color:rgba(239,68,68,0.7)}
+.diff-neu .diff-txt{color:var(--mute)}
+
+/* COMMAND PALETTE */
+.pal-overlay{position:fixed;inset:0;background:rgba(0,0,0,0.75);display:flex;align-items:flex-start;justify-content:center;padding-top:72px;z-index:1000;opacity:0;pointer-events:none;transition:opacity 0.14s}
+.pal-overlay.open{opacity:1;pointer-events:all}
+.pal-box{width:540px;max-width:calc(100vw - 40px);background:var(--canvas-card);border:1px solid rgba(255,255,255,0.1);border-radius:var(--r-md);overflow:hidden;transform:translateY(-8px) scale(0.99);transition:transform 0.17s cubic-bezier(0.22,1,0.36,1)}
+.pal-overlay.open .pal-box{transform:translateY(0) scale(1)}
+.pal-search{display:flex;align-items:center;gap:9px;padding:13px 14px;border-bottom:1px solid var(--hairline)}
+.pal-search input{flex:1;background:transparent;border:none;padding:0;font-size:14px;color:var(--ink);border-radius:0}
+.pal-search input:focus{border:none}
+.pal-search input::placeholder{color:var(--mute)}
+.pal-results{max-height:340px;overflow-y:auto;padding:4px 0}
+.pal-group{font-family:var(--mono);font-size:9px;letter-spacing:0.1em;text-transform:uppercase;color:var(--mute);padding:8px 12px 3px}
+.pal-item{display:flex;align-items:center;gap:9px;padding:7px 8px;margin:1px 5px;border-radius:6px;cursor:pointer;transition:background 0.08s}
+.pal-item:hover,.pal-item.on{background:rgba(255,255,255,0.06)}
+.pal-icon{width:26px;height:26px;background:var(--canvas-soft);border-radius:5px;display:flex;align-items:center;justify-content:center;flex-shrink:0;font-size:12px}
+.pal-title{flex:1;font-size:13px;color:var(--body)}
+.pal-item.on .pal-title{color:var(--ink)}
+.pal-keys{display:flex;gap:2px}
+.pal-key{font-family:var(--mono);font-size:9px;color:var(--mute);background:var(--canvas-soft);border:1px solid var(--hairline);border-radius:3px;padding:1px 4px}
+.pal-foot{display:flex;align-items:center;gap:12px;padding:6px 12px;border-top:1px solid var(--hairline)}
+.pal-hint{display:flex;align-items:center;gap:4px}
+
+/* TOAST */
+#toast{position:fixed;bottom:20px;right:20px;background:var(--canvas-card);border:1px solid var(--hairline-mid);border-radius:var(--r-sm);padding:10px 14px;font-size:13px;color:var(--body);z-index:2000;opacity:0;transform:translateY(6px);transition:all 0.18s;pointer-events:none;min-width:200px;display:flex;align-items:center;gap:8px}
+#toast.show{opacity:1;transform:translateY(0)}
+
+/* EMPTY STATE */
+.empty{display:flex;flex-direction:column;align-items:center;justify-content:center;flex:1;gap:9px;color:var(--mute);padding:40px;text-align:center}
+.empty-icon{font-size:32px;opacity:0.25;margin-bottom:4px}
+
+/* DIVIDER */
+.hr{border:none;border-top:1px solid var(--hairline);margin:12px 0}
+
+/* CONFIRMATION DIALOG */
+.confirm-box{position:fixed;inset:0;display:flex;align-items:center;justify-content:center;z-index:1100;background:rgba(0,0,0,0.7);opacity:0;pointer-events:none;transition:opacity 0.15s}
+.confirm-box.open{opacity:1;pointer-events:all}
+.confirm-card{background:var(--canvas-card);border:1px solid var(--hairline-mid);border-radius:var(--r-md);padding:20px;max-width:340px;width:100%;margin:0 20px}
+.confirm-title{font-size:14px;font-weight:500;color:var(--ink);margin-bottom:6px}
+.confirm-msg{font-size:12px;color:var(--mute);line-height:1.5;margin-bottom:16px}
+.confirm-btns{display:flex;gap:7px;justify-content:flex-end}
+
+/* ONBOARDING HINT CHIP */
+.hint-chip{display:inline-flex;align-items:center;gap:6px;background:var(--sunset-soft);border:1px solid rgba(255,122,23,0.2);border-radius:var(--r-pill);padding:4px 10px;font-size:11px;color:#ff9d4d;margin-top:10px}
+
+/* Scrollable dept tabs */
+.dept-tabs{display:flex;align-items:center;gap:0;overflow-x:auto;padding:0 16px;border-bottom:1px solid var(--hairline);flex-shrink:0;scrollbar-width:none}
+.dept-tabs::-webkit-scrollbar{display:none}
+.dept-tab{padding:8px 14px;font-size:12px;color:var(--mute);cursor:pointer;border-bottom:2px solid transparent;white-space:nowrap;transition:color 0.12s;font-weight:400}
+.dept-tab:hover{color:var(--body)}
+.dept-tab.active{color:var(--ink);border-bottom-color:var(--ink)}
 </style>
-<script src="https://cdn.jsdelivr.net/npm/mermaid/dist/mermaid.min.js"></script>
 </head>
 <body>
-
-<!-- Login -->
+<!-- LOGIN SCREEN -->
 <div id="login-screen">
   <div class="login-card">
-    <div class="brand-logo"><em>system</em><strong>lab.</strong></div>
-    <div style="font-family: var(--font-mono); font-size:10px; color:var(--mute); text-align:center; margin-bottom: 24px; letter-spacing:1px;">AUTHORIZED ACCESS ONLY</div>
-    <input type="email" id="l-email" placeholder="Email (admin@systemlab.com)">
-    <input type="password" id="l-pass" placeholder="Password (admin)">
-    <button onclick="login()">Enter Workspace</button>
-    <div class="login-error" id="l-err">Invalid credentials. Try admin@systemlab.com / admin</div>
+    <div class="login-logo"><em>system</em><strong>lab.</strong></div>
+    <div class="login-sub">Authorized Access Only</div>
+    <input type="email" id="l-email" placeholder="Email (admin@systemlab.com)" style="margin-bottom:12px">
+    <input type="password" id="l-pass" placeholder="Password (admin)" style="margin-bottom:20px" onkeydown="if(event.key==='Enter')loginApp()">
+    <button class="btn btn-primary" style="padding:10px;justify-content:center" onclick="loginApp()">Enter Workspace</button>
+    <div class="login-err" id="l-err">Invalid credentials.</div>
   </div>
 </div>
 
-<!-- App -->
 <div id="app">
-  <div class="topbar">
-    <div class="brand-logo" style="margin:0; font-size: 20px;"><em>system</em><strong>lab.</strong></div>
-    <div class="top-search" onclick="openCmd()">⌘K Search SOPs...</div>
-    <div class="top-user">
-      <span id="u-name">Jordan Kim</span>
-      <div class="avatar">JK</div>
-      <span style="cursor:pointer; color:var(--mute); font-size:12px;" onclick="logout()">Logout</span>
+
+  <!-- TOPBAR -->
+  <div id="topbar">
+    <div class="topbar-brand">
+      <div class="brand-mark"><span></span><span></span><span></span><span></span></div>
+      <div>
+        <div class="brand-name"><em style="font-family:var(--serif);font-weight:500;font-style:italic">system</em>lab.</div>
+      </div>
+    </div>
+    <div class="topbar-center">
+      <div class="search-bar" onclick="openPalette()">
+        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="var(--mute)" stroke-width="2" stroke-linecap="round"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg>
+        <input placeholder="Search SOPs and actions…" readonly>
+        <span class="kbd">⌘K</span>
+      </div>
+    </div>
+    <div class="topbar-right">
+      <button class="btn btn-sm btn-ghost" onclick="openDeptManager()">
+        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87M16 3.13a4 4 0 0 1 0 7.75"/></svg>
+        Departments
+      </button>
+      <div class="avatar" title="Jordan Kim">JK</div>
+      <span style="cursor:pointer; color:var(--mute); font-size:11px;" onclick="logoutApp()">Logout</span>
     </div>
   </div>
 
-  <div class="sidebar">
-    <div class="nav-item active" onclick="nav('dashboard')" id="nav-dashboard">Dashboard</div>
-    <div class="nav-item" onclick="nav('all')" id="nav-all">All SOPs</div>
-    
-    <div class="nav-eyebrow">Departments</div>
-    <div id="dept-list"></div>
-    
-    <div style="margin-top: 24px; font-size:12px; color:var(--mute); cursor:pointer; padding: 8px 12px;" onclick="document.getElementById('modal-dept').style.display='flex'">+ Manage Depts</div>
-    
-    <button class="btn-primary" onclick="createSOP()">+ New SOP</button>
-  </div>
-
-  <div class="main-area">
-    <!-- Dashboard -->
-    <div class="view active" id="v-dashboard">
-      <h2 style="font-weight: 500; letter-spacing:-1px; font-size:28px; margin-bottom:32px;">Workspace Overview</h2>
-      <div class="stat-grid">
-        <div class="stat-card"><div class="nav-eyebrow" style="margin:0">Total SOPs</div><div class="stat-val" id="st-total">0</div></div>
-        <div class="stat-card"><div class="nav-eyebrow" style="margin:0">Active</div><div class="stat-val" id="st-active" style="color:var(--brand-green)">0</div></div>
-        <div class="stat-card"><div class="nav-eyebrow" style="margin:0">Drafts</div><div class="stat-val" id="st-draft" style="color:var(--brand-orange)">0</div></div>
-        <div class="stat-card"><div class="nav-eyebrow" style="margin:0">Departments</div><div class="stat-val" id="st-dept">0</div></div>
-      </div>
-      <h3 style="font-weight:500; margin-bottom:16px;">Recent SOPs</h3>
-      <div class="sop-grid" id="recent-grid"></div>
-    </div>
-
-    <!-- All SOPs -->
-    <div class="view" id="v-all">
-      <div class="list-toolbar">
-        <h2 style="font-weight: 500; letter-spacing:-1px; font-size:24px;" id="all-title">All SOPs</h2>
-        <input type="text" class="list-search" placeholder="Filter SOPs..." oninput="renderSOPs(this.value)">
-      </div>
-      <div class="sop-grid" id="sop-grid"></div>
-    </div>
-
-    <!-- Editor -->
-    <div class="view editor-layout" id="v-editor">
-      <div class="editor-bar">
-        <button class="btn-outline" onclick="nav('all')">← Back</button>
-        <div style="display:flex; gap:12px; align-items:center;">
-          <span style="font-family:var(--font-mono); font-size:10px; color:var(--mute);" id="ed-autosave"></span>
-          <select id="ed-dept" style="background:transparent; border:1px solid var(--hairline); color:var(--ink); padding:6px 12px; border-radius:9999px; outline:none; font-size:12px;"></select>
-          <select id="ed-status" style="background:transparent; border:1px solid var(--hairline); color:var(--ink); padding:6px 12px; border-radius:9999px; outline:none; font-size:12px;">
-            <option value="draft">Draft</option>
-            <option value="active">Active</option>
-            <option value="review">Review</option>
-          </select>
-          <button class="btn-primary" onclick="saveSOP()">Save</button>
+  <!-- SIDEBAR -->
+  <div id="sidebar">
+    <div class="sidebar-scroll">
+      <div class="sidebar-section">
+        <div class="nav-item active" data-view="dashboard" onclick="showView('dashboard',this)">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/></svg>
+          Dashboard
+        </div>
+        <div class="nav-item" data-view="all" onclick="showView('all',this)">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
+          All SOPs
+          <span class="nav-count" id="cnt-all">0</span>
         </div>
       </div>
-      <input type="text" class="editor-title-input" id="ed-title" placeholder="SOP Title..." oninput="triggerAutosave()">
-      <div class="editor-tools">
-        <button class="tool-btn" onclick="insertAtCursor('**bold**')">B</button>
-        <button class="tool-btn" onclick="insertAtCursor('*italic*')">I</button>
-        <button class="tool-btn" onclick="insertAtCursor('- [ ] task')">Checklist</button>
-        <button class="tool-btn" onclick="document.getElementById('modal-flow').style.display='flex'">Flowchart</button>
-        <button class="tool-btn" onclick="document.getElementById('modal-loom').style.display='flex'">Loom</button>
-      </div>
-      <div class="editor-split">
-        <div class="editor-pane">
-          <textarea class="editor-textarea" id="ed-body" placeholder="Write markdown here..." oninput="triggerAutosave()"></textarea>
+      <div class="sidebar-section">
+        <div class="sidebar-label">Departments</div>
+        <div id="sidebar-depts"></div>
+        <div class="nav-item" onclick="openDeptManager()" style="opacity:0.6">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+          <span style="font-size:12px">Add department</span>
         </div>
-        <div class="preview-pane md-content" id="ed-preview"></div>
       </div>
     </div>
+    <div class="sidebar-bottom">
+      <button class="new-btn" onclick="newSOP()">
+        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+        New SOP
+      </button>
+    </div>
+  </div>
+
+  <!-- MAIN -->
+  <div id="main">
+
+    <!-- DASHBOARD -->
+    <div id="v-dashboard" class="view active">
+      <div class="dash-head">
+        <div class="dash-h1" id="greeting">Good morning, Jordan</div>
+        <div class="dash-sub">Your team's operating system — every process, SOP, and system in one place.</div>
+        <div class="hint-chip" id="onboard-hint" style="display:none">
+          <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
+          Start by creating your first SOP or adding a department
+        </div>
+      </div>
+      <div class="stats-row">
+        <div class="stat-cell"><div class="stat-n" id="st-total">0</div><div class="eyebrow stat-lbl">Total SOPs</div></div>
+        <div class="stat-cell"><div class="stat-n" id="st-active">0</div><div class="eyebrow stat-lbl">Active</div></div>
+        <div class="stat-cell"><div class="stat-n" id="st-depts">0</div><div class="eyebrow stat-lbl">Departments</div></div>
+        <div class="stat-cell"><div class="stat-n" id="st-drafts">0</div><div class="eyebrow stat-lbl">Drafts</div></div>
+      </div>
+      <div class="dash-body">
+        <div>
+          <div class="panel-hd">Recent SOPs <button class="btn btn-xs btn-ghost" onclick="showView('all',null)">View all →</button></div>
+          <div id="dash-recent" class="sop-table"></div>
+          <div style="margin-top:20px">
+            <div class="panel-hd">Team Activity</div>
+            <div id="dash-activity" class="activity-feed"></div>
+          </div>
+        </div>
+        <div>
+          <div class="panel-hd">Departments</div>
+          <div id="dash-depts" class="dept-pills"></div>
+          <div style="margin-top:18px">
+            <div class="panel-hd">Quick Actions</div>
+            <div style="display:flex;flex-direction:column;gap:5px">
+              <div class="sop-card" onclick="newSOP()" style="gap:8px">
+                <div style="display:flex;align-items:center;gap:9px">
+                  <div style="font-size:18px">✍️</div>
+                  <div><div style="font-size:13px;font-weight:500;letter-spacing:-0.02em;color:var(--ink)">Create SOP</div><div style="font-size:11px;color:var(--mute);margin-top:1px">Write a new process</div></div>
+                </div>
+              </div>
+              <div class="sop-card" onclick="openFlowModal()" style="gap:8px">
+                <div style="display:flex;align-items:center;gap:9px">
+                  <div style="font-size:18px">⬡</div>
+                  <div><div style="font-size:13px;font-weight:500;letter-spacing:-0.02em;color:var(--ink)">Build a Flowchart</div><div style="font-size:11px;color:var(--mute);margin-top:1px">Visual process map</div></div>
+                </div>
+              </div>
+              <div class="sop-card" onclick="openDeptManager()" style="gap:8px">
+                <div style="display:flex;align-items:center;gap:9px">
+                  <div style="font-size:18px">🏢</div>
+                  <div><div style="font-size:13px;font-weight:500;letter-spacing:-0.02em;color:var(--ink)">Add Department</div><div style="font-size:11px;color:var(--mute);margin-top:1px">Organise your teams</div></div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ALL SOPs / DEPT VIEW -->
+    <div id="v-all" class="view">
+      <div class="listview-head">
+        <div class="listview-dot" id="lv-dot"></div>
+        <div class="listview-title" id="lv-title">All SOPs</div>
+        <div style="flex:1"></div>
+        <button class="btn btn-sm" onclick="newSOP()">
+          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+          New SOP
+        </button>
+      </div>
+      <div class="listview-toolbar">
+        <input type="text" placeholder="Search…" style="padding:5px 11px;font-size:12px;width:170px;border-radius:var(--r-pill)" oninput="filterList(this.value)">
+        <select style="padding:5px 10px;font-size:12px;border-radius:var(--r-pill);background:transparent;color:var(--mute);border:1px solid var(--hairline)" onchange="filterStatus(this.value)">
+          <option value="">All status</option>
+          <option value="active">Active</option>
+          <option value="draft">Draft</option>
+          <option value="review">In Review</option>
+        </select>
+        <div style="flex:1"></div>
+        <button class="btn btn-xs btn-ghost" id="layout-grid-btn" onclick="setLayout('grid')" title="Grid view">
+          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/></svg>
+        </button>
+        <button class="btn btn-xs btn-ghost" id="layout-list-btn" onclick="setLayout('list')" title="List view">
+          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="18" x2="21" y2="18"/></svg>
+        </button>
+      </div>
+      <div class="listview-body" id="lv-body"></div>
+    </div>
+
+    <!-- EDITOR -->
+    <div id="v-editor" class="view">
+      <div class="ed-bar">
+        <div class="breadcrumb">
+          <span onclick="exitEditor()" style="cursor:pointer;display:inline-flex;align-items:center">
+            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><polyline points="15 18 9 12 15 6"/></svg>
+          </span>
+          <span onclick="exitEditor()" style="cursor:pointer" id="bc-dept">SOPs</span>
+          <span class="sep">/</span>
+          <span class="cur" id="bc-title">Untitled</span>
+        </div>
+        <div style="flex:1"></div>
+        <button class="btn btn-xs btn-ghost" id="ed-canvas-toggle" onclick="toggleEdCanvas()" title="Toggle preview">
+          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><rect x="2" y="3" width="20" height="14" rx="2"/><line x1="8" y1="21" x2="16" y2="21"/><line x1="12" y1="17" x2="12" y2="21"/></svg>
+          Canvas
+        </button>
+        <button class="btn btn-xs btn-ghost" onclick="openVersionDrawer()">
+          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+          History
+        </button>
+        <button class="btn btn-xs btn-ghost" onclick="shareDoc()">Share</button>
+        <button class="btn btn-xs btn-primary" onclick="saveDoc()">Save</button>
+      </div>
+      <div class="ed-meta">
+        <select id="ed-dept-sel" style="padding:4px 10px;font-size:11px;background:transparent;border-radius:var(--r-pill);color:var(--mute)" onchange="edDeptChange(this.value)"></select>
+        <div class="status-toggle" id="status-tog">
+          <button class="on" onclick="setStatus('draft',this)">Draft</button>
+          <button onclick="setStatus('active',this)">Active</button>
+          <button onclick="setStatus('review',this)">Review</button>
+        </div>
+        <select id="ed-emoji-sel" style="padding:4px 8px;font-size:12px;background:transparent;border-radius:var(--r-sm);border:1px solid var(--hairline);color:var(--body)" onchange="setEmoji(this.value)">
+          <option>📄</option><option>🤝</option><option>🚨</option><option>📋</option><option>🌐</option><option>📣</option><option>⚙️</option><option>🎯</option><option>🔒</option><option>💰</option><option>🎨</option><option>🤖</option><option>📊</option><option>🧪</option><option>🛡️</option>
+        </select>
+        <div style="margin-left:auto">
+          <div class="save-indicator eyebrow">
+            <span class="save-dot" id="save-dot"></span>&nbsp;<span id="save-txt">Saved</span>
+          </div>
+        </div>
+      </div>
+      <div class="ed-title-zone">
+        <input class="ed-title" id="ed-title" placeholder="Untitled SOP…" type="text" oninput="onTitleInput()">
+      </div>
+      <div class="ins-bar">
+        <span class="ins-bar-label">Insert:</span>
+        <button class="ins-btn" onclick="insH2()">H2 Heading</button>
+        <button class="ins-btn" onclick="insList()">• List</button>
+        <button class="ins-btn" onclick="insChecklist()">✓ Checklist</button>
+        <button class="ins-btn" onclick="insCallout()">💡 Callout</button>
+        <button class="ins-btn" onclick="openLoomModal()">▶ Loom Video</button>
+        <button class="ins-btn" onclick="openFlowModal()">⬡ Flowchart</button>
+        <button class="ins-btn" onclick="insTable()">⊞ Table</button>
+        <button class="ins-btn" onclick="insDivider()">— Divider</button>
+      </div>
+      <div class="ed-body" id="ed-body">
+        <div class="ed-pane">
+          <div class="pane-head">
+            <span class="eyebrow">Markdown</span>
+            <span class="eyebrow" id="cursor-lbl" style="opacity:0.4">Ln 1 · Col 1</span>
+          </div>
+          <textarea class="ed-textarea" id="ed-ta" oninput="onMdInput()" onkeyup="updateCursor(event)" spellcheck="false"></textarea>
+        </div>
+        <div class="ed-pane preview-pane">
+          <div class="pane-head">
+            <span class="eyebrow">Preview</span>
+            <span class="eyebrow" style="color:var(--mute2)">Live</span>
+          </div>
+          <div class="ed-preview-scroll"><div class="md-out" id="ed-preview"></div></div>
+        </div>
+      </div>
+      <div class="ed-foot">
+        <div class="ed-foot-stats">
+          <span class="eyebrow" id="wc">0 words</span>
+          <span class="eyebrow" style="color:var(--mute2)">·</span>
+          <span class="eyebrow" id="rt">~1 min read</span>
+        </div>
+        <button class="btn btn-xs btn-ghost" onclick="exitEditor()">Discard</button>
+        <button class="btn btn-xs btn-primary" onclick="saveDoc()">Save SOP</button>
+      </div>
+    </div>
+
   </div>
 </div>
 
-<!-- Modals -->
-<div class="modal-overlay" id="modal-dept">
-  <div class="modal">
-    <div class="modal-close" onclick="this.parentElement.parentElement.style.display='none'">✕</div>
-    <h3>Manage Departments</h3>
-    <div id="dept-mgr-list" style="margin-bottom:24px;"></div>
-    <h4 style="font-size:12px; font-family:var(--font-mono); color:var(--mute); margin-bottom:12px;">ADD NEW</h4>
-    <input type="text" id="new-dept-name" placeholder="Department Name">
-    <select id="new-dept-color">
-      <option value="var(--brand-orange)">Orange</option>
-      <option value="var(--brand-green)">Green</option>
-      <option value="var(--brand-blue)">Blue</option>
-      <option value="var(--brand-purple)">Purple</option>
-      <option value="var(--brand-pink)">Pink</option>
-      <option value="#ffffff">White</option>
-    </select>
-    <button class="btn-primary" style="width:100%" onclick="addDept()">Add Department</button>
-  </div>
-</div>
-
-<div class="modal-overlay" id="modal-flow">
-  <div class="modal">
-    <div class="modal-close" onclick="this.parentElement.parentElement.style.display='none'">✕</div>
-    <h3>Build Flowchart</h3>
-    <textarea id="flow-steps" style="width:100%; height:100px; background:var(--canvas); border:1px solid var(--hairline); color:var(--ink); padding:12px; margin-bottom:16px; border-radius:4px; font-family:var(--font-mono); resize:none;" placeholder="Enter steps, one per line..."></textarea>
-    <button class="btn-primary" style="width:100%" onclick="insertFlow()">Insert into SOP</button>
-  </div>
-</div>
-
-<div class="modal-overlay" id="modal-loom">
-  <div class="modal">
-    <div class="modal-close" onclick="this.parentElement.parentElement.style.display='none'">✕</div>
-    <h3>Embed Loom</h3>
-    <input type="text" id="loom-url" placeholder="Paste Loom URL...">
-    <button class="btn-primary" style="width:100%" onclick="insertLoom()">Insert Video</button>
-  </div>
-</div>
-
-<div class="modal-overlay" id="modal-confirm">
-  <div class="modal">
-    <h3>Delete SOP?</h3>
-    <p style="color:var(--mute); margin-bottom:24px;">This action cannot be undone.</p>
-    <div style="display:flex; gap:12px; justify-content:flex-end;">
-      <button class="btn-outline" onclick="document.getElementById('modal-confirm').style.display='none'">Cancel</button>
-      <button class="btn-outline btn-danger" id="confirm-del-btn">Delete</button>
+<!-- FLOWCHART MODAL -->
+<div class="modal-overlay" id="flow-modal">
+  <div class="modal" style="width:640px">
+    <div class="modal-head">
+      <div class="modal-title">⬡ Build Flowchart</div>
+      <button class="btn btn-xs btn-ghost" onclick="closeFlowModal()">✕</button>
+    </div>
+    <div class="modal-body">
+      <div class="eyebrow" style="margin-bottom:10px;color:var(--mute)">Add steps in order — they'll connect automatically into a visual flow</div>
+      <div class="flow-nodes" id="flow-nodes"></div>
+      <button class="btn btn-sm" onclick="addFlowNode()" style="width:100%;justify-content:center;border-style:dashed;margin-bottom:0">+ Add Step</button>
+      <div class="flow-preview-box">
+        <div class="eyebrow" style="margin-bottom:10px">Preview</div>
+        <div id="flow-preview"></div>
+      </div>
+    </div>
+    <div class="modal-foot">
+      <button class="btn btn-sm" onclick="closeFlowModal()">Cancel</button>
+      <button class="btn btn-sm btn-primary" onclick="insertFlowChart()">Insert into SOP</button>
     </div>
   </div>
 </div>
 
-<!-- Command Palette -->
-<div id="cmd-palette">
-  <div class="cmd-box">
-    <input type="text" class="cmd-input" id="cmd-input" placeholder="Search SOPs..." oninput="renderCmd(this.value)">
-    <div class="cmd-results" id="cmd-results"></div>
+<!-- LOOM MODAL -->
+<div class="modal-overlay" id="loom-modal">
+  <div class="modal" style="width:440px">
+    <div class="modal-head">
+      <div class="modal-title">▶ Insert Loom Video</div>
+      <button class="btn btn-xs btn-ghost" onclick="closeLoomModal()">✕</button>
+    </div>
+    <div class="modal-body">
+      <div class="field-group">
+        <div class="field-label">Loom Share URL</div>
+        <input id="loom-url" type="text" placeholder="https://www.loom.com/share/…" style="width:100%">
+      </div>
+      <div class="field-group">
+        <div class="field-label">Caption (optional)</div>
+        <input id="loom-cap" type="text" placeholder="e.g. Onboarding walkthrough — 3 min" style="width:100%">
+      </div>
+      <div style="background:var(--canvas-soft);border:1px solid var(--hairline);border-radius:var(--r-sm);padding:11px;font-size:11px;color:var(--mute);line-height:1.5">
+        Paste any Loom share link. It renders as an interactive video block in your SOP — readers click to play without leaving the page.
+      </div>
+    </div>
+    <div class="modal-foot">
+      <button class="btn btn-sm" onclick="closeLoomModal()">Cancel</button>
+      <button class="btn btn-sm btn-primary" onclick="insertLoom()">Insert Video</button>
+    </div>
   </div>
 </div>
 
-<!-- Toast -->
-<div id="toast">Saved successfully.</div>
+<!-- DEPT MANAGER MODAL -->
+<div class="modal-overlay" id="dept-modal">
+  <div class="modal" style="width:460px">
+    <div class="modal-head">
+      <div class="modal-title">🏢 Manage Departments</div>
+      <button class="btn btn-xs btn-ghost" onclick="closeDeptManager()">✕</button>
+    </div>
+    <div class="modal-body">
+      <div class="eyebrow" style="margin-bottom:10px;color:var(--mute)">Each department has its own space. Teams see only what's relevant.</div>
+      <div id="dept-mgr-list"></div>
+      <div class="hr"></div>
+      <div class="eyebrow" style="margin-bottom:8px">Add New Department</div>
+      <div class="new-dept-row">
+        <input id="new-dept-input" type="text" placeholder="Department name…" style="flex:1" onkeydown="if(event.key==='Enter')addDept()">
+        <button class="btn btn-sm btn-primary" onclick="addDept()">Add</button>
+      </div>
+      <div class="color-picks" id="color-picks" style="margin-top:10px"></div>
+    </div>
+    <div class="modal-foot">
+      <button class="btn btn-sm btn-primary" onclick="closeDeptManager()">Done</button>
+    </div>
+  </div>
+</div>
+
+<!-- VERSION DRAWER -->
+<div class="drawer-bg" id="drawer-bg" onclick="closeVersionDrawer()"></div>
+<div class="ver-drawer" id="ver-drawer">
+  <div class="ver-head">
+    <div>
+      <div style="font-size:13px;font-weight:500;letter-spacing:-0.02em">Version History</div>
+      <div class="eyebrow" style="margin-top:2px" id="ver-subtitle">— versions</div>
+    </div>
+    <button class="btn btn-xs btn-ghost" onclick="closeVersionDrawer()">✕</button>
+  </div>
+  <div class="ver-list" id="ver-list"></div>
+  <div class="diff-zone">
+    <div class="diff-head"><span class="eyebrow">Diff — <span id="diff-label">select a version</span></span></div>
+    <div class="diff-scroll" id="diff-content"></div>
+  </div>
+</div>
+
+<!-- COMMAND PALETTE -->
+<div class="pal-overlay" id="palette" onclick="if(event.target===this)closePalette()">
+  <div class="pal-box">
+    <div class="pal-search">
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="var(--mute)" stroke-width="2" stroke-linecap="round"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg>
+      <input id="pal-input" placeholder="Search SOPs, actions, departments…" oninput="filterPalette()" onkeydown="palKey(event)">
+      <span class="eyebrow" style="color:var(--mute2)">ESC</span>
+    </div>
+    <div class="pal-results" id="pal-results"></div>
+    <div class="pal-foot">
+      <div class="pal-hint"><span class="pal-key">↑↓</span><span class="eyebrow" style="color:var(--mute2)">&nbsp;navigate</span></div>
+      <div class="pal-hint"><span class="pal-key">↵</span><span class="eyebrow" style="color:var(--mute2)">&nbsp;select</span></div>
+      <div class="pal-hint"><span class="pal-key">Esc</span><span class="eyebrow" style="color:var(--mute2)">&nbsp;close</span></div>
+    </div>
+  </div>
+</div>
+
+<!-- CONFIRM DIALOG -->
+<div class="confirm-box" id="confirm-box">
+  <div class="confirm-card">
+    <div class="confirm-title" id="confirm-title">Are you sure?</div>
+    <div class="confirm-msg" id="confirm-msg"></div>
+    <div class="confirm-btns">
+      <button class="btn btn-sm" onclick="confirmResolve(false)">Cancel</button>
+      <button class="btn btn-sm btn-danger" id="confirm-ok" onclick="confirmResolve(true)">Delete</button>
+    </div>
+  </div>
+</div>
+
+<!-- TOAST -->
+<div id="toast"></div>
 
 <script>
-// State
+/* ════════════════════════════════
+   STATE
+════════════════════════════════ */
+const COLORS = ['#ff7a17','#22c55e','#60a5fa','#a78bfa','#f472b6','#34d399','#fb923c','#facc15','#e879f9','#2dd4bf'];
+let selColor = COLORS[0];
+
 let S = {
   depts: [
-    { id: 'sales', name: 'Sales & Closing', color: 'var(--brand-orange)' },
-    { id: 'ops', name: 'Operations', color: 'var(--brand-blue)' },
-    { id: 'seo', name: 'SEO', color: 'var(--brand-green)' }
+    {id:'d1',name:'Operations', color:'#ff7a17'},
+    {id:'d2',name:'Sales',      color:'#22c55e'},
+    {id:'d3',name:'Marketing',  color:'#60a5fa'},
+    {id:'d4',name:'HR',         color:'#a78bfa'},
+    {id:'d5',name:'Engineering',color:'#f472b6'},
+    {id:'d6',name:'Website',    color:'#34d399'},
   ],
   sops: [],
-  cur: null,
-  deptFilter: null
+  cur: null,          // current SOP id in editor
+  deptFilter: null,   // dept id for list view
+  layout: 'grid',
+  canvasMode: false,
 };
 
-mermaid.initialize({ startOnLoad: false, theme: 'dark', themeVariables: { fontFamily: 'Inter, sans-serif', primaryColor: '#191919', primaryTextColor: '#ffffff', primaryBorderColor: '#212327', lineColor: '#ffffff', secondaryColor: '#0a0a0a' }});
+const STARTER = `# SOP Title
 
-let saveTimeout;
+## Purpose
 
-// Init
-function init() {
-  const saved = localStorage.getItem('systemlab_s');
-  if (saved) {
-    const parsed = JSON.parse(saved);
-    S.depts = parsed.depts || S.depts;
-    S.sops = parsed.sops || [];
-  } else {
-    // Seed data
-    S.sops = [
-      { id: 's1', title: 'Inbound Lead Qualification', deptId: 'sales', status: 'active', body: '## Step 1\nCall the lead.\n\n```mermaid\ngraph TD\n A[Lead] --> B[Qualify]\n```', updated: Date.now() },
-      { id: 's2', title: 'Monthly SEO Audit', deptId: 'seo', status: 'draft', body: '## Requirements\n- Ahrefs\n- Screaming Frog\n', updated: Date.now() - 86400000 }
-    ];
-    persist();
-  }
-  
-  if (localStorage.getItem('systemlab_auth')) {
-    showApp();
-  }
-  
-  // Shortcuts
-  document.addEventListener('keydown', e => {
-    if ((e.metaKey || e.ctrlKey) && e.key === 'k') { e.preventDefault(); openCmd(); }
-    if ((e.metaKey || e.ctrlKey) && e.key === 's' && document.getElementById('v-editor').classList.contains('active')) { e.preventDefault(); saveSOP(); }
-    if (e.key === 'Escape') closeModals();
-  });
-}
+What is this process for? Who does it apply to?
 
+## Scope
+
+Which team, tool, or workflow does this cover?
+
+## Prerequisites
+
+- [ ] Prerequisite one
+- [ ] Prerequisite two
+
+## Process Steps
+
+### Step 1 — First step
+
+Describe what happens here in clear, simple language.
+
+### Step 2 — Second step
+
+Continue the process.
+
+\`\`\`mermaid
+Start → Step 1 → Step 2 → Review → Done
+\`\`\`
+
+## Notes & Exceptions
+
+> 💡 Add any important notes, exceptions, or edge cases here.
+
+---
+
+*Last reviewed: ${new Date().toLocaleDateString('en-US',{month:'long',year:'numeric'})}*
+`;
+
+const SEEDS = [
+  {title:'Customer Onboarding',deptId:'d2',status:'active',emoji:'🤝',body:`# Customer Onboarding\n\n## Purpose\n\nEnsure every new customer gets set up successfully within 7 days.\n\n## Process Steps\n\n### Step 1 — Contract Signed\n\nVerify contract in DocuSign and send welcome email within 2 hours.\n\n### Step 2 — Assign CSM\n\nTeam lead assigns a Customer Success Manager based on account size.\n\n### Step 3 — Kickoff Call\n\nSchedule within 48 hours. Use the kickoff call template.\n\n\`\`\`mermaid\nContract Signed → Assign CSM → Kickoff Call → Discovery → Setup → Go Live\n\`\`\`\n\n## Notes\n\n> 💡 Enterprise accounts get a dedicated CSM. SMB accounts are pooled.\n`,author:'Jordan Kim',updated:'2 days ago'},
+  {title:'Sales Handoff Protocol',deptId:'d2',status:'active',emoji:'🤝',body:`# Sales Handoff Protocol\n\n## Purpose\n\nClean handoff from Sales to Customer Success.\n\n## Required Information\n\n- Contract value and term\n- Key stakeholders + decision maker\n- Agreed success metrics\n- Known risks or concerns\n\n## Checklist\n\n- [ ] CRM updated\n- [ ] Handoff doc complete\n- [ ] CS notified in Slack\n- [ ] Kickoff call booked\n`,author:'Sam Patel',updated:'5 days ago'},
+  {title:'Incident Response',deptId:'d5',status:'active',emoji:'🚨',body:`# Incident Response Runbook\n\n## Severity Levels\n\n**P0** — Full outage. Page all engineers immediately.\n**P1** — Major degradation. On-call responds within 15 min.\n**P2** — Minor issue. Fix within business hours.\n\n## Steps\n\n1. Acknowledge in PagerDuty\n2. Post in #incidents Slack channel\n3. Start incident call\n4. Identify root cause\n5. Fix and verify\n6. Write post-mortem within 48h\n\n\`\`\`mermaid\nAlert → Acknowledge → Diagnose → Fix → Verify → Post-mortem\n\`\`\`\n`,author:'Alex Chen',updated:'1 week ago'},
+  {title:'Employee Offboarding',deptId:'d4',status:'draft',emoji:'📋',body:`# Employee Offboarding Checklist\n\n## Day of Last Work\n\n- [ ] Revoke all system access\n- [ ] Retrieve hardware (laptop, badge, etc.)\n- [ ] Remove from all shared accounts\n- [ ] Notify IT and Finance\n\n## HR Tasks\n\n- [ ] Process final payroll\n- [ ] Send COBRA / benefits information\n- [ ] Schedule exit interview\n- [ ] Archive employee records\n`,author:'Maria L',updated:'3 days ago'},
+  {title:'Website Release Process',deptId:'d6',status:'review',emoji:'🌐',body:`# Website Release Process\n\n## Process\n\nAll website changes must go through QA before merging to main.\n\n### Steps\n\n1. Open a PR with clear description\n2. QA reviews and signs off\n3. Merge to staging branch\n4. Smoke test on staging\n5. Deploy to production (Tuesday/Thursday releases only)\n6. Monitor for 30 minutes post-deploy\n\n> 💡 Hotfixes can bypass the schedule with lead approval.\n`,author:'Dev Team',updated:'Today'},
+  {title:'Marketing Campaign Playbook',deptId:'d3',status:'active',emoji:'📣',body:`# Marketing Campaign Playbook\n\n## Pre-Launch (T-14 days)\n\n- Define target audience and ICP\n- Set KPIs: reach, CTR, conversion target\n- Draft creative brief and get approval\n- Build landing page and tracking\n\n## Launch Week\n\n- Publish across all channels on launch day\n- Monitor daily: spend, CTR, conversion rate\n- Pause underperforming ad sets at day 3\n\n## Post-Campaign\n\n- Compile results vs KPIs\n- Write retrospective doc\n- Share learnings with team\n`,author:'Priya M',updated:'1 week ago'},
+];
+
+const DIFFS = {
+  'v2.0':[{t:'neu',n:14,tx:'  3. Provision sandbox environment'},{t:'rem',n:15,tx:'  4. Schedule training within 2 weeks'},{t:'add',n:15,tx:'  4. Assign dedicated integration engineer'},{t:'add',n:16,tx:'  5. Schedule kickoff call within 48 hours'},{t:'rem',n:18,tx:'## Week 1 Tasks'},{t:'add',n:18,tx:'## Week 1 — Foundation'},{t:'neu',n:19,tx:''},{t:'rem',n:20,tx:'Complete discovery and setup.'},{t:'add',n:20,tx:'Conduct a detailed discovery session.'},{t:'add',n:21,tx:"Map the customer's existing workflows."}],
+  'v1.4':[{t:'rem',n:4,tx:'- Contract excuted'},{t:'add',n:4,tx:'- Contract fully executed'},{t:'rem',n:6,tx:'- Customer succes manager assigned'},{t:'add',n:6,tx:'- CSM assigned from the team'}],
+  'v1.0':[{t:'add',n:1,tx:'# Customer Onboarding'},{t:'add',n:2,tx:''},{t:'add',n:3,tx:'Initial draft created from onboarding template.'}],
+};
+
+const ACTIVITY = [
+  {who:'Jordan Kim',color:'#ff7a17',what:'updated <strong>Customer Onboarding</strong>',time:'2h ago'},
+  {who:'Sam Patel',color:'#22c55e',what:'created <strong>Sales Handoff Protocol</strong>',time:'5h ago'},
+  {who:'Alex Chen',color:'#f472b6',what:'reviewed <strong>Incident Response</strong>',time:'Yesterday'},
+  {who:'Maria L',color:'#a78bfa',what:'drafted <strong>Employee Offboarding</strong>',time:'3 days ago'},
+  {who:'Dev Team',color:'#34d399',what:'updated <strong>Website Release Process</strong>',time:'5 days ago'},
+];
+
+/* ════════════════════════════════
+   AUTH & PERSISTENCE
+════════════════════════════════ */
 function persist() {
-  localStorage.setItem('systemlab_s', JSON.stringify({ depts: S.depts, sops: S.sops }));
+  localStorage.setItem('systemlab_v2', JSON.stringify({ depts: S.depts, sops: S.sops }));
 }
 
-function showToast(msg) {
-  const t = document.getElementById('toast');
-  t.textContent = msg;
-  t.classList.add('show');
-  setTimeout(() => t.classList.remove('show'), 2400);
-}
-
-// Auth
-function login() {
+function loginApp() {
   const e = document.getElementById('l-email').value;
   const p = document.getElementById('l-pass').value;
   if (e === 'admin@systemlab.com' && p === 'admin') {
     localStorage.setItem('systemlab_auth', 'true');
-    showApp();
+    document.getElementById('login-screen').style.display = 'none';
+    document.getElementById('app').style.display = 'grid';
   } else {
     document.getElementById('l-err').style.display = 'block';
   }
 }
-function logout() {
+
+function logoutApp() {
   localStorage.removeItem('systemlab_auth');
   document.getElementById('app').style.display = 'none';
   document.getElementById('login-screen').style.display = 'flex';
 }
-function showApp() {
-  document.getElementById('login-screen').style.display = 'none';
-  document.getElementById('app').style.display = 'grid';
+
+/* ════════════════════════════════
+   INIT
+════════════════════════════════ */
+function init() {
+  const saved = localStorage.getItem('systemlab_v2');
+  if (saved) {
+    const data = JSON.parse(saved);
+    S.depts = data.depts || S.depts;
+    S.sops = data.sops || [];
+  } else {
+    SEEDS.forEach((s,i) => S.sops.push({...s, id:'s'+i, versions:makeVersions()}));
+    persist();
+  }
+  
+  if (localStorage.getItem('systemlab_auth')) {
+    document.getElementById('login-screen').style.display = 'none';
+    document.getElementById('app').style.display = 'grid';
+  }
+
   renderSidebar();
-  nav('dashboard');
+  renderDashboard();
+  updateGreeting();
+  if (S.sops.length === 0) document.getElementById('onboard-hint').style.display = 'inline-flex';
 }
 
-// Navigation
-function nav(view, deptId = null) {
-  document.querySelectorAll('.view').forEach(el => el.classList.remove('active'));
-  document.querySelectorAll('.nav-item').forEach(el => el.classList.remove('active'));
-  
-  if (view === 'dashboard') {
-    document.getElementById('v-dashboard').classList.add('active');
-    document.getElementById('nav-dashboard').classList.add('active');
-    updateStats();
-    renderRecent();
-  } else if (view === 'all') {
-    S.deptFilter = deptId;
-    document.getElementById('v-all').classList.add('active');
-    if (!deptId) document.getElementById('nav-all').classList.add('active');
-    document.getElementById('all-title').textContent = deptId ? S.depts.find(d=>d.id===deptId).name : 'All SOPs';
-    renderSOPs();
-  } else if (view === 'editor') {
-    document.getElementById('v-editor').classList.add('active');
+function makeVersions() {
+  return [
+    {v:'v2.1',author:'Jordan Kim',time:'2 days ago',summary:'Updated go-live criteria and added 90-day milestone check',current:true},
+    {v:'v2.0',author:'Sam Patel',time:'1 week ago',summary:'Major revision: restructured pre-onboarding checklist'},
+    {v:'v1.4',author:'Jordan Kim',time:'2 weeks ago',summary:'Fixed typos, clarified CSM assignment note'},
+    {v:'v1.0',author:'Alex Chen',time:'6 weeks ago',summary:'Initial draft created from template'},
+  ];
+}
+
+function updateGreeting() {
+  const h = new Date().getHours();
+  const g = h<12?'Good morning':'Good afternoon';
+  document.getElementById('greeting').textContent = g+', Jordan';
+}
+
+/* ════════════════════════════════
+   SIDEBAR
+════════════════════════════════ */
+function renderSidebar() {
+  const el = document.getElementById('sidebar-depts');
+  el.innerHTML = S.depts.map(d => {
+    const c = S.sops.filter(s=>s.deptId===d.id).length;
+    return `<div class="nav-item" onclick="showDept('${d.id}',this)">
+      <span class="dept-dot" style="background:${d.color}"></span>
+      <span style="flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${d.name}</span>
+      <span class="nav-count">${c}</span>
+    </div>`;
+  }).join('');
+  document.getElementById('cnt-all').textContent = S.sops.length;
+}
+
+/* ════════════════════════════════
+   VIEWS
+════════════════════════════════ */
+function showView(id, navEl) {
+  document.querySelectorAll('.view').forEach(v=>v.classList.remove('active'));
+  document.getElementById('v-'+id).classList.add('active');
+  document.querySelectorAll('.nav-item').forEach(n=>n.classList.remove('active'));
+  if (navEl) navEl.classList.add('active');
+  if (id==='dashboard') renderDashboard();
+  if (id==='all') { S.deptFilter=null; renderListView(S.sops,'All SOPs','var(--mute)'); }
+}
+
+function showDept(id, navEl) {
+  S.deptFilter = id;
+  const d = S.depts.find(x=>x.id===id);
+  const sops = S.sops.filter(s=>s.deptId===id);
+  document.querySelectorAll('.view').forEach(v=>v.classList.remove('active'));
+  document.getElementById('v-all').classList.add('active');
+  document.querySelectorAll('.nav-item').forEach(n=>n.classList.remove('active'));
+  if (navEl) navEl.classList.add('active');
+  renderListView(sops, d.name, d.color);
+}
+
+/* ════════════════════════════════
+   DASHBOARD
+════════════════════════════════ */
+function renderDashboard() {
+  document.getElementById('st-total').textContent = S.sops.length;
+  document.getElementById('st-active').textContent = S.sops.filter(s=>s.status==='active').length;
+  document.getElementById('st-depts').textContent = S.depts.length;
+  document.getElementById('st-drafts').textContent = S.sops.filter(s=>s.status==='draft').length;
+
+  document.getElementById('dash-recent').innerHTML = [...S.sops].slice(0,5).map(s=>sopRowHtml(s)).join('');
+  document.getElementById('dash-activity').innerHTML = ACTIVITY.map(a=>`
+    <div class="activity-item">
+      <div class="act-av" style="background:${a.color}">${a.who.split(' ').map(w=>w[0]).join('').slice(0,2)}</div>
+      <div style="flex:1"><div class="act-text"><strong>${a.who}</strong> ${a.what}</div><div class="act-time">${a.time}</div></div>
+    </div>`).join('');
+
+  document.getElementById('dash-depts').innerHTML = S.depts.map(d=>{
+    const c = S.sops.filter(s=>s.deptId===d.id).length;
+    return `<div class="dept-pill" onclick="showDept('${d.id}')">
+      <span class="dept-pill-dot" style="background:${d.color}"></span>
+      <span class="dept-pill-name">${d.name}</span>
+      <span class="dept-pill-count">${c} SOP${c!==1?'s':''}</span>
+      <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="var(--mute)" stroke-width="2" stroke-linecap="round"><polyline points="9 18 15 12 9 6"/></svg>
+    </div>`;
+  }).join('');
+}
+
+/* ════════════════════════════════
+   LIST VIEW
+════════════════════════════════ */
+let listSops = [], listQ = '', listStatus = '';
+
+function renderListView(sops, title, color) {
+  listSops = sops;
+  document.getElementById('lv-title').textContent = title;
+  document.getElementById('lv-dot').style.background = color;
+  applyListFilters();
+}
+
+function applyListFilters() {
+  let filtered = listSops;
+  if (listQ) filtered = filtered.filter(s=>s.title.toLowerCase().includes(listQ));
+  if (listStatus) filtered = filtered.filter(s=>s.status===listStatus);
+  const body = document.getElementById('lv-body');
+  if (!filtered.length) {
+    body.innerHTML = `<div class="empty"><div class="empty-icon">📄</div><div style="font-size:14px;font-weight:500;letter-spacing:-0.02em;color:var(--body)">No SOPs found</div><div style="font-size:12px;color:var(--mute);margin-top:2px">Try a different filter or create a new SOP</div><button class="btn btn-sm" style="margin-top:10px" onclick="newSOP()">New SOP</button></div>`;
+    return;
+  }
+  if (S.layout === 'grid') {
+    body.innerHTML = `<div class="sop-grid">${filtered.map(s=>sopCardHtml(s)).join('')}</div>`;
+  } else {
+    body.innerHTML = `<div class="sop-table">${filtered.map(s=>sopRowHtml(s)).join('')}</div>`;
   }
 }
 
-function renderSidebar() {
-  const list = document.getElementById('dept-list');
-  list.innerHTML = S.depts.map(d => {
-    const count = S.sops.filter(s => s.deptId === d.id).length;
-    return `<div class="nav-item" onclick="nav('all', '${d.id}')">
-      <div class="nav-dot" style="background:${d.color}"></div>
-      ${d.name}
-      <span class="nav-count">${count}</span>
-    </div>`;
-  }).join('');
-  renderDeptManager();
-}
+function filterList(q) { listQ = q.toLowerCase(); applyListFilters(); }
+function filterStatus(v) { listStatus = v; applyListFilters(); }
+function setLayout(l) { S.layout = l; applyListFilters(); }
 
-function updateStats() {
-  document.getElementById('st-total').textContent = S.sops.length;
-  document.getElementById('st-active').textContent = S.sops.filter(s=>s.status==='active').length;
-  document.getElementById('st-draft').textContent = S.sops.filter(s=>s.status==='draft').length;
-  document.getElementById('st-dept').textContent = S.depts.length;
-}
-
-// Lists
-function buildSOPCard(s) {
-  const dept = S.depts.find(d => d.id === s.deptId) || {name:'Unassigned', color:'#888'};
-  const date = new Date(s.updated).toLocaleDateString('en-US', {month:'short', day:'numeric'});
-  return `<div class="sop-card" onclick="openSOP('${s.id}')">
-    <div class="sop-meta">
-      <span style="color:${dept.color}">${dept.name}</span>
-      <span>${s.status}</span>
+function sopCardHtml(s) {
+  const d = S.depts.find(x=>x.id===s.deptId);
+  const desc = firstLine(s.body);
+  return `<div class="sop-card" onclick="openEditor('${s.id}')">
+    <div class="sop-card-head">
+      <div class="sop-card-title">${esc(s.title||'Untitled')}</div>
+      <div class="sop-card-emoji">${s.emoji||'📄'}</div>
     </div>
-    <div class="sop-title">${s.title || 'Untitled SOP'}</div>
-    <div style="font-size:12px; color:var(--mute);">${date}</div>
-    <div class="sop-actions">
-      <button class="btn-outline btn-danger" onclick="event.stopPropagation(); deleteSOP('${s.id}')">Delete</button>
+    ${desc?`<div class="sop-card-desc">${esc(desc)}</div>`:''}
+    <div class="sop-card-foot">
+      <div class="sop-card-meta">
+        ${d?`<span style="width:5px;height:5px;border-radius:50%;background:${d.color};display:inline-block;flex-shrink:0"></span><span>${d.name}</span>`:''}
+        <span style="color:var(--mute2)">·</span><span>${s.updated||'—'}</span>
+      </div>
+      <div style="display:flex;align-items:center;gap:5px">
+        <div class="sop-card-actions">
+          <button class="btn btn-xs btn-ghost" onclick="event.stopPropagation();confirmDelete('${s.id}')">✕</button>
+        </div>
+        <span class="badge badge-${s.status}">${s.status}</span>
+      </div>
     </div>
   </div>`;
 }
 
-function renderRecent() {
-  const sorted = [...S.sops].sort((a,b) => b.updated - a.updated).slice(0, 5);
-  document.getElementById('recent-grid').innerHTML = sorted.map(buildSOPCard).join('');
+function sopRowHtml(s) {
+  const d = S.depts.find(x=>x.id===s.deptId);
+  return `<div class="sop-row" onclick="openEditor('${s.id}')">
+    <div class="sop-row-icon">${s.emoji||'📄'}</div>
+    <div class="sop-row-info">
+      <div class="sop-row-title">${esc(s.title||'Untitled')}</div>
+      <div class="sop-row-meta">
+        ${d?`<span style="width:5px;height:5px;border-radius:50%;background:${d.color};display:inline-block;flex-shrink:0"></span><span>${d.name}</span>`:''}
+        <span>${s.updated||'—'}</span>
+      </div>
+    </div>
+    <span class="badge badge-${s.status}">${s.status}</span>
+    <div class="sop-row-actions">
+      <button class="btn btn-xs btn-ghost" onclick="event.stopPropagation();openEditor('${s.id}')">Edit</button>
+      <button class="btn btn-xs btn-ghost" onclick="event.stopPropagation();confirmDelete('${s.id}')">✕</button>
+    </div>
+  </div>`;
 }
 
-function renderSOPs(query = '') {
-  const grid = document.getElementById('sop-grid');
-  let filtered = S.sops;
-  if (S.deptFilter) filtered = filtered.filter(s => s.deptId === S.deptFilter);
-  if (query) filtered = filtered.filter(s => s.title.toLowerCase().includes(query.toLowerCase()));
-  
-  filtered.sort((a,b) => b.updated - a.updated);
-  grid.innerHTML = filtered.map(buildSOPCard).join('');
+function firstLine(body) {
+  if (!body) return '';
+  const lines = body.split('\n').filter(l=>l.trim()&&!l.startsWith('#')&&!l.startsWith('`')&&!l.startsWith('-')&&!l.startsWith('*')&&!l.startsWith('>'));
+  return (lines[0]||'').slice(0,80);
 }
 
-// Editor & Markdown
-function createSOP() {
-  const id = 'sop_' + Date.now();
-  const newSop = { id, title: '', deptId: S.depts[0]?.id, status: 'draft', body: '', updated: Date.now() };
-  S.sops.push(newSop);
-  persist();
-  openSOP(id);
-}
+/* ════════════════════════════════
+   EDITOR
+════════════════════════════════ */
+let autoSaveT, lastSaved = Date.now(), saveAgoT;
+let canvasMode = false;
 
-function openSOP(id) {
-  S.cur = id;
-  const sop = S.sops.find(s => s.id === id);
-  document.getElementById('ed-title').value = sop.title;
-  document.getElementById('ed-body').value = sop.body;
-  document.getElementById('ed-status').value = sop.status;
-  
-  const deptSelect = document.getElementById('ed-dept');
-  deptSelect.innerHTML = S.depts.map(d => `<option value="${d.id}" ${d.id===sop.deptId?'selected':''}>${d.name}</option>`).join('');
-  
-  document.getElementById('ed-autosave').textContent = 'Saved';
-  updatePreview();
-  nav('editor');
-}
-
-function triggerAutosave() {
-  document.getElementById('ed-autosave').textContent = 'Saving...';
-  clearTimeout(saveTimeout);
-  updatePreview();
-  saveTimeout = setTimeout(saveSOP, 1200);
-}
-
-function saveSOP() {
-  if (!S.cur) return;
-  const sop = S.sops.find(s => s.id === S.cur);
-  sop.title = document.getElementById('ed-title').value;
-  sop.body = document.getElementById('ed-body').value;
-  sop.deptId = document.getElementById('ed-dept').value;
-  sop.status = document.getElementById('ed-status').value;
-  sop.updated = Date.now();
+function newSOP() {
+  const sop = {
+    id: 's'+Date.now(), title:'', deptId: S.deptFilter||S.depts[0]?.id||'',
+    status:'draft', emoji:'📄', body: STARTER,
+    author:'Jordan Kim', updated:'Just now', versions: makeVersions()
+  };
+  S.sops.push(sop);
   persist();
   renderSidebar();
-  document.getElementById('ed-autosave').textContent = 'Saved';
-  showToast('SOP Saved');
+  openEditor(sop.id);
 }
 
-function deleteSOP(id) {
-  document.getElementById('modal-confirm').style.display = 'flex';
-  document.getElementById('confirm-del-btn').onclick = () => {
-    S.sops = S.sops.filter(s => s.id !== id);
-    persist();
-    renderSidebar();
-    if (document.getElementById('v-dashboard').classList.contains('active')) nav('dashboard');
-    else renderSOPs();
-    document.getElementById('modal-confirm').style.display = 'none';
-    showToast('SOP Deleted');
-  };
-}
+function openEditor(id) {
+  const sop = S.sops.find(s=>s.id===id);
+  if (!sop) return;
+  S.cur = id;
 
-function insertAtCursor(text) {
-  const t = document.getElementById('ed-body');
-  const start = t.selectionStart;
-  const end = t.selectionEnd;
-  const val = t.value;
-  t.value = val.substring(0, start) + text + val.substring(end);
-  t.selectionStart = t.selectionEnd = start + text.length;
-  t.focus();
-  triggerAutosave();
-}
+  document.getElementById('ed-title').value = sop.title;
+  document.getElementById('ed-ta').value = sop.body||'';
 
-function insertFlow() {
-  const steps = document.getElementById('flow-steps').value.split('\n').filter(x=>x.trim());
-  if (!steps.length) return;
-  let flow = '```mermaid\ngraph TD\n';
-  for(let i=0; i<steps.length; i++) {
-    const node = `N${i}[${steps[i].trim()}]`;
-    if (i === 0) flow += `  ${node}\n`;
-    else flow += `  N${i-1} --> ${node}\n`;
-  }
-  flow += '```\n';
-  insertAtCursor(flow);
-  document.getElementById('modal-flow').style.display = 'none';
-  document.getElementById('flow-steps').value = '';
-}
+  const dSel = document.getElementById('ed-dept-sel');
+  dSel.innerHTML = S.depts.map(d=>`<option value="${d.id}" ${d.id===sop.deptId?'selected':''}>${d.name}</option>`).join('');
+  const eSel = document.getElementById('ed-emoji-sel');
+  eSel.value = sop.emoji||'📄';
 
-function insertLoom() {
-  const url = document.getElementById('loom-url').value;
-  if (!url) return;
-  insertAtCursor(`\n\`\`\`loom\n${url}\n\`\`\`\n`);
-  document.getElementById('modal-loom').style.display = 'none';
-  document.getElementById('loom-url').value = '';
-}
+  // breadcrumb
+  const dept = S.depts.find(d=>d.id===sop.deptId);
+  document.getElementById('bc-dept').textContent = dept?.name||'SOPs';
+  document.getElementById('bc-title').textContent = sop.title||'Untitled';
 
-function mdRender(text) {
-  if (!text) return '';
-  let html = text
-    .replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;') // sanitize
-    .replace(/^### (.*$)/gim, '<h3>$1</h3>')
-    .replace(/^## (.*$)/gim, '<h2>$1</h2>')
-    .replace(/^# (.*$)/gim, '<h1>$1</h1>')
-    .replace(/\*\*(.*?)\*\*/gim, '<strong>$1</strong>')
-    .replace(/\*(.*?)\*/gim, '<em>$1</em>')
-    .replace(/~~(.*?)~~/gim, '<del>$1</del>')
-    .replace(/`(.*?)`/gim, '<code>$1</code>')
-    .replace(/^> (.*$)/gim, '<blockquote>$1</blockquote>')
-    .replace(/\[(.*?)\]\((.*?)\)/gim, '<a href="$2" target="_blank">$1</a>')
-    .replace(/^- \[ \] (.*$)/gim, '<li class="task-list-item"><input type="checkbox" disabled> $1</li>')
-    .replace(/^- \[x\] (.*$)/gim, '<li class="task-list-item"><input type="checkbox" checked disabled> <del>$1</del></li>')
-    .replace(/^- (.*$)/gim, '<li>$1</li>')
-    .replace(/^\d+\. (.*$)/gim, '<li>$1</li>')
-    .replace(/^---$/gim, '<hr>');
-  
-  // Wrap li
-  html = html.replace(/(<li>.*<\/li>)/gis, '<ul>$1</ul>');
-  // cleanup multiple ul
-  html = html.replace(/<\/ul>\s*<ul>/g, '');
-  
-  // Paragraphs
-  html = html.split('\n').map(l => {
-    if (l.trim() === '' || l.startsWith('<h') || l.startsWith('<u') || l.startsWith('<b') || l.startsWith('<h') || l.startsWith('<l')) return l;
-    return `<p>${l}</p>`;
-  }).join('\n');
-
-  // Handle Code blocks (Mermaid / Loom)
-  let blocks = [];
-  html = html.replace(/```(mermaid|loom)?\n([\s\S]*?)```/gim, (match, lang, code) => {
-    const id = 'block_' + Math.random().toString(36).substr(2,9);
-    blocks.push({id, lang, code: code.trim()});
-    return `<div id="${id}"></div>`;
+  // status toggle
+  document.querySelectorAll('#status-tog button').forEach((b,i)=>{
+    b.classList.toggle('on', (sop.status==='draft'&&i===0)||(sop.status==='active'&&i===1)||(sop.status==='review'&&i===2));
   });
 
-  setTimeout(() => {
-    blocks.forEach(b => {
-      const el = document.getElementById(b.id);
-      if (!el) return;
-      if (b.lang === 'mermaid') {
-        el.className = 'md-mermaid';
-        mermaid.render(`m_${b.id}`, b.code).then(res => el.innerHTML = res.svg).catch(e => el.innerHTML = `<pre style="color:red">Mermaid Error</pre>`);
-      } else if (b.lang === 'loom') {
-        const lid = b.code.split('/').pop();
-        el.innerHTML = `<div class="md-loom"><iframe src="https://www.loom.com/embed/${lid}" frameborder="0" allowfullscreen style="width:100%; height:440px; display:block;"></iframe></div>`;
-      } else {
-        el.innerHTML = `<pre><code>${b.code}</code></pre>`;
-      }
-    });
-  }, 10);
+  updatePreview();
+  updateWordCount();
+  setSave('saved');
+  showView('editor', null);
+}
 
+function exitEditor() {
+  const prevId = S.deptFilter ? 'all' : 'dashboard';
+  const navEl = document.querySelector(`.nav-item[data-view="${prevId}"]`);
+  if (S.deptFilter) {
+    showDept(S.deptFilter);
+  } else {
+    showView(prevId, navEl);
+  }
+  renderSidebar();
+}
+
+function curSOP() { return S.sops.find(s=>s.id===S.cur); }
+
+function onTitleInput() {
+  const sop = curSOP(); if (!sop) return;
+  sop.title = document.getElementById('ed-title').value;
+  document.getElementById('bc-title').textContent = sop.title||'Untitled';
+  schedAutosave();
+}
+
+function onMdInput() {
+  updatePreview();
+  updateWordCount();
+  schedAutosave();
+}
+
+function updateCursor(e) {
+  const ta = e.target, txt = ta.value.substring(0, ta.selectionStart), lines = txt.split('\n');
+  document.getElementById('cursor-lbl').textContent = `Ln ${lines.length} · Col ${lines[lines.length-1].length+1}`;
+}
+
+function schedAutosave() {
+  const sop = curSOP();
+  if (sop) {
+    sop.title = document.getElementById('ed-title').value;
+    sop.body  = document.getElementById('ed-ta').value;
+    sop.updated = 'Just now';
+  }
+  setSave('saving');
+  clearTimeout(autoSaveT);
+  autoSaveT = setTimeout(()=>{ persist(); lastSaved=Date.now(); setSave('saved'); startSaveAgo(); }, 1200);
+}
+
+function startSaveAgo() {
+  clearInterval(saveAgoT);
+  saveAgoT = setInterval(()=>{
+    const d = Math.round((Date.now()-lastSaved)/1000);
+    document.getElementById('save-txt').textContent = d<5?'Saved just now':`Saved ${d}s ago`;
+  }, 1000);
+}
+
+function setSave(state) {
+  const dot = document.getElementById('save-dot');
+  const txt = document.getElementById('save-txt');
+  if (state==='saving') { dot.style.background='var(--yellow)'; txt.textContent='Saving…'; }
+  else { dot.style.background='var(--green)'; txt.textContent='Saved'; }
+}
+
+function saveDoc() {
+  const sop = curSOP(); if (!sop) return;
+  sop.title = document.getElementById('ed-title').value;
+  sop.body  = document.getElementById('ed-ta').value;
+  sop.updated = 'Just now';
+  persist();
+  setSave('saved'); lastSaved=Date.now(); startSaveAgo();
+  renderSidebar();
+  showToast('✓ SOP saved');
+}
+
+function edDeptChange(v) {
+  const sop = curSOP(); if (sop) sop.deptId = v;
+  const d = S.depts.find(x=>x.id===v);
+  document.getElementById('bc-dept').textContent = d?.name||'SOPs';
+}
+
+function setStatus(val, btn) {
+  document.querySelectorAll('#status-tog button').forEach(b=>b.classList.remove('on'));
+  btn.classList.add('on');
+  const sop = curSOP(); if (sop) sop.status = val;
+}
+
+function setEmoji(v) {
+  const sop = curSOP(); if (sop) sop.emoji = v;
+}
+
+function toggleEdCanvas() {
+  canvasMode = !canvasMode;
+  document.getElementById('ed-body').classList.toggle('ed-canvas-mode', canvasMode);
+  document.getElementById('ed-canvas-toggle').classList.toggle('btn-primary', canvasMode);
+}
+
+function shareDoc() { showToast('🔗 Share link copied'); }
+
+/* ════════════════════════════════
+   INSERT SNIPPETS
+════════════════════════════════ */
+function insAt(txt) {
+  const ta = document.getElementById('ed-ta');
+  const s = ta.selectionStart, v = ta.value;
+  const nl = s>0&&v[s-1]!=='\n'?'\n':'';
+  ta.value = v.slice(0,s)+nl+txt+'\n'+v.slice(s);
+  ta.selectionStart = ta.selectionEnd = s+nl.length+txt.length+1;
+  ta.focus(); onMdInput();
+}
+function insH2()       { insAt('## Section Heading'); }
+function insList()     { insAt('- First item\n- Second item\n- Third item'); }
+function insChecklist(){ insAt('- [ ] Task one\n- [ ] Task two\n- [ ] Task three'); }
+function insCallout()  { insAt('> 💡 **Note:** Important callout here.'); }
+function insTable()    { insAt('| Column 1 | Column 2 | Column 3 |\n|----------|----------|----------|\n| Data     | Data     | Data     |'); }
+function insDivider()  { insAt('---'); }
+
+/* ════════════════════════════════
+   MARKDOWN RENDERER
+════════════════════════════════ */
+function updatePreview() {
+  document.getElementById('ed-preview').innerHTML = mdRender(document.getElementById('ed-ta').value);
+}
+
+function updateWordCount() {
+  const w = document.getElementById('ed-ta').value.trim().split(/\s+/).filter(x=>x).length;
+  document.getElementById('wc').textContent = `${w} words`;
+  document.getElementById('rt').textContent = `~${Math.max(1,Math.round(w/200))} min read`;
+}
+
+function mdRender(md) {
+  const lines = md.split('\n');
+  let html = '', inCode = false, codeBuf = '', codeType = '', inTable = false, tableBuf = [];
+
+  const flushTable = () => {
+    if (!tableBuf.length) return;
+    const rows = tableBuf.filter(r=>!r.match(/^[\s|:-]+$/));
+    let t = '<table>';
+    rows.forEach((r,i) => {
+      const cells = r.split('|').filter((_,ci)=>ci>0&&ci<r.split('|').length-1).map(c=>c.trim());
+      t += '<tr>'+(cells.map(c=>`<${i===0?'th':'td'}>${inlineRender(c)}</${i===0?'th':'td'}>`).join(''))+'</tr>';
+    });
+    html += t+'</table>';
+    tableBuf = []; inTable = false;
+  };
+
+  for (const line of lines) {
+    if (line.startsWith('```')) {
+      if (!inCode) { inCode=true; codeType=line.slice(3).trim().toLowerCase(); codeBuf=''; continue; }
+      else {
+        inCode=false;
+        if (codeType==='mermaid') html+=mermaidRender(codeBuf);
+        else if (codeType==='loom') html+=loomRender(codeBuf.trim());
+        else html+=`<pre><code>${esc(codeBuf.trimEnd())}</code></pre>`;
+        codeBuf=''; codeType=''; continue;
+      }
+    }
+    if (inCode) { codeBuf+=line+'\n'; continue; }
+
+    if (line.includes('|') && !line.startsWith('#') && !line.startsWith('>')) {
+      inTable=true; tableBuf.push(line); continue;
+    } else if (inTable) { flushTable(); }
+
+    if (line.startsWith('# '))    html+=`<h1>${inlineRender(line.slice(2))}</h1>`;
+    else if (line.startsWith('## '))  html+=`<h2>${inlineRender(line.slice(3))}</h2>`;
+    else if (line.startsWith('### ')) html+=`<h3>${inlineRender(line.slice(4))}</h3>`;
+    else if (line.startsWith('> '))   html+=`<blockquote><p>${inlineRender(line.slice(2))}</p></blockquote>`;
+    else if (line.startsWith('- [ ] '))html+=`<ul><li class="checklist-item"><span>☐</span><span>${inlineRender(line.slice(6))}</span></li></ul>`;
+    else if (line.startsWith('- [x] '))html+=`<ul><li class="checklist-item"><span style="color:var(--green)">☑</span><span style="text-decoration:line-through;color:var(--mute)">${inlineRender(line.slice(6))}</span></li></ul>`;
+    else if (line.startsWith('- ')||line.startsWith('* ')) html+=`<ul><li>${inlineRender(line.slice(2))}</li></ul>`;
+    else if (/^\d+\. /.test(line)) html+=`<ol><li>${inlineRender(line.replace(/^\d+\. /,''))}</li></ol>`;
+    else if (line.trim()==='---') html+=`<hr>`;
+    else if (line.trim()==='') html+='';
+    else html+=`<p>${inlineRender(line)}</p>`;
+  }
+  if (inTable) flushTable();
   return html;
 }
 
-function updatePreview() {
-  const text = document.getElementById('ed-body').value;
-  document.getElementById('ed-preview').innerHTML = mdRender(text);
+function inlineRender(s) {
+  s = esc(s);
+  s = s.replace(/\*\*(.+?)\*\*/g,'<strong>$1</strong>');
+  s = s.replace(/\*(.+?)\*/g,'<em>$1</em>');
+  s = s.replace(/`(.+?)`/g,'<code>$1</code>');
+  s = s.replace(/~~(.+?)~~/g,'<del>$1</del>');
+  s = s.replace(/\[(.+?)\]\((.+?)\)/g,'<a href="$2">$1</a>');
+  return s;
 }
 
-// Depts
-function renderDeptManager() {
-  const list = document.getElementById('dept-mgr-list');
-  list.innerHTML = S.depts.map(d => `<div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:12px; padding:12px; background:var(--canvas); border:1px solid var(--hairline); border-radius:4px;">
-    <div style="display:flex; align-items:center; gap:8px;">
-      <div style="width:12px; height:12px; border-radius:50%; background:${d.color}"></div>
-      ${d.name}
-    </div>
-    <button class="btn-outline btn-danger" onclick="removeDept('${d.id}')">Remove</button>
-  </div>`).join('');
+function loomRender(raw) {
+  const lines = raw.split('\n').filter(Boolean);
+  const url = lines.find(l=>l.startsWith('http'))||lines[0]||'Loom Recording';
+  const cap = lines.length>1&&!lines[0].startsWith('http')?lines[0]:'';
+  return `<div class="loom-block" title="Click to open Loom recording" onclick="window.open('${url}','_blank')">
+    <div class="loom-play"><svg width="14" height="14" viewBox="0 0 24 24" fill="rgba(255,255,255,0.8)"><polygon points="5,3 19,12 5,21"/></svg></div>
+    ${cap?`<div style="font-size:11px;color:var(--body);font-weight:500">${esc(cap)}</div>`:''}
+    <div class="loom-url-label">${esc(url)}</div>
+  </div>`;
 }
+
+function mermaidRender(raw) {
+  const steps = raw.trim().split(/→|->|–>|\n/).map(s=>s.trim()).filter(Boolean);
+  if (!steps.length) return `<div class="mermaid-wrap"><span class="eyebrow">Empty flowchart</span></div>`;
+  return `<div class="mermaid-wrap">${buildFlowSVG(steps)}</div>`;
+}
+
+function buildFlowSVG(steps) {
+  const BW=112, BH=34, COL=136, ROW=66, PX=20, PY=14;
+  const perRow=Math.min(steps.length,4);
+  const rows=Math.ceil(steps.length/perRow);
+  const W=perRow*COL+PX*2, H=rows*ROW+PY*2;
+  const pos=steps.map((_,i)=>({x:PX+(i%perRow)*COL+COL/2, y:PY+Math.floor(i/perRow)*ROW+ROW/2}));
+  let edges='', nodes='';
+  for(let i=0;i<steps.length-1;i++){
+    const a=pos[i],b=pos[i+1];
+    const sameRow=Math.floor(i/perRow)===Math.floor((i+1)/perRow);
+    if(sameRow){
+      edges+=`<line x1="${a.x+BW/2}" y1="${a.y}" x2="${b.x-BW/2}" y2="${b.y}" stroke="rgba(255,255,255,0.12)" stroke-width="1.5" marker-end="url(#ar)"/>`;
+    } else {
+      const midY=a.y+BH/2+12;
+      edges+=`<path d="M${a.x} ${a.y+BH/2} L${a.x} ${midY} L${pos[i+1].x} ${midY} L${pos[i+1].x} ${b.y-BH/2}" fill="none" stroke="rgba(255,255,255,0.12)" stroke-width="1.5" marker-end="url(#ar)"/>`;
+    }
+  }
+  steps.forEach((s,i)=>{
+    const {x,y}=pos[i];
+    const first=i===0, last=i===steps.length-1;
+    const fill=first?'rgba(255,255,255,0.1)':last?'rgba(34,197,94,0.12)':'rgba(255,255,255,0.03)';
+    const stroke=first?'rgba(255,255,255,0.25)':last?'rgba(34,197,94,0.35)':'rgba(255,255,255,0.08)';
+    const label=s.length>15?s.slice(0,14)+'…':s;
+    nodes+=`<rect x="${x-BW/2}" y="${y-BH/2}" width="${BW}" height="${BH}" rx="5" fill="${fill}" stroke="${stroke}" stroke-width="1"/>`;
+    nodes+=`<text x="${x}" y="${y+4.5}" text-anchor="middle" fill="rgba(218,219,223,0.88)" font-family="Inter,sans-serif" font-size="10.5" font-weight="400">${esc(label)}</text>`;
+    if(first||last){
+      nodes+=`<rect x="${x-BW/2}" y="${y-BH/2}" width="${BW}" height="${BH}" rx="5" fill="none" stroke="${stroke}" stroke-width="1.5"/>`;
+    }
+  });
+  return `<svg width="${W}" height="${H}" viewBox="0 0 ${W} ${H}" style="max-width:100%;display:block">
+    <defs><marker id="ar" markerWidth="7" markerHeight="7" refX="6" refY="3" orient="auto"><path d="M0,0 L0,6 L7,3 z" fill="rgba(255,255,255,0.18)"/></marker></defs>
+    ${edges}${nodes}
+  </svg>`;
+}
+
+function esc(s){return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;')}
+
+/* ════════════════════════════════
+   FLOWCHART MODAL
+════════════════════════════════ */
+let flowSteps = ['Start','','','End'];
+let flowTargetInsert = false;
+
+function openFlowModal(insertMode=true) {
+  flowTargetInsert = insertMode;
+  flowSteps = ['Start','','','End'];
+  renderFlowNodes(); renderFlowPrev();
+  document.getElementById('flow-modal').classList.add('open');
+}
+function closeFlowModal() { document.getElementById('flow-modal').classList.remove('open'); }
+
+function renderFlowNodes() {
+  document.getElementById('flow-nodes').innerHTML = flowSteps.map((n,i)=>`
+    <div>
+      ${i>0?`<div class="flow-arr">↓</div>`:''}
+      <div class="flow-node-row">
+        <input class="flow-node-input" value="${esc(n)}" placeholder="Step name…"
+          oninput="flowSteps[${i}]=this.value;renderFlowPrev()"
+          onkeydown="if(event.key==='Enter'){addFlowNode();event.preventDefault()}">
+        ${flowSteps.length>2?`<button class="flow-node-del" onclick="removeFlowNode(${i})">✕</button>`:''}
+      </div>
+    </div>`).join('');
+}
+
+function addFlowNode() {
+  flowSteps.splice(flowSteps.length-1,0,'');
+  renderFlowNodes(); renderFlowPrev();
+  const inputs = document.querySelectorAll('.flow-node-input');
+  if(inputs[inputs.length-2]) inputs[inputs.length-2].focus();
+}
+
+function removeFlowNode(i) { flowSteps.splice(i,1); renderFlowNodes(); renderFlowPrev(); }
+
+function renderFlowPrev() {
+  const steps = flowSteps.filter(s=>s.trim());
+  document.getElementById('flow-preview').innerHTML = steps.length>=2
+    ? `<div class="eyebrow" style="margin-bottom:10px">Preview</div>${buildFlowSVG(steps)}`
+    : `<span class="eyebrow">Add steps to preview</span>`;
+}
+
+function insertFlowChart() {
+  const steps = flowSteps.filter(s=>s.trim());
+  if (steps.length<2) { showToast('Add at least 2 steps'); return; }
+  if (flowTargetInsert) insAt('```mermaid\n'+steps.join(' → ')+'\n```');
+  closeFlowModal();
+  showToast('⬡ Flowchart inserted');
+}
+
+/* ════════════════════════════════
+   LOOM MODAL
+════════════════════════════════ */
+function openLoomModal() { document.getElementById('loom-modal').classList.add('open'); setTimeout(()=>document.getElementById('loom-url').focus(),80); }
+function closeLoomModal() { document.getElementById('loom-modal').classList.remove('open'); }
+
+function insertLoom() {
+  const url = document.getElementById('loom-url').value.trim();
+  const cap = document.getElementById('loom-cap').value.trim();
+  if (!url) { showToast('Paste a Loom URL first'); return; }
+  insAt('```loom\n'+(cap?cap+'\n':'')+url+'\n```');
+  document.getElementById('loom-url').value='';
+  document.getElementById('loom-cap').value='';
+  closeLoomModal();
+  showToast('▶ Loom video inserted');
+}
+
+/* ════════════════════════════════
+   DEPT MANAGER
+════════════════════════════════ */
+function openDeptManager() {
+  renderDeptMgr(); renderColorPicks();
+  document.getElementById('dept-modal').classList.add('open');
+}
+function closeDeptManager() {
+  document.getElementById('dept-modal').classList.remove('open');
+  renderSidebar(); renderDashboard();
+  // refresh editor dept dropdown if open
+  if (document.getElementById('v-editor').classList.contains('active')) {
+    const dSel = document.getElementById('ed-dept-sel');
+    dSel.innerHTML = S.depts.map(d=>`<option value="${d.id}" ${d.id===curSOP()?.deptId?'selected':''}>${d.name}</option>`).join('');
+  }
+}
+
+function renderDeptMgr() {
+  document.getElementById('dept-mgr-list').innerHTML = S.depts.map(d=>`
+    <div class="dept-mgr-row">
+      <span class="dept-mgr-dot" style="background:${d.color}"></span>
+      <span class="dept-mgr-name">${d.name}</span>
+      <span class="dept-mgr-count">${S.sops.filter(s=>s.deptId===d.id).length} SOPs</span>
+      ${S.depts.length>1?`<button class="btn btn-xs btn-ghost" onclick="removeDept('${d.id}')">Remove</button>`:''}
+    </div>`).join('');
+}
+
+function renderColorPicks() {
+  document.getElementById('color-picks').innerHTML = COLORS.map(c=>`
+    <div class="color-pick ${c===selColor?'sel':''}" style="background:${c}" onclick="selColor='${c}';renderColorPicks()"></div>`).join('');
+}
+
 function addDept() {
-  const name = document.getElementById('new-dept-name').value;
-  const color = document.getElementById('new-dept-color').value;
-  if (!name) return;
-  const id = name.toLowerCase().replace(/[^a-z0-9]/g, '-');
-  S.depts.push({ id, name, color });
+  const name = document.getElementById('new-dept-input').value.trim();
+  if (!name) { showToast('Enter a department name'); return; }
+  if (S.depts.find(d=>d.name.toLowerCase()===name.toLowerCase())) { showToast('Department already exists'); return; }
+  S.depts.push({id:'d'+Date.now(), name, color: selColor});
+  document.getElementById('new-dept-input').value='';
   persist();
-  renderSidebar();
-  document.getElementById('new-dept-name').value = '';
+  renderDeptMgr(); renderSidebar(); renderDashboard();
+  showToast('🏢 '+name+' added');
 }
+
 function removeDept(id) {
-  if(S.depts.length <= 1) return alert("Must have at least one department.");
-  S.depts = S.depts.filter(d => d.id !== id);
-  // Reassign SOPs
-  S.sops.forEach(s => { if (s.deptId === id) s.deptId = S.depts[0].id; });
+  if (!confirm('Remove this department? SOPs will stay but become unassigned.')) return;
+  S.depts = S.depts.filter(d=>d.id!==id);
+  S.sops.forEach(s=>{ if(s.deptId===id) s.deptId=S.depts[0]?.id||''; });
   persist();
-  renderSidebar();
+  renderDeptMgr(); renderSidebar();
 }
 
-// Command Palette
-function openCmd() {
-  document.getElementById('cmd-palette').style.display = 'flex';
-  document.getElementById('cmd-input').value = '';
-  document.getElementById('cmd-input').focus();
-  renderCmd('');
-}
-function renderCmd(q) {
-  const res = document.getElementById('cmd-results');
-  let filtered = S.sops;
-  if (q) filtered = S.sops.filter(s => s.title.toLowerCase().includes(q.toLowerCase()));
-  
-  res.innerHTML = filtered.map(s => `<div class="cmd-item" onclick="openSOP('${s.id}'); closeModals();">📄 ${s.title || 'Untitled'}</div>`).join('');
-  if(filtered.length === 0) res.innerHTML = `<div class="cmd-item" style="color:var(--mute)">No results found.</div>`;
+/* ════════════════════════════════
+   DELETE SOP
+════════════════════════════════ */
+let confirmCb = null;
+function confirmResolve(yes) {
+  document.getElementById('confirm-box').classList.remove('open');
+  if (yes && confirmCb) confirmCb();
+  confirmCb = null;
 }
 
-function closeModals() {
-  document.querySelectorAll('.modal-overlay, #cmd-palette').forEach(el => el.style.display = 'none');
-}
-window.onclick = function(event) {
-  if (event.target.classList.contains('modal-overlay')) event.target.style.display = 'none';
-  if (event.target.id === 'cmd-palette') event.target.style.display = 'none';
+function confirmDelete(id) {
+  const sop = S.sops.find(s=>s.id===id);
+  document.getElementById('confirm-title').textContent = 'Delete SOP?';
+  document.getElementById('confirm-msg').textContent = `"${sop?.title||'Untitled'}" will be permanently deleted. This can't be undone.`;
+  document.getElementById('confirm-box').classList.add('open');
+  confirmCb = () => {
+    S.sops = S.sops.filter(s=>s.id!==id);
+    persist();
+    renderSidebar(); renderDashboard();
+    if (S.deptFilter) showDept(S.deptFilter); else renderListView(S.sops,'All SOPs','var(--mute)');
+    showToast('SOP deleted');
+  };
 }
 
+/* ════════════════════════════════
+   VERSION DRAWER
+════════════════════════════════ */
+let selVer = null;
+
+function openVersionDrawer() {
+  const sop = curSOP(); if (!sop) return;
+  document.getElementById('ver-subtitle').textContent = sop.versions.length+' versions';
+  renderVerList(sop);
+  document.getElementById('ver-drawer').classList.add('open');
+  document.getElementById('drawer-bg').classList.add('open');
+}
+function closeVersionDrawer() {
+  document.getElementById('ver-drawer').classList.remove('open');
+  document.getElementById('drawer-bg').classList.remove('open');
+}
+
+function renderVerList(sop) {
+  document.getElementById('ver-list').innerHTML = sop.versions.map((v,i)=>`
+    <div class="ver-entry ${v.current?'current':''} ${selVer===i?'vsel':''}" onclick="selectVer(${i})">
+      <div class="ver-entry-row">
+        <span class="ver-tag">${v.v}</span>
+        ${v.current?'<span class="badge badge-active">Current</span>':`<button class="btn btn-xs" onclick="event.stopPropagation();restoreVer('${v.v}')">Restore</button>`}
+      </div>
+      <div class="ver-author">${v.author} <span class="ver-time">· ${v.time}</span></div>
+      <div class="ver-summary">${v.summary}</div>
+    </div>`).join('');
+}
+
+function selectVer(i) {
+  selVer = i;
+  const sop = curSOP(); if (!sop) return;
+  const v = sop.versions[i];
+  renderVerList(sop);
+  document.getElementById('diff-label').textContent = v.current ? 'current version' : `vs ${sop.versions[0].v}`;
+  if (v.current) {
+    document.getElementById('diff-content').innerHTML = `<div style="padding:10px 16px"><span class="eyebrow" style="color:var(--mute)">This is the current version</span></div>`;
+    return;
+  }
+  const lines = DIFFS[v.v]||[{t:'neu',n:1,tx:'No diff data available.'}];
+  document.getElementById('diff-content').innerHTML = lines.map(l=>`
+    <div class="diff-line diff-${l.t==='add'?'add':l.t==='rem'?'rem':'neu'}">
+      <span class="diff-ln">${l.n}</span>
+      <span class="diff-sign">${l.t==='add'?'+':l.t==='rem'?'-':' '}</span>
+      <span class="diff-txt">${esc(l.tx)}</span>
+    </div>`).join('');
+}
+
+function restoreVer(v) { showToast(`Version ${v} restored as new draft`); closeVersionDrawer(); }
+
+/* ════════════════════════════════
+   COMMAND PALETTE
+════════════════════════════════ */
+const PAL_STATIC = [
+  {g:'Actions',icon:'✍️',title:'New SOP',short:['⌘','N'],fn:()=>newSOP()},
+  {g:'Actions',icon:'⬡', title:'Build Flowchart',short:[],fn:()=>openFlowModal()},
+  {g:'Actions',icon:'🏢',title:'Manage Departments',short:[],fn:()=>openDeptManager()},
+  {g:'Navigate',icon:'🏠',title:'Go to Dashboard',short:['G','D'],fn:()=>showView('dashboard',document.querySelector('.nav-item[data-view="dashboard"]'))},
+  {g:'Navigate',icon:'📋',title:'All SOPs',short:['G','A'],fn:()=>showView('all',document.querySelector('.nav-item[data-view="all"]'))},
+];
+
+let palIdx=0, palItems=[];
+
+function openPalette() {
+  palIdx=0; document.getElementById('pal-input').value='';
+  document.getElementById('palette').classList.add('open');
+  setTimeout(()=>document.getElementById('pal-input').focus(),60);
+  filterPalette();
+}
+function closePalette() { document.getElementById('palette').classList.remove('open'); }
+
+function filterPalette() {
+  const q = document.getElementById('pal-input').value.toLowerCase();
+  palItems = [];
+  const groups = {};
+  const add = (item) => { if(!groups[item.g])groups[item.g]=[]; groups[item.g].push(item); palItems.push(item); };
+
+  S.sops.filter(s=>!q||s.title.toLowerCase().includes(q)).slice(0,6).forEach(s=>
+    add({g:'SOPs',icon:s.emoji||'📄',title:s.title||'Untitled',short:[],fn:()=>{closePalette();openEditor(s.id)}}));
+  PAL_STATIC.filter(a=>!q||a.title.toLowerCase().includes(q)).forEach(add);
+  S.depts.filter(d=>!q||d.name.toLowerCase().includes(q)).forEach(d=>
+    add({g:'Departments',icon:'🏢',title:d.name,short:[],fn:()=>{closePalette();showDept(d.id)}}));
+
+  if (palIdx >= palItems.length) palIdx = 0;
+  let html = '';
+  for (const g in groups) {
+    html += `<div class="pal-group">${g}</div>`;
+    groups[g].forEach(item => {
+      const i = palItems.indexOf(item);
+      html += `<div class="pal-item ${i===palIdx?'on':''}" onmouseenter="palIdx=${i};filterPalette()" onclick="palSel(${i})">
+        <div class="pal-icon">${item.icon}</div>
+        <div class="pal-title">${item.title}</div>
+        <div class="pal-keys">${item.short.map(k=>`<span class="pal-key">${k}</span>`).join('')}</div>
+      </div>`;
+    });
+  }
+  if (!html) html = `<div style="padding:22px;text-align:center"><span class="eyebrow">No results for "${esc(q)}"</span></div>`;
+  document.getElementById('pal-results').innerHTML = html;
+}
+
+function palKey(e) {
+  if (e.key==='Escape') { closePalette(); return; }
+  if (e.key==='ArrowDown') { e.preventDefault(); palIdx=Math.min(palIdx+1,palItems.length-1); filterPalette(); scrollPalActive(); }
+  if (e.key==='ArrowUp')   { e.preventDefault(); palIdx=Math.max(palIdx-1,0); filterPalette(); scrollPalActive(); }
+  if (e.key==='Enter') palSel(palIdx);
+}
+function palSel(i) { const item=palItems[i]; if(item) item.fn(); closePalette(); }
+function scrollPalActive() { const el=document.querySelector('.pal-item.on'); if(el) el.scrollIntoView({block:'nearest'}); }
+
+/* ════════════════════════════════
+   TOAST
+════════════════════════════════ */
+let toastT;
+function showToast(msg) {
+  clearTimeout(toastT);
+  const t = document.getElementById('toast');
+  t.innerHTML = msg; t.classList.add('show');
+  toastT = setTimeout(()=>t.classList.remove('show'), 2400);
+}
+
+/* ════════════════════════════════
+   KEYBOARD SHORTCUTS
+════════════════════════════════ */
+document.addEventListener('keydown', e => {
+  if ((e.metaKey||e.ctrlKey) && e.key==='k') { e.preventDefault(); openPalette(); return; }
+  if ((e.metaKey||e.ctrlKey) && e.key==='s' && document.getElementById('v-editor').classList.contains('active')) { e.preventDefault(); saveDoc(); return; }
+  if (e.key==='Escape') { closePalette(); closeFlowModal(); closeLoomModal(); closeDeptManager(); closeVersionDrawer(); document.getElementById('confirm-box').classList.remove('open'); }
+});
+
+/* GO */
 init();
 </script>
 </body>
