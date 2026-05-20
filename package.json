@@ -1,5 +1,5 @@
 {
-  "name": "pixelizt",
+  "name": "systemlab",
   "private": true,
   "version": "0.0.0",
   "type": "module",
@@ -10,8 +10,13 @@
     "preview": "vite preview"
   },
   "dependencies": {
+    "lucide-react": "^1.16.0",
+    "mermaid": "^11.15.0",
     "react": "^19.2.6",
-    "react-dom": "^19.2.6"
+    "react-dom": "^19.2.6",
+    "react-markdown": "^10.1.0",
+    "react-router-dom": "^7.15.1",
+    "remark-gfm": "^4.0.1"
   },
   "devDependencies": {
     "@eslint/js": "^10.0.1",

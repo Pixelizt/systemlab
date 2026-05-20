@@ -1,7 +1,7 @@
-# Pixelizt SOP Portal — Master Handoff
+# SystemLab — Master Handoff
 
 ## 1. Project Overview
-This repository contains the source code and documentation for **app.pixelizt.com**, the internal SOP (Standard Operating Procedure) portal for the Pixelizt Website and SEO Agency.
+This repository contains the source code for **SystemLab**, a commercial SOP (Standard Operating Procedure) portal designed for businesses ranging from small agencies to large enterprises.
 
 **Tech Stack:**
 - **Framework:** React + Vite + TypeScript
@@ -23,10 +23,11 @@ EVERY SINGLE reply or action taken by an AI agent must be logged in the `/chat_h
 3. This is non-negotiable.
 
 ### Rule B: Read Before Writing
-Any new AI agent joining this repository MUST read this `PIXELIZT_MASTER_HANDOFF.md` and the most recent `chat_history` files BEFORE executing any commands or making changes.
+Any new AI agent joining this repository MUST read this `SYSTEMLAB_MASTER_HANDOFF.md` and the most recent `chat_history` files BEFORE executing any commands or making changes.
 
 ### Rule C: Design Adherence
-Do NOT invent new CSS patterns. Always consult `DESIGN.md` and use the established tokens and component styles.
+Do NOT invent new CSS patterns. Always consult `DESIGN.md` and use the established tokens and component styles (SystemLab aesthetics).
+Keep the UI hyper-focused, minimal, and essential. Strip away unnecessary features. No bloat.
 
 ## 4. Current State & Next Steps
 - **Phase 1 (Current):** Initialized Vite React project, added x.ai design system, established handoff protocols.
