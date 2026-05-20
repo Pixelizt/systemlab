@@ -1,0 +1,9 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    match /workspaces/{workspaceId} {
+      // Anyone with anonymous auth (or signed-in) can read/write workspaces
+      allow read, write: if request.auth != null;
+    }
+  }
+}

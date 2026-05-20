@@ -1685,7 +1685,8 @@ document.addEventListener('keydown', e => {
 
 <script type="module">
   import { initializeApp } from "https://www.gstatic.com/firebasejs/10.9.0/firebase-app.js";
-  import { getFirestore, doc, setDoc, getDoc, onSnapshot } from "https://www.gstatic.com/firebasejs/10.9.0/firebase-firestore.js";
+  import { getFirestore, doc, setDoc, getDoc, onSnapshot, enableIndexedDbPersistence } from "https://www.gstatic.com/firebasejs/10.9.0/firebase-firestore.js";
+  import { getAuth, signInAnonymously } from "https://www.gstatic.com/firebasejs/10.9.0/firebase-auth.js";
 
   const firebaseConfig = {
     apiKey: "AIzaSyCRS2fwIZkQ12ivMg55Q0uZnJXzhtDl9A8",
@@ -1697,11 +1698,19 @@ document.addEventListener('keydown', e => {
   };
 
   const app = initializeApp(firebaseConfig);
+  const auth = getAuth(app);
   window.db = getFirestore(app);
   window.fsDoc = doc;
   window.fsSetDoc = setDoc;
   window.fsGetDoc = getDoc;
   window.fsOnSnapshot = onSnapshot;
+
+  // Sign in anonymously so Firestore rules (request.auth != null) pass
+  try {
+    await signInAnonymously(auth);
+  } catch(e) {
+    console.warn('Anonymous auth failed, trying without:', e.message);
+  }
 
   window.bootApp();
 </script>
