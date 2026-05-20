@@ -331,6 +331,7 @@ select option{background:var(--canvas-card)}
 
 /* PRINT STYLES */
 @media print {
+  html, body { height: auto !important; overflow: visible !important; }
   body { background: #fff !important; color: #000 !important; }
   #topbar, #sidebar, .ed-bar, .ed-meta, .ins-bar, .ed-foot, .pane-head, .ed-pane:first-child, .drawer-bg, .ver-drawer, .pal-overlay, #toast, .modal-overlay, .confirm-box { display: none !important; }
   #app { display: block !important; height: auto !important; overflow: visible !important; }
@@ -534,6 +535,7 @@ select option{background:var(--canvas-card)}
         </button>
         <button class="btn btn-xs btn-ghost" onclick="shareDoc()">Share</button>
         <button class="btn btn-xs btn-ghost" onclick="printDoc()">Export PDF</button>
+        <button class="btn btn-xs btn-ghost" onclick="saveNewVersion()">Save Version</button>
         <button class="btn btn-xs btn-primary" onclick="saveDoc()">Save</button>
       </div>
       <div class="ed-meta">
@@ -838,7 +840,7 @@ function init() {
     S.depts = data.depts || S.depts;
     S.sops = data.sops || [];
   } else {
-    SEEDS.forEach((s,i) => S.sops.push({...s, id:'s'+i, versions:makeVersions()}));
+    SEEDS.forEach((s,i) => S.sops.push({...s, id:'s'+i, versions:makeVersions(s.body)}));
     persist();
   }
   
@@ -853,12 +855,9 @@ function init() {
   if (S.sops.length === 0) document.getElementById('onboard-hint').style.display = 'inline-flex';
 }
 
-function makeVersions() {
+function makeVersions(body) {
   return [
-    {v:'v2.1',author:'Jordan Kim',time:'2 days ago',summary:'Updated go-live criteria and added 90-day milestone check',current:true},
-    {v:'v2.0',author:'Sam Patel',time:'1 week ago',summary:'Major revision: restructured pre-onboarding checklist'},
-    {v:'v1.4',author:'Jordan Kim',time:'2 weeks ago',summary:'Fixed typos, clarified CSM assignment note'},
-    {v:'v1.0',author:'Alex Chen',time:'6 weeks ago',summary:'Initial draft created from template'},
+    {v:'v1.0',author:'System',time:new Date().toLocaleString(),summary:'Initial creation',current:true,body:body||''}
   ];
 }
 
@@ -1025,7 +1024,7 @@ function newSOP() {
   const sop = {
     id: 's'+Date.now(), title:'', deptId: S.deptFilter||S.depts[0]?.id||'',
     status:'draft', emoji:'📄', body: STARTER,
-    author:'Jordan Kim', updated:'Just now', versions: makeVersions()
+    author:'Jordan Kim', updated:'Just now', versions: makeVersions(STARTER)
   };
   S.sops.push(sop);
   persist();
@@ -1125,10 +1124,30 @@ function saveDoc() {
   sop.title = document.getElementById('ed-title').value;
   sop.body  = document.getElementById('ed-ta').value;
   sop.updated = 'Just now';
+  // Update the current version body as well
+  const cv = sop.versions.find(v => v.current);
+  if(cv) cv.body = sop.body;
   persist();
   setSave('saved'); lastSaved=Date.now(); startSaveAgo();
   renderSidebar();
   showToast('✓ SOP saved');
+}
+
+function saveNewVersion() {
+  const sop = curSOP(); if (!sop) return;
+  const newV = 'v' + (sop.versions.length + 1) + '.0';
+  sop.versions.forEach(v => v.current = false);
+  sop.versions.unshift({
+    v: newV,
+    author: 'Jordan Kim',
+    time: new Date().toLocaleString(),
+    summary: 'Manual save',
+    current: true,
+    body: document.getElementById('ed-ta').value
+  });
+  persist();
+  showToast(`Version ${newV} saved!`);
+  renderSidebar();
 }
 
 function edDeptChange(v) {
@@ -1446,7 +1465,7 @@ function renderVerList(sop) {
     <div class="ver-entry ${v.current?'current':''} ${selVer===i?'vsel':''}" onclick="selectVer(${i})">
       <div class="ver-entry-row">
         <span class="ver-tag">${v.v}</span>
-        ${v.current?'<span class="badge badge-active">Current</span>':`<button class="btn btn-xs" onclick="event.stopPropagation();restoreVer('${v.v}')">Restore</button>`}
+        ${v.current?'<span class="badge badge-active">Current</span>':`<button class="btn btn-xs" onclick="event.stopPropagation();restoreVer(${i})">Restore</button>`}
       </div>
       <div class="ver-author">${v.author} <span class="ver-time">· ${v.time}</span></div>
       <div class="ver-summary">${v.summary}</div>
@@ -1458,21 +1477,24 @@ function selectVer(i) {
   const sop = curSOP(); if (!sop) return;
   const v = sop.versions[i];
   renderVerList(sop);
-  document.getElementById('diff-label').textContent = v.current ? 'current version' : `vs ${sop.versions[0].v}`;
+  document.getElementById('diff-label').textContent = v.current ? 'current version' : `Previewing ${v.v}`;
   if (v.current) {
     document.getElementById('diff-content').innerHTML = `<div style="padding:10px 16px"><span class="eyebrow" style="color:var(--mute)">This is the current version</span></div>`;
     return;
   }
-  const lines = DIFFS[v.v]||[{t:'neu',n:1,tx:'No diff data available.'}];
-  document.getElementById('diff-content').innerHTML = lines.map(l=>`
-    <div class="diff-line diff-${l.t==='add'?'add':l.t==='rem'?'rem':'neu'}">
-      <span class="diff-ln">${l.n}</span>
-      <span class="diff-sign">${l.t==='add'?'+':l.t==='rem'?'-':' '}</span>
-      <span class="diff-txt">${esc(l.tx)}</span>
-    </div>`).join('');
+  document.getElementById('diff-content').innerHTML = `<div class="md-out" style="padding:14px;background:var(--canvas-soft);overflow-y:auto;flex:1">${mdRender(v.body||'')}</div>`;
 }
 
-function restoreVer(v) { showToast(`Version ${v} restored as new draft`); closeVersionDrawer(); }
+function restoreVer(i) { 
+  const sop = curSOP(); if (!sop) return;
+  const v = sop.versions[i];
+  if (!v) return;
+  document.getElementById('ed-ta').value = v.body || '';
+  onMdInput();
+  saveNewVersion();
+  closeVersionDrawer();
+  showToast(`Restored from ${v.v}`);
+}
 
 /* ════════════════════════════════
    COMMAND PALETTE
