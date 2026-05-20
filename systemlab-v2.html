@@ -808,9 +808,6 @@ const ACTIVITY = [
 /* ════════════════════════════════
    AUTH & PERSISTENCE
 ════════════════════════════════ */
-function persist() {
-  localStorage.setItem('systemlab_v2', JSON.stringify({ depts: S.depts, sops: S.sops }));
-}
 
 let currentWorkspaceId = '';
 let currentUser = '';
@@ -849,61 +846,135 @@ async function loginApp() {
   }
 }
 
+const RTDB_URL = 'https://system-labs-default-rtdb.asia-southeast1.firebasedatabase.app';
+
+async function rtdbGet(path) {
+  const res = await fetch(`${RTDB_URL}/${path}.json`);
+  if (!res.ok) throw new Error('RTDB read failed: ' + res.status);
+  return res.json();
+}
+
+async function rtdbSet(path, data) {
+  const res = await fetch(`${RTDB_URL}/${path}.json`, {
+    method: 'PUT',
+    headers: {'Content-Type': 'application/json'},
+    body: JSON.stringify(data)
+  });
+  if (!res.ok) throw new Error('RTDB write failed: ' + res.status);
+  return res.json();
+}
+
+function rtdbListen(path, callback) {
+  // Use Server-Sent Events (EventSource) for real-time RTDB listening
+  const url = `${RTDB_URL}/${path}.json`;
+  let lastData = null;
+  const poll = async () => {
+    try {
+      const data = await rtdbGet(path);
+      const str = JSON.stringify(data);
+      if (str !== lastData) {
+        lastData = str;
+        callback(data);
+      }
+    } catch(e) { /* silently ignore poll errors */ }
+  };
+  const interval = setInterval(poll, 5000);
+  return () => clearInterval(interval);
+}
+
+let cloudEnabled = false;
+
 async function connectToWorkspace(workspaceId, userName) {
   currentWorkspaceId = workspaceId;
   currentUser = userName;
-  
-  const wsRef = window.fsDoc(window.db, "workspaces", workspaceId);
-  const snap = await window.fsGetDoc(wsRef);
-  
-  if (!snap.exists()) {
-    S.depts = [{id:'d1',name:'General',color:'#4b5563'},{id:'d2',name:'Engineering',color:'#3b82f6'},{id:'d3',name:'Sales',color:'#10b981'},{id:'d4',name:'HR',color:'#f59e0b'}];
+
+  const path = 'workspaces/' + workspaceId;
+
+  // Always load from localStorage first — login never blocks
+  const localKey = 'systemlab_ws_' + workspaceId;
+  const localData = localStorage.getItem(localKey);
+  if (localData) {
+    try { const d = JSON.parse(localData); S.depts = d.depts || S.depts; S.sops = d.sops || []; } catch(e) {}
+  } else {
+    S.depts = [{id:'d1',name:'Operations',color:'#ff7a17'},{id:'d2',name:'Sales',color:'#22c55e'},{id:'d3',name:'Marketing',color:'#60a5fa'},{id:'d4',name:'HR',color:'#a78bfa'}];
     S.sops = [];
     SEEDS.forEach((s,i) => S.sops.push({...s, id:'s'+i, versions:makeVersions(s.body)}));
-    await window.fsSetDoc(wsRef, { data: JSON.stringify(S) });
-  } else {
-    S = JSON.parse(snap.data().data);
   }
-  
+
   localStorage.setItem('systemlab_auth', JSON.stringify({workspaceId, userName}));
-  localStorage.setItem('systemlab_v2', JSON.stringify(S)); 
-  
+  localStorage.setItem(localKey, JSON.stringify({depts: S.depts, sops: S.sops}));
+
   document.getElementById('login-screen').style.display = 'none';
   document.getElementById('app').style.display = 'grid';
-  
+
   renderSidebar();
   renderDashboard();
   updateGreeting();
   if (S.sops.length === 0) document.getElementById('onboard-hint').style.display = 'inline-flex';
-  
-  if(unsubSnapshot) unsubSnapshot();
-  unsubSnapshot = window.fsOnSnapshot(wsRef, (docSnap) => {
-    if(docSnap.exists()) {
-       const cloudStr = docSnap.data().data;
-       const localStr = JSON.stringify(S);
-       if (cloudStr !== localStr) {
-         S = JSON.parse(cloudStr);
-         localStorage.setItem('systemlab_v2', cloudStr);
-         renderSidebar();
-         renderDashboard();
-         const activeId = curSOP()?.id;
-         if (activeId) {
-            const updatedSOP = S.sops.find(s=>s.id===activeId);
-            if (updatedSOP && document.getElementById('ed-ta').value !== updatedSOP.body) {
-                document.getElementById('ed-ta').value = updatedSOP.body;
-                onMdInput(); 
-            }
-         }
-       }
-    }
-  });
+
+  // Try cloud sync in background — doesn't block login
+  tryCloudSync(path, workspaceId);
 }
 
+async function tryCloudSync(path, workspaceId) {
+  const localKey = 'systemlab_ws_' + workspaceId;
+  try {
+    let existing = null;
+    try { existing = await rtdbGet(path); } catch(e) { return; } // RTDB not set up yet — silently skip
+
+    cloudEnabled = true;
+    showToast('☁️ Cloud sync active');
+
+    if (existing) {
+      try {
+        const remoteS = JSON.parse(existing.data);
+        S.depts = remoteS.depts || S.depts;
+        S.sops = remoteS.sops || S.sops;
+        localStorage.setItem(localKey, JSON.stringify({depts: S.depts, sops: S.sops}));
+        renderSidebar();
+        renderDashboard();
+      } catch(e) {}
+    } else {
+      await rtdbSet(path, { data: JSON.stringify({depts: S.depts, sops: S.sops}) });
+    }
+
+    if (unsubSnapshot) unsubSnapshot();
+    unsubSnapshot = rtdbListen(path, (remoteData) => {
+      if (!remoteData) return;
+      try {
+        const remoteS = JSON.parse(remoteData.data);
+        const localStr = JSON.stringify({depts: S.depts, sops: S.sops});
+        const remoteStr = JSON.stringify({depts: remoteS.depts, sops: remoteS.sops});
+        if (remoteStr !== localStr) {
+          S.depts = remoteS.depts || S.depts;
+          S.sops = remoteS.sops || S.sops;
+          localStorage.setItem(localKey, JSON.stringify({depts: S.depts, sops: S.sops}));
+          renderSidebar();
+          renderDashboard();
+          const activeId = curSOP()?.id;
+          if (activeId) {
+            const updatedSOP = S.sops.find(s=>s.id===activeId);
+            if (updatedSOP && document.getElementById('ed-ta').value !== updatedSOP.body) {
+              document.getElementById('ed-ta').value = updatedSOP.body;
+              onMdInput();
+            }
+          }
+        }
+      } catch(e) {}
+    });
+  } catch(e) { /* cloud sync not available */ }
+}
+
+
 function persist() {
-  const str = JSON.stringify(S);
+  const payload = {depts: S.depts, sops: S.sops};
+  const str = JSON.stringify(payload);
   localStorage.setItem('systemlab_v2', str);
-  if (currentWorkspaceId && window.db) {
-    window.fsSetDoc(window.fsDoc(window.db, "workspaces", currentWorkspaceId), { data: str }).catch(e=>console.log("Sync delay"));
+  if (currentWorkspaceId) {
+    localStorage.setItem('systemlab_ws_' + currentWorkspaceId, str);
+    if (cloudEnabled) {
+      rtdbSet('workspaces/' + currentWorkspaceId, { data: str }).catch(e => console.log('Sync skipped:', e.message));
+    }
   }
 }
 
@@ -1683,35 +1754,9 @@ document.addEventListener('keydown', e => {
 // bootApp() will be called by Firebase module below
 </script>
 
-<script type="module">
-  import { initializeApp } from "https://www.gstatic.com/firebasejs/10.9.0/firebase-app.js";
-  import { getFirestore, doc, setDoc, getDoc, onSnapshot, enableIndexedDbPersistence } from "https://www.gstatic.com/firebasejs/10.9.0/firebase-firestore.js";
-  import { getAuth, signInAnonymously } from "https://www.gstatic.com/firebasejs/10.9.0/firebase-auth.js";
-
-  const firebaseConfig = {
-    apiKey: "AIzaSyCRS2fwIZkQ12ivMg55Q0uZnJXzhtDl9A8",
-    authDomain: "system-labs.firebaseapp.com",
-    projectId: "system-labs",
-    storageBucket: "system-labs.firebasestorage.app",
-    messagingSenderId: "824772452676",
-    appId: "1:824772452676:web:c3e1706534cf9c664a7711"
-  };
-
-  const app = initializeApp(firebaseConfig);
-  const auth = getAuth(app);
-  window.db = getFirestore(app);
-  window.fsDoc = doc;
-  window.fsSetDoc = setDoc;
-  window.fsGetDoc = getDoc;
-  window.fsOnSnapshot = onSnapshot;
-
-  // Sign in anonymously so Firestore rules (request.auth != null) pass
-  try {
-    await signInAnonymously(auth);
-  } catch(e) {
-    console.warn('Anonymous auth failed, trying without:', e.message);
-  }
-
+<script>
+  // Use Firebase RTDB REST API — no SDK needed
+  // bootApp uses rtdbGet/rtdbSet defined above via plain fetch()
   window.bootApp();
 </script>
 <script type="module">
