@@ -1,38 +1,209 @@
-# SystemLab — Master Handoff
+# SystemLab — Master Handoff Document
 
-## 1. Project Overview
-This repository contains the source code for **SystemLab**, a commercial SOP (Standard Operating Procedure) portal designed for businesses ranging from small agencies to large enterprises.
+> **⚠️ READ THIS FIRST.** This is the single source of truth for the SystemLab project.
+> Any AI agent picking up this project MUST read this document completely before touching any code.
+> Do NOT mix anything with the LeadLab project. They are two completely separate products.
 
-**Tech Stack:**
-- **Framework:** React + Vite + TypeScript
-- **Styling:** Vanilla CSS + x.ai design system (`DESIGN.md`)
-- **Content:** Markdown (MDX/React-Markdown) for SOPs, Mermaid.js for flowcharts, and custom components for Loom video embeds.
+---
 
-## 2. Architecture & Design Principles
-- **Markdown-Driven:** All SOPs live in `src/content/{category}/`. The app dynamically parses these files.
-- **Rich Media:** SOPs natively support Loom video embeds (via custom markdown directives or React components) and flowcharts (via Mermaid syntax ` ```mermaid `).
-- **Navigation:** A persistent sidebar categorizes SOPs (Sales, SEO, Marketing, Operations). Clicking a category displays all relevant SOPs.
-- **Design System:** We strictly follow the `DESIGN.md` guidelines (inspired by x.ai) for a sleek, minimal, and highly professional internal tool.
+## 🏷️ Project Identity
 
-## 3. Strict AI Rules (MANDATORY FOR ALL AGENTS)
+| Field | Value |
+|---|---|
+| **Product Name** | SystemLab |
+| **Tagline** | The Team Operating System |
+| **Type** | Commercial B2B SaaS — SOP portal |
+| **Target Users** | Agencies, clinics, startups (5–500 people) |
+| **Owner** | Nithin Mohan (`nithinjoee@gmail.com`) |
+| **GitHub Org** | `leadlabcrm` (Nithin's org — SystemLab is hosted here) |
+| **NOT related to** | LeadLab CRM (completely separate product) |
 
-### Rule A: Auto-Recording Chat History
-EVERY SINGLE reply or action taken by an AI agent must be logged in the `/chat_history/` directory.
-1. Format: `YYYY-MM-DD_session_XX.md`
-2. Include the exact user request and a detailed summary of actions taken, files modified, and rationale.
-3. This is non-negotiable.
+---
 
-### Rule B: Read Before Writing
-Any new AI agent joining this repository MUST read this `SYSTEMLAB_MASTER_HANDOFF.md` and the most recent `chat_history` files BEFORE executing any commands or making changes.
+## 🔗 Live URLs
 
-### Rule C: Design Adherence
-Do NOT invent new CSS patterns. Always consult `DESIGN.md` and use the established tokens and component styles (SystemLab aesthetics).
-Keep the UI hyper-focused, minimal, and essential. Strip away unnecessary features. No bloat.
+| Resource | URL |
+|---|---|
+| **Live App** | https://systemlab-sop-demo.netlify.app |
+| **GitHub Repo** | https://github.com/leadlabcrm/systemlab |
+| **Netlify Dashboard** | https://app.netlify.com/projects/systemlab-sop-demo |
+| **Login Email** | `admin@systemlab.com` |
+| **Login Password** | `admin` |
 
-## 4. Current State & Next Steps
-- **Phase 1 (Current):** Initialized Vite React project, added x.ai design system, established handoff protocols.
-- **Phase 2:** Implement React Router, Markdown parsing (`react-markdown`, `remark-gfm`), Mermaid integration, and Loom embed component.
-- **Phase 3:** Build the UI shell (Sidebar + Content area) and populate initial SOPs for Sales.
+---
 
-## 5. Deployment
-This app will eventually be deployed and connected to `app.pixelizt.com`. Keep build artifacts optimized.
+## 🔑 Access Tokens & Credentials
+
+> **For agents:** GitHub PAT is stored in local git credential store. Netlify token is in `~/.netlify/config.json`.
+> Nithin must provide fresh tokens if switching machines or accounts. Never commit raw tokens to this repo.
+> **Netlify Site ID** (safe to store): `d8fc6a33-196a-41c7-955a-e8f40d16fa47`
+
+| Service | Token / Credential | Notes |
+|---|---|---|
+| **GitHub PAT** | `[STORED IN LOCAL ~/.gitconfig — see agent setup]` | Scopes: `repo` + `workflow`. Owner: `leadlabcrm` org |
+| **Netlify Auth Token** | `[STORED IN ~/.netlify/config.json]` | Nithin's personal Netlify account (`nithinjoee@gmail.com`) |
+| **Netlify Site ID** | `d8fc6a33-196a-41c7-955a-e8f40d16fa47` | Site name: `systemlab-sop-demo` |
+| **App Login** | `admin@systemlab.com` / `admin` | Client-side auth only (localStorage) |
+
+---
+
+## 📂 Project Structure (Local Path)
+
+```
+/Users/nithin/.gemini/antigravity/scratch/systemlab/
+│
+├── systemlab-v2.html          ← THE MAIN APP (single-file, edit this)
+├── netlify.toml               ← Build config: copies v2.html → dist/index.html
+├── SYSTEMLAB_MASTER_HANDOFF.md ← This file
+├── DESIGN.md                  ← Full x.ai design system spec
+├── README.md                  ← Project overview
+│
+├── .github/
+│   └── workflows/
+│       └── deploy.yml         ← GitHub Actions: auto-deploy on git push
+│
+├── chat_history/              ← Session logs (append after every session)
+│   ├── 2026-05-20_session_01.md
+│   ├── 2026-05-20_session_02.md
+│   ├── 2026-05-20_session_03.md
+│   ├── 2026-05-20_session_04.md
+│   ├── 2026-05-20_session_05.md
+│   └── 2026-05-20_session_06.md  ← Current session
+│
+├── dist/                      ← Auto-generated by build (do not edit)
+└── src/                       ← Old React prototype (ignore — superseded by v2.html)
+```
+
+---
+
+## 🏗️ Architecture
+
+**Single-file app.** The entire product lives in `systemlab-v2.html`.
+
+- **No build tools** — vanilla HTML + CSS + JS only
+- **No frameworks** — zero React, Vue, Angular
+- **External deps** — only Mermaid.js (CDN) + Google Fonts
+- **State** — global `S` object persisted to `localStorage` (`systemlab_v2` key)
+- **Auth** — client-side login gate persisted to `localStorage` (`systemlab_auth` key)
+
+---
+
+## 🎨 Design System (STRICT — do not deviate)
+
+| Token | Value |
+|---|---|
+| Canvas bg | `#0a0a0a` |
+| Card bg | `#191919` |
+| Border | `1px solid #212327` (hairline only, NO shadows) |
+| Primary text | `#ffffff` |
+| Body text | `#dadbdf` |
+| Muted text | `#7d8187` |
+| Accent | `#ff7a17` (sunset orange) |
+| Font — UI | `Inter` (Google Fonts, weight 400/500/600) |
+| Font — Labels | `JetBrains Mono` (uppercase, tracked) |
+| Font — Brand | `Playfair Display` (italic, brand name only) |
+| Buttons | Pill shape `border-radius: 9999px`, 1px border |
+| Primary btn | White fill `background: #fff; color: #000` |
+
+**Rules:** No Tailwind. No gradients. No shadows. No light mode. No white backgrounds.
+
+---
+
+## ✅ Features Built (as of Session 06)
+
+- [x] Auth login screen (`admin@systemlab.com` / `admin`)
+- [x] Logout button in topbar
+- [x] Session persistence (stays logged in on refresh)
+- [x] Full data persistence — all SOPs and departments saved to localStorage
+- [x] Autosave every 1.2s while editing
+- [x] Dashboard with stats (Total SOPs, Active, Departments, Drafts)
+- [x] Sidebar with department navigation
+- [x] All SOPs grid/list view with search + status filter
+- [x] SOP Editor — split pane (Markdown | Live Preview)
+- [x] Custom Markdown renderer (no library needed)
+- [x] Mermaid.js flowchart support in editor
+- [x] Loom video embed support in editor
+- [x] Insert toolbar (H2, List, Checklist, Callout, Loom, Flowchart, Table, Divider)
+- [x] Flowchart builder modal (visual step editor)
+- [x] Loom embed modal
+- [x] Department manager modal (add/remove/color picker)
+- [x] Version history drawer (with diff viewer)
+- [x] Command palette (`⌘K`)
+- [x] Confirm-delete dialog
+- [x] Toast notifications
+- [x] Word count + read time in editor footer
+- [x] Grid/List layout toggle
+
+---
+
+## 🚀 CI/CD Pipeline
+
+**How deploys work:**
+```
+Edit systemlab-v2.html
+    ↓
+git add . && git commit -m "message" && git push origin main
+    ↓
+GitHub Actions triggers (.github/workflows/deploy.yml)
+    ↓
+Actions runs: mkdir -p dist && cp systemlab-v2.html dist/index.html
+    ↓
+netlify-cli deploy --prod --dir=dist
+    ↓
+Live at https://systemlab-sop-demo.netlify.app (~60s total)
+```
+
+**To deploy from terminal:**
+```bash
+cd /Users/nithin/.gemini/antigravity/scratch/systemlab
+source ~/.nvm/nvm.sh && nvm use 20
+git add . && git commit -m "feat: your change" && git push origin main
+# Done. GitHub Actions handles the rest automatically.
+```
+
+**To deploy manually (bypass GitHub Actions):**
+```bash
+cp systemlab-v2.html dist/index.html
+npx netlify-cli deploy --prod --dir=dist
+```
+
+---
+
+## ⚠️ Do NOT Touch
+
+- `src/` folder — old React prototype, completely superseded
+- `dist/` folder — auto-generated, never edit manually
+- `node_modules/` — React app deps, irrelevant to v2
+- `.netlify/` — Netlify CLI state, do not commit changes here
+
+---
+
+## 📋 Next Steps / Backlog
+
+- [ ] Custom domain (e.g. `app.systemlab.io`)
+- [ ] Real backend (Supabase or Firebase) for multi-user collaboration
+- [ ] Role-based access (Admin / Editor / Viewer)
+- [ ] SOP template library
+- [ ] PDF export
+- [ ] Real version diffing
+- [ ] Invite team members flow
+- [ ] Rich text (WYSIWYG) editor mode
+
+---
+
+## 🔄 Agent Handoff Protocol
+
+Every session, the agent MUST:
+1. Read this file (`SYSTEMLAB_MASTER_HANDOFF.md`) first
+2. Read the latest `chat_history/` session file to understand recent changes
+3. Only edit `systemlab-v2.html` for app changes
+4. After completing work: update this handoff + write a new session log to `chat_history/`
+5. Commit and push everything: `git add . && git commit -m "..." && git push origin main`
+
+**⚠️ Separation of concerns:**
+- SystemLab repo: `github.com/leadlabcrm/systemlab`
+- LeadLab repo: completely different — do NOT mix or cross-reference
+
+---
+
+*Last updated: 2026-05-20 by Antigravity AI (Session 06)*
