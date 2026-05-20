@@ -46,7 +46,7 @@ export default function SopRenderer() {
     if (saved) {
       setContent(saved);
     } else {
-      const demoContent = `# ${sopId.replace(/-/g, ' ').replace(/\\b\\w/g, c => c.toUpperCase())}
+      const demoContent = `# ${sopId.replace(/-/g, ' ').replace(/\b\w/g, c => c.toUpperCase())}
 
 This is a demonstration of the SystemLab standard operating procedure format.
 
@@ -114,7 +114,7 @@ https://www.loom.com/share/c0faec017b204ce4997193f211d1bb6d
               const lang = match ? match[1] : '';
               
               if (!inline && lang === 'mermaid') {
-                return <MermaidChart chart={String(children).replace(/\\n$/, '')} />;
+                return <MermaidChart chart={String(children).replace(/\n$/, '')} />;
               }
               if (!inline && lang === 'loom') {
                 const url = String(children).trim();
@@ -122,7 +122,7 @@ https://www.loom.com/share/c0faec017b204ce4997193f211d1bb6d
                 return (
                   <div className="loom-container">
                     <iframe 
-                      src={\`https://www.loom.com/embed/\${id}\`} 
+                      src={`https://www.loom.com/embed/${id}`} 
                       frameBorder="0" 
                       allowFullScreen 
                       style={{width: '100%', height: '440px', display: 'block'}}>
