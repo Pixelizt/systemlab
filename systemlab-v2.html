@@ -846,7 +846,7 @@ async function loginApp() {
   }
 }
 
-const RTDB_URL = 'https://system-labs-default-rtdb.asia-southeast1.firebasedatabase.app';
+const RTDB_URL = 'https://system-labs-default-rtdb.firebaseio.com';
 
 async function rtdbGet(path) {
   const res = await fetch(`${RTDB_URL}/${path}.json`);
