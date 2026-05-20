@@ -360,10 +360,10 @@ select option{background:var(--canvas-card)}
 <div id="login-screen">
   <div class="login-card">
     <div class="login-logo"><em>system</em><strong>lab.</strong></div>
-    <div class="login-sub">Authorized Access Only</div>
-    <input type="email" id="l-email" placeholder="Email (admin@systemlab.com)" style="margin-bottom:12px">
-    <input type="password" id="l-pass" placeholder="Password (admin)" style="margin-bottom:20px" onkeydown="if(event.key==='Enter')loginApp()">
-    <button class="btn btn-primary" style="padding:10px;justify-content:center" onclick="loginApp()">Enter Workspace</button>
+    <div class="login-sub">Enter Workspace Passcode to join team</div>
+    <input type="text" id="l-name" placeholder="Your Name (e.g. John)" style="margin-bottom:12px">
+    <input type="password" id="l-pass" placeholder="Workspace Passcode" style="margin-bottom:20px" onkeydown="if(event.key==='Enter')loginApp()">
+    <button class="btn btn-primary" id="l-btn" style="padding:10px;justify-content:center" onclick="loginApp()">Enter Workspace</button>
     <div class="login-err" id="l-err">Invalid credentials.</div>
   </div>
 </div>
@@ -812,59 +812,121 @@ function persist() {
   localStorage.setItem('systemlab_v2', JSON.stringify({ depts: S.depts, sops: S.sops }));
 }
 
-function loginApp() {
-  const e = document.getElementById('l-email').value;
-  const p = document.getElementById('l-pass').value;
-  if (e === 'admin@systemlab.com' && p === 'admin') {
-    localStorage.setItem('systemlab_auth', 'true');
-    document.getElementById('login-screen').style.display = 'none';
-    document.getElementById('app').style.display = 'grid';
+let currentWorkspaceId = '';
+let currentUser = '';
+let unsubSnapshot = null;
+
+window.bootApp = function() {
+  const auth = localStorage.getItem('systemlab_auth');
+  if (!auth) {
+    document.getElementById('login-screen').style.display='flex';
+    document.getElementById('app').style.display='none';
   } else {
-    document.getElementById('l-err').style.display = 'block';
+    try {
+      const a = JSON.parse(auth);
+      connectToWorkspace(a.workspaceId, a.userName);
+    } catch(e) {
+      document.getElementById('login-screen').style.display='flex';
+      document.getElementById('app').style.display='none';
+    }
+  }
+};
+
+async function loginApp() {
+  const name = document.getElementById('l-name').value.trim();
+  const pass = document.getElementById('l-pass').value.trim();
+  if(!name || !pass) return document.getElementById('l-err').style.display='block';
+  
+  document.getElementById('l-btn').textContent = 'Connecting...';
+  document.getElementById('l-err').style.display='none';
+  try {
+    await connectToWorkspace(pass.toLowerCase(), name);
+  } catch(e) {
+    console.error(e);
+    document.getElementById('l-err').textContent = "Failed to connect to workspace.";
+    document.getElementById('l-err').style.display='block';
+    document.getElementById('l-btn').textContent = 'Enter Workspace';
+  }
+}
+
+async function connectToWorkspace(workspaceId, userName) {
+  currentWorkspaceId = workspaceId;
+  currentUser = userName;
+  
+  const wsRef = window.fsDoc(window.db, "workspaces", workspaceId);
+  const snap = await window.fsGetDoc(wsRef);
+  
+  if (!snap.exists()) {
+    S.depts = [{id:'d1',name:'General',color:'#4b5563'},{id:'d2',name:'Engineering',color:'#3b82f6'},{id:'d3',name:'Sales',color:'#10b981'},{id:'d4',name:'HR',color:'#f59e0b'}];
+    S.sops = [];
+    SEEDS.forEach((s,i) => S.sops.push({...s, id:'s'+i, versions:makeVersions(s.body)}));
+    await window.fsSetDoc(wsRef, { data: JSON.stringify(S) });
+  } else {
+    S = JSON.parse(snap.data().data);
+  }
+  
+  localStorage.setItem('systemlab_auth', JSON.stringify({workspaceId, userName}));
+  localStorage.setItem('systemlab_v2', JSON.stringify(S)); 
+  
+  document.getElementById('login-screen').style.display = 'none';
+  document.getElementById('app').style.display = 'grid';
+  
+  renderSidebar();
+  renderDashboard();
+  updateGreeting();
+  if (S.sops.length === 0) document.getElementById('onboard-hint').style.display = 'inline-flex';
+  
+  if(unsubSnapshot) unsubSnapshot();
+  unsubSnapshot = window.fsOnSnapshot(wsRef, (docSnap) => {
+    if(docSnap.exists()) {
+       const cloudStr = docSnap.data().data;
+       const localStr = JSON.stringify(S);
+       if (cloudStr !== localStr) {
+         S = JSON.parse(cloudStr);
+         localStorage.setItem('systemlab_v2', cloudStr);
+         renderSidebar();
+         renderDashboard();
+         const activeId = curSOP()?.id;
+         if (activeId) {
+            const updatedSOP = S.sops.find(s=>s.id===activeId);
+            if (updatedSOP && document.getElementById('ed-ta').value !== updatedSOP.body) {
+                document.getElementById('ed-ta').value = updatedSOP.body;
+                onMdInput(); 
+            }
+         }
+       }
+    }
+  });
+}
+
+function persist() {
+  const str = JSON.stringify(S);
+  localStorage.setItem('systemlab_v2', str);
+  if (currentWorkspaceId && window.db) {
+    window.fsSetDoc(window.fsDoc(window.db, "workspaces", currentWorkspaceId), { data: str }).catch(e=>console.log("Sync delay"));
   }
 }
 
 function logoutApp() {
   localStorage.removeItem('systemlab_auth');
-  document.getElementById('app').style.display = 'none';
-  document.getElementById('login-screen').style.display = 'flex';
-}
-
-/* ════════════════════════════════
-   INIT
-════════════════════════════════ */
-function init() {
-  const saved = localStorage.getItem('systemlab_v2');
-  if (saved) {
-    const data = JSON.parse(saved);
-    S.depts = data.depts || S.depts;
-    S.sops = data.sops || [];
-  } else {
-    SEEDS.forEach((s,i) => S.sops.push({...s, id:'s'+i, versions:makeVersions(s.body)}));
-    persist();
-  }
-  
-  if (localStorage.getItem('systemlab_auth')) {
-    document.getElementById('login-screen').style.display = 'none';
-    document.getElementById('app').style.display = 'grid';
-  }
-
-  renderSidebar();
-  renderDashboard();
-  updateGreeting();
-  if (S.sops.length === 0) document.getElementById('onboard-hint').style.display = 'inline-flex';
+  if(unsubSnapshot) unsubSnapshot();
+  location.reload();
 }
 
 function makeVersions(body) {
   return [
-    {v:'v1.0',author:'System',time:new Date().toLocaleString(),summary:'Initial creation',current:true,body:body||''}
+    {v:'v1.0',author:currentUser||'System',time:new Date().toLocaleString(),summary:'Initial creation',current:true,body:body||''}
   ];
 }
 
 function updateGreeting() {
   const h = new Date().getHours();
   const g = h<12?'Good morning':'Good afternoon';
-  document.getElementById('greeting').textContent = g+', Jordan';
+  const name = currentUser || 'Jordan';
+  document.getElementById('greeting').textContent = g+', '+name;
+  
+  const topbarUser = document.querySelector('.topbar-user .eyebrow');
+  if (topbarUser) topbarUser.innerHTML = `${name} <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="margin-top:1px"><polyline points="6 9 12 15 18 9"/></svg>`;
 }
 
 /* ════════════════════════════════
@@ -1024,7 +1086,7 @@ function newSOP() {
   const sop = {
     id: 's'+Date.now(), title:'', deptId: S.deptFilter||S.depts[0]?.id||'',
     status:'draft', emoji:'📄', body: STARTER,
-    author:'Jordan Kim', updated:'Just now', versions: makeVersions(STARTER)
+    author: currentUser || 'Team Member', updated:'Just now', versions: makeVersions(STARTER)
   };
   S.sops.push(sop);
   persist();
@@ -1139,7 +1201,7 @@ function saveNewVersion() {
   sop.versions.forEach(v => v.current = false);
   sop.versions.unshift({
     v: newV,
-    author: 'Jordan Kim',
+    author: currentUser || 'Team Member',
     time: new Date().toLocaleString(),
     summary: 'Manual save',
     current: true,
@@ -1576,7 +1638,30 @@ document.addEventListener('keydown', e => {
 });
 
 /* GO */
-init();
+// bootApp() will be called by Firebase module below
+</script>
+
+<script type="module">
+  import { initializeApp } from "https://www.gstatic.com/firebasejs/10.9.0/firebase-app.js";
+  import { getFirestore, doc, setDoc, getDoc, onSnapshot } from "https://www.gstatic.com/firebasejs/10.9.0/firebase-firestore.js";
+
+  const firebaseConfig = {
+    apiKey: "AIzaSyCRS2fwIZkQ12ivMg55Q0uZnJXzhtDl9A8",
+    authDomain: "system-labs.firebaseapp.com",
+    projectId: "system-labs",
+    storageBucket: "system-labs.firebasestorage.app",
+    messagingSenderId: "824772452676",
+    appId: "1:824772452676:web:c3e1706534cf9c664a7711"
+  };
+
+  const app = initializeApp(firebaseConfig);
+  window.db = getFirestore(app);
+  window.fsDoc = doc;
+  window.fsSetDoc = setDoc;
+  window.fsGetDoc = getDoc;
+  window.fsOnSnapshot = onSnapshot;
+
+  window.bootApp();
 </script>
 <script type="module">
   import mermaid from 'https://cdn.jsdelivr.net/npm/mermaid@11/dist/mermaid.esm.min.mjs';
