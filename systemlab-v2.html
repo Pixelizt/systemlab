@@ -932,8 +932,11 @@ async function connectToWorkspace(workspaceId, userName) {
   renderSidebar();
   renderDashboard();
   updateGreeting();
-  const emailEl = document.getElementById('topbar-email');
-  if (emailEl) emailEl.textContent = userName || '';
+  // Use setTimeout to ensure DOM is fully painted before writing email
+  setTimeout(() => {
+    const emailEl = document.getElementById('topbar-email');
+    if (emailEl) emailEl.textContent = userName || '';
+  }, 0);
   if (S.sops.length === 0) document.getElementById('onboard-hint').style.display = 'inline-flex';
 
   // Try cloud sync in background — doesn't block login
@@ -943,9 +946,14 @@ async function connectToWorkspace(workspaceId, userName) {
 async function tryCloudSync(path, workspaceId) {
   const localKey = 'systemlab_ws_' + workspaceId;
   try {
+    // Attempt to reach Firebase
     let existing = null;
-    try { existing = await rtdbGet(path); } catch(e) { return; } // RTDB not reachable — silently skip
+    try { existing = await rtdbGet(path); } catch(e) {
+      console.warn('Firebase unreachable, running in local-only mode.');
+      return;
+    }
 
+    // Firebase is reachable — enable cloud writes from now on
     cloudEnabled = true;
     showToast('☁️ Cloud sync active');
 
@@ -958,16 +966,19 @@ async function tryCloudSync(path, workspaceId) {
         localStorage.setItem(localKey, JSON.stringify({depts: S.depts, sops: S.sops}));
         renderSidebar();
         renderDashboard();
-      } catch(e) {}
+        showToast('✅ Workspace synced from cloud');
+      } catch(e) { console.error('Failed to parse cloud data', e); }
     } else {
-      // Cloud is empty — push local data to cloud (first time setup only)
+      // Cloud node is empty — push current local data up (first-time setup)
+      console.log('No cloud data found, pushing local state to Firebase...');
       await rtdbSet(path, { data: JSON.stringify({depts: S.depts, sops: S.sops}) });
+      showToast('☁️ Workspace saved to cloud');
     }
 
-    // Start polling for live changes from other browsers
+    // Poll every 5s for live changes from other browsers/tabs
     if (unsubSnapshot) unsubSnapshot();
     unsubSnapshot = rtdbListen(path, (remoteData) => {
-      if (!remoteData) return;
+      if (!remoteData || !remoteData.data) return;
       try {
         const remoteS = JSON.parse(remoteData.data);
         const localStr = JSON.stringify({depts: S.depts, sops: S.sops});
@@ -978,6 +989,7 @@ async function tryCloudSync(path, workspaceId) {
           localStorage.setItem(localKey, JSON.stringify({depts: S.depts, sops: S.sops}));
           renderSidebar();
           renderDashboard();
+          showToast('🔄 Workspace updated from another session');
           const activeId = curSOP()?.id;
           if (activeId) {
             const updatedSOP = S.sops.find(s=>s.id===activeId);
@@ -987,9 +999,9 @@ async function tryCloudSync(path, workspaceId) {
             }
           }
         }
-      } catch(e) {}
+      } catch(e) { console.error('Poll parse error', e); }
     });
-  } catch(e) { /* cloud sync not available */ }
+  } catch(e) { console.error('Cloud sync setup failed', e); }
 }
 
 
@@ -999,9 +1011,11 @@ function persist() {
   localStorage.setItem('systemlab_v2', str);
   if (currentWorkspaceId) {
     localStorage.setItem('systemlab_ws_' + currentWorkspaceId, str);
-    if (cloudEnabled) {
-      rtdbSet('workspaces/' + currentWorkspaceId, { data: str }).catch(e => console.log('Sync skipped:', e.message));
-    }
+    // Always attempt Firebase write when we have a workspaceId.
+    // The fetch will simply fail quietly if Firebase is unreachable.
+    rtdbSet('workspaces/' + currentWorkspaceId, { data: str })
+      .then(() => { cloudEnabled = true; })
+      .catch(e => console.log('Firebase write skipped (offline):', e.message));
   }
 }
 
