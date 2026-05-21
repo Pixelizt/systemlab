@@ -375,11 +375,11 @@ select option{background:var(--canvas-card)}
 <div id="login-screen">
   <div class="login-card">
     <div class="login-logo"><em>system</em><strong>lab.</strong></div>
-    <div class="login-sub">Enter Workspace Passcode to join team</div>
-    <input type="text" id="l-name" placeholder="Your Name (e.g. John)" style="margin-bottom:12px">
+    <div class="login-sub">Sign in to your team workspace</div>
+    <input type="email" id="l-email" placeholder="Your Email (e.g. john@company.com)" style="margin-bottom:12px" onkeydown="if(event.key==='Enter')loginApp()">
     <input type="password" id="l-pass" placeholder="Workspace Passcode" style="margin-bottom:20px" onkeydown="if(event.key==='Enter')loginApp()">
     <button class="btn btn-primary" id="l-btn" style="padding:10px;justify-content:center" onclick="loginApp()">Enter Workspace</button>
-    <div class="login-err" id="l-err">Invalid credentials.</div>
+    <div class="login-err" id="l-err">Please enter your email and passcode.</div>
   </div>
 </div>
 
@@ -833,7 +833,8 @@ window.bootApp = function() {
   } else {
     try {
       const a = JSON.parse(auth);
-      connectToWorkspace(a.workspaceId, a.userName);
+      // Support both old (userName) and new (userEmail) auth format
+      connectToWorkspace(a.workspaceId, a.userEmail || a.userName || '');
     } catch(e) {
       document.getElementById('login-screen').style.display='flex';
       document.getElementById('app').style.display='none';
@@ -842,17 +843,22 @@ window.bootApp = function() {
 };
 
 async function loginApp() {
-  const name = document.getElementById('l-name').value.trim();
+  const email = document.getElementById('l-email').value.trim();
   const pass = document.getElementById('l-pass').value.trim();
-  if(!name || !pass) return document.getElementById('l-err').style.display='block';
-  
+  const emailValid = /^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(email);
+  if(!email || !pass || !emailValid) {
+    document.getElementById('l-err').textContent = 'Please enter a valid email and passcode.';
+    document.getElementById('l-err').style.display='block';
+    return;
+  }
   document.getElementById('l-btn').textContent = 'Connecting...';
   document.getElementById('l-err').style.display='none';
   try {
-    await connectToWorkspace(pass.toLowerCase(), name);
+    // Workspace is identified by passcode. Email is the user identifier.
+    await connectToWorkspace(pass.toLowerCase(), email);
   } catch(e) {
     console.error(e);
-    document.getElementById('l-err').textContent = "Failed to connect to workspace.";
+    document.getElementById('l-err').textContent = 'Failed to connect. Check your passcode and try again.';
     document.getElementById('l-err').style.display='block';
     document.getElementById('l-btn').textContent = 'Enter Workspace';
   }
@@ -913,7 +919,7 @@ async function connectToWorkspace(workspaceId, userName) {
     SEEDS.forEach((s,i) => S.sops.push({...s, id:'s'+i, versions:makeVersions(s.body)}));
   }
 
-  localStorage.setItem('systemlab_auth', JSON.stringify({workspaceId, userName}));
+  localStorage.setItem('systemlab_auth', JSON.stringify({workspaceId, userEmail: userName}));
   localStorage.setItem(localKey, JSON.stringify({depts: S.depts, sops: S.sops}));
 
   document.getElementById('login-screen').style.display = 'none';
@@ -932,12 +938,13 @@ async function tryCloudSync(path, workspaceId) {
   const localKey = 'systemlab_ws_' + workspaceId;
   try {
     let existing = null;
-    try { existing = await rtdbGet(path); } catch(e) { return; } // RTDB not set up yet — silently skip
+    try { existing = await rtdbGet(path); } catch(e) { return; } // RTDB not reachable — silently skip
 
     cloudEnabled = true;
     showToast('☁️ Cloud sync active');
 
-    if (existing) {
+    if (existing && existing.data) {
+      // Cloud has data — ALWAYS trust cloud as the source of truth
       try {
         const remoteS = JSON.parse(existing.data);
         S.depts = remoteS.depts || S.depts;
@@ -947,9 +954,11 @@ async function tryCloudSync(path, workspaceId) {
         renderDashboard();
       } catch(e) {}
     } else {
+      // Cloud is empty — push local data to cloud (first time setup only)
       await rtdbSet(path, { data: JSON.stringify({depts: S.depts, sops: S.sops}) });
     }
 
+    // Start polling for live changes from other browsers
     if (unsubSnapshot) unsubSnapshot();
     unsubSnapshot = rtdbListen(path, (remoteData) => {
       if (!remoteData) return;
