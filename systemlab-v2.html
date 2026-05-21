@@ -404,6 +404,10 @@ select option{background:var(--canvas-card)}
         <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87M16 3.13a4 4 0 0 1 0 7.75"/></svg>
         Departments
       </button>
+      <div style="display:flex;align-items:center;gap:7px;padding:4px 10px;border:1px solid var(--hairline);border-radius:var(--r-pill);margin-left:10px">
+        <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="var(--mute)" stroke-width="2" stroke-linecap="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+        <span id="topbar-email" style="font-size:11px;color:var(--mute);font-family:var(--mono);letter-spacing:0.01em;max-width:160px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap"></span>
+      </div>
       <span style="cursor:pointer; color:var(--mute); font-size:11px; margin-left:10px" onclick="logoutApp()">Logout</span>
     </div>
   </div>
@@ -928,6 +932,8 @@ async function connectToWorkspace(workspaceId, userName) {
   renderSidebar();
   renderDashboard();
   updateGreeting();
+  const emailEl = document.getElementById('topbar-email');
+  if (emailEl) emailEl.textContent = userName || '';
   if (S.sops.length === 0) document.getElementById('onboard-hint').style.display = 'inline-flex';
 
   // Try cloud sync in background — doesn't block login
