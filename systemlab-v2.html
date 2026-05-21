@@ -1355,12 +1355,12 @@ function updateWordCount() {
 
 function mdRender(md) {
   const lines = md.split('\n');
-  let html = '', inCode = false, codeBuf = '', codeType = '', inTable = false, tableBuf = [];
+  let html = '', inCode = false, codeBuf = '', codeType = '', inTable = false, tableBuf = [], tableStartLine = 0;
 
   const flushTable = () => {
     if (!tableBuf.length) return;
     const rows = tableBuf.filter(r=>!r.match(/^[\s|:-]+$/));
-    let t = '<table>';
+    let t = `<table data-line="${tableStartLine}" class="sync-block">`;
     rows.forEach((r,i) => {
       let rTrim = r.trim();
       if (rTrim.startsWith('|')) rTrim = rTrim.substring(1);
@@ -1372,34 +1372,36 @@ function mdRender(md) {
     tableBuf = []; inTable = false;
   };
 
-  for (const line of lines) {
+  for (let i = 0; i < lines.length; i++) {
+    const line = lines[i];
     if (line.startsWith('```')) {
-      if (!inCode) { inCode=true; codeType=line.slice(3).trim().toLowerCase(); codeBuf=''; continue; }
+      if (!inCode) { inCode=true; codeType=line.slice(3).trim().toLowerCase(); codeBuf=''; tableStartLine=i; continue; }
       else {
         inCode=false;
-        if (codeType==='mermaid') html+=mermaidRender(codeBuf);
-        else if (codeType==='loom') html+=loomRender(codeBuf.trim());
-        else html+=`<pre><code>${esc(codeBuf.trimEnd())}</code></pre>`;
+        if (codeType==='mermaid') html+=`<div data-line="${tableStartLine}" class="sync-block">${mermaidRender(codeBuf)}</div>`;
+        else if (codeType==='loom') html+=`<div data-line="${tableStartLine}" class="sync-block">${loomRender(codeBuf.trim())}</div>`;
+        else html+=`<pre data-line="${tableStartLine}" class="sync-block"><code>${esc(codeBuf.trimEnd())}</code></pre>`;
         codeBuf=''; codeType=''; continue;
       }
     }
     if (inCode) { codeBuf+=line+'\n'; continue; }
 
     if (line.trim().startsWith('|')) {
-      inTable=true; tableBuf.push(line); continue;
+      if (!inTable) { inTable=true; tableStartLine=i; }
+      tableBuf.push(line); continue;
     } else if (inTable) { flushTable(); }
 
-    if (line.startsWith('# '))    html+=`<h1>${inlineRender(line.slice(2))}</h1>`;
-    else if (line.startsWith('## '))  html+=`<h2>${inlineRender(line.slice(3))}</h2>`;
-    else if (line.startsWith('### ')) html+=`<h3>${inlineRender(line.slice(4))}</h3>`;
-    else if (line.startsWith('> '))   html+=`<blockquote><p>${inlineRender(line.slice(2))}</p></blockquote>`;
-    else if (line.startsWith('- [ ] '))html+=`<ul><li class="checklist-item"><span>☐</span><span>${inlineRender(line.slice(6))}</span></li></ul>`;
-    else if (line.startsWith('- [x] '))html+=`<ul><li class="checklist-item"><span style="color:var(--green)">☑</span><span style="text-decoration:line-through;color:var(--mute)">${inlineRender(line.slice(6))}</span></li></ul>`;
-    else if (line.startsWith('- ')||line.startsWith('* ')) html+=`<ul><li>${inlineRender(line.slice(2))}</li></ul>`;
-    else if (/^\d+\. /.test(line)) html+=`<ol><li>${inlineRender(line.replace(/^\d+\. /,''))}</li></ol>`;
-    else if (line.trim()==='---') html+=`<hr>`;
+    if (line.startsWith('# '))    html+=`<h1 data-line="${i}" class="sync-block">${inlineRender(line.slice(2))}</h1>`;
+    else if (line.startsWith('## '))  html+=`<h2 data-line="${i}" class="sync-block">${inlineRender(line.slice(3))}</h2>`;
+    else if (line.startsWith('### ')) html+=`<h3 data-line="${i}" class="sync-block">${inlineRender(line.slice(4))}</h3>`;
+    else if (line.startsWith('> '))   html+=`<blockquote data-line="${i}" class="sync-block"><p>${inlineRender(line.slice(2))}</p></blockquote>`;
+    else if (line.startsWith('- [ ] '))html+=`<ul data-line="${i}" class="sync-block"><li class="checklist-item"><span>☐</span><span>${inlineRender(line.slice(6))}</span></li></ul>`;
+    else if (line.startsWith('- [x] '))html+=`<ul data-line="${i}" class="sync-block"><li class="checklist-item"><span style="color:var(--green)">☑</span><span style="text-decoration:line-through;color:var(--mute)">${inlineRender(line.slice(6))}</span></li></ul>`;
+    else if (line.startsWith('- ')||line.startsWith('* ')) html+=`<ul data-line="${i}" class="sync-block"><li>${inlineRender(line.slice(2))}</li></ul>`;
+    else if (/^\d+\. /.test(line)) html+=`<ol data-line="${i}" class="sync-block"><li>${inlineRender(line.replace(/^\d+\. /,''))}</li></ol>`;
+    else if (line.trim()==='---') html+=`<hr data-line="${i}" class="sync-block">`;
     else if (line.trim()==='') html+='';
-    else html+=`<p>${inlineRender(line)}</p>`;
+    else html+=`<p data-line="${i}" class="sync-block">${inlineRender(line)}</p>`;
   }
   if (inTable) flushTable();
   return html;
@@ -1427,8 +1429,8 @@ function loomRender(raw) {
 }
 
 function mermaidRender(raw) {
-  if (!raw.trim()) return `<div class="mermaid-wrap"><span class="eyebrow">Empty flowchart</span></div>`;
-  return `<div class="mermaid-wrap" style="display:flex;justify-content:center"><pre class="mermaid">${esc(raw)}</pre></div>`;
+  if (!raw.trim()) return `<div class="mermaid-wrap" style="padding:0;background:none;border:none"><span class="eyebrow">Empty flowchart</span></div>`;
+  return `<div class="mermaid-wrap" style="display:flex;justify-content:center;padding:0;background:none;border:none"><pre class="mermaid">${esc(raw)}</pre></div>`;
 }
 
 function esc(s){return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;')}
@@ -1713,6 +1715,30 @@ document.addEventListener('keydown', e => {
   if ((e.metaKey||e.ctrlKey) && e.key==='k') { e.preventDefault(); openPalette(); return; }
   if ((e.metaKey||e.ctrlKey) && e.key==='s' && document.getElementById('v-editor').classList.contains('active')) { e.preventDefault(); saveDoc(); return; }
   if (e.key==='Escape') { closePalette(); closeFlowModal(); closeLoomModal(); closeDeptManager(); closeVersionDrawer(); document.getElementById('confirm-box').classList.remove('open'); }
+});
+
+/* ════════════════════════════════
+   SCROLL SYNC
+════════════════════════════════ */
+document.getElementById('ed-preview').addEventListener('click', e => {
+  if (canvasMode) return; // Don't trigger if editor is hidden
+  const block = e.target.closest('.sync-block');
+  if (block && block.hasAttribute('data-line')) {
+    const lineIndex = parseInt(block.getAttribute('data-line'), 10);
+    if (isNaN(lineIndex)) return;
+    const ta = document.getElementById('ed-ta');
+    const lines = ta.value.split('\n');
+    let offset = 0;
+    for (let i = 0; i < Math.min(lineIndex, lines.length); i++) {
+      offset += lines[i].length + 1; // +1 for newline character
+    }
+    ta.focus();
+    ta.setSelectionRange(offset, offset);
+    
+    // Some browsers need this slight trick to ensure they scroll to the selection
+    ta.blur();
+    setTimeout(() => { ta.focus(); }, 10);
+  }
 });
 
 /* GO */
