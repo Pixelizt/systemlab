@@ -449,7 +449,7 @@ select option{background:var(--canvas-card)}
     <!-- DASHBOARD -->
     <div id="v-dashboard" class="view active">
       <div class="dash-head">
-        <div class="dash-h1" id="greeting">Good morning, Jordan</div>
+        <div class="dash-h1" id="greeting">Loading...</div>
         <div class="dash-sub">Your team's operating system — every process, SOP, and system in one place.</div>
         <div class="hint-chip" id="onboard-hint" style="display:none">
           <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
@@ -800,7 +800,7 @@ Start → Step 1 → Step 2 → Review → Done
 `;
 
 const SEEDS = [
-  {title:'Customer Onboarding',deptId:'d2',status:'active',emoji:'🤝',body:`# Customer Onboarding\n\n## Purpose\n\nEnsure every new customer gets set up successfully within 7 days.\n\n## Process Steps\n\n### Step 1 — Contract Signed\n\nVerify contract in DocuSign and send welcome email within 2 hours.\n\n### Step 2 — Assign CSM\n\nTeam lead assigns a Customer Success Manager based on account size.\n\n### Step 3 — Kickoff Call\n\nSchedule within 48 hours. Use the kickoff call template.\n\n\`\`\`mermaid\nContract Signed → Assign CSM → Kickoff Call → Discovery → Setup → Go Live\n\`\`\`\n\n## Notes\n\n> 💡 Enterprise accounts get a dedicated CSM. SMB accounts are pooled.\n`,author:'Jordan Kim',updated:'2 days ago'},
+  {title:'Customer Onboarding',deptId:'d2',status:'active',emoji:'🤝',body:`# Customer Onboarding\n\n## Purpose\n\nEnsure every new customer gets set up successfully within 7 days.\n\n## Process Steps\n\n### Step 1 — Contract Signed\n\nVerify contract in DocuSign and send welcome email within 2 hours.\n\n### Step 2 — Assign CSM\n\nTeam lead assigns a Customer Success Manager based on account size.\n\n### Step 3 — Kickoff Call\n\nSchedule within 48 hours. Use the kickoff call template.\n\n\`\`\`mermaid\nContract Signed → Assign CSM → Kickoff Call → Discovery → Setup → Go Live\n\`\`\`\n\n## Notes\n\n> 💡 Enterprise accounts get a dedicated CSM. SMB accounts are pooled.\n`,author:'Team Member',updated:'2 days ago'},
   {title:'Sales Handoff Protocol',deptId:'d2',status:'active',emoji:'🤝',body:`# Sales Handoff Protocol\n\n## Purpose\n\nClean handoff from Sales to Customer Success.\n\n## Required Information\n\n- Contract value and term\n- Key stakeholders + decision maker\n- Agreed success metrics\n- Known risks or concerns\n\n## Checklist\n\n- [ ] CRM updated\n- [ ] Handoff doc complete\n- [ ] CS notified in Slack\n- [ ] Kickoff call booked\n`,author:'Sam Patel',updated:'5 days ago'},
   {title:'Incident Response',deptId:'d5',status:'active',emoji:'🚨',body:`# Incident Response Runbook\n\n## Severity Levels\n\n**P0** — Full outage. Page all engineers immediately.\n**P1** — Major degradation. On-call responds within 15 min.\n**P2** — Minor issue. Fix within business hours.\n\n## Steps\n\n1. Acknowledge in PagerDuty\n2. Post in #incidents Slack channel\n3. Start incident call\n4. Identify root cause\n5. Fix and verify\n6. Write post-mortem within 48h\n\n\`\`\`mermaid\nAlert → Acknowledge → Diagnose → Fix → Verify → Post-mortem\n\`\`\`\n`,author:'Alex Chen',updated:'1 week ago'},
   {title:'Employee Offboarding',deptId:'d4',status:'draft',emoji:'📋',body:`# Employee Offboarding Checklist\n\n## Day of Last Work\n\n- [ ] Revoke all system access\n- [ ] Retrieve hardware (laptop, badge, etc.)\n- [ ] Remove from all shared accounts\n- [ ] Notify IT and Finance\n\n## HR Tasks\n\n- [ ] Process final payroll\n- [ ] Send COBRA / benefits information\n- [ ] Schedule exit interview\n- [ ] Archive employee records\n`,author:'Maria L',updated:'3 days ago'},
@@ -815,7 +815,7 @@ const DIFFS = {
 };
 
 const ACTIVITY = [
-  {who:'Jordan Kim',color:'#ff7a17',what:'updated <strong>Customer Onboarding</strong>',time:'2h ago'},
+  {who:'Team Member',color:'#ff7a17',what:'updated <strong>Customer Onboarding</strong>',time:'2h ago'},
   {who:'Sam Patel',color:'#22c55e',what:'created <strong>Sales Handoff Protocol</strong>',time:'5h ago'},
   {who:'Alex Chen',color:'#f472b6',what:'reviewed <strong>Incident Response</strong>',time:'Yesterday'},
   {who:'Maria L',color:'#a78bfa',what:'drafted <strong>Employee Offboarding</strong>',time:'3 days ago'},
@@ -913,6 +913,21 @@ async function connectToWorkspace(workspaceId, userName) {
 
   const path = 'workspaces/' + workspaceId;
   const localKey = 'systemlab_ws_' + workspaceId;
+
+  // ─── OPTIMISTIC UI UPDATE ───
+  // Update email right away
+  const emailEl = document.getElementById('topbar-email');
+  if (emailEl) emailEl.textContent = userName || '';
+  
+  // Try to load workspace name from local storage immediately so greeting isn't blank
+  const localData = localStorage.getItem(localKey);
+  if (localData) {
+    try {
+      const d = JSON.parse(localData);
+      if (d.workspaceName) S.workspaceName = d.workspaceName;
+    } catch(e) {}
+  }
+  updateGreeting();
 
   // ─── STEP 1: Try cloud FIRST (this is the source of truth) ───
   let loadedFromCloud = false;
