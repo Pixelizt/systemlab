@@ -218,6 +218,7 @@ select option{background:var(--canvas-card)}
 /* FULL EDITOR (single pane canvas mode) */
 .ed-canvas-mode .ed-body{grid-template-columns:1fr}
 .ed-canvas-mode .ed-pane.preview-pane{display:none}
+.preview-full-mode .ed-body{grid-template-columns:1fr}
 .preview-full-mode .ed-pane:first-child{display:none}
 
 /* ── MODALS ── */
@@ -587,7 +588,7 @@ select option{background:var(--canvas-card)}
               <span class="eyebrow">Preview</span>
               <span class="eyebrow" style="color:var(--mute2); margin-left:8px">Live</span>
             </div>
-            <button class="btn btn-xs btn-ghost" onclick="togglePreviewFull()" title="Toggle Full Screen">⛶ Full Screen</button>
+            <button class="btn btn-xs btn-ghost" id="btn-preview-full" onclick="togglePreviewFull()" title="Toggle Full Screen">⛶ Full Screen</button>
           </div>
           <div class="ed-preview-scroll"><div class="md-out" id="ed-preview"></div></div>
         </div>
@@ -1644,6 +1645,7 @@ let previewFullMode = false;
 function togglePreviewFull() {
   previewFullMode = !previewFullMode;
   document.getElementById('ed-body').classList.toggle('preview-full-mode', previewFullMode);
+  document.getElementById('btn-preview-full').textContent = previewFullMode ? '⛶ Exit Full Screen' : '⛶ Full Screen';
 }
 
 /* ════════════════════════════════
