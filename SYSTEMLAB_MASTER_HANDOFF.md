@@ -110,35 +110,38 @@
 
 ---
 
-## ✅ Features Built (as of Session 06)
+## ✅ Features Built (as of Session 09)
 
-- [x] Auth login screen ("Workspace Passcode" team login system)
+- [x] Auth login screen — **Email + Workspace Passcode** (email validated, passcode = workspace key)
+- [x] Logged-in email badge displayed in topbar at all times
 - [x] Logout button in topbar
-- [x] Session persistence (stays logged in on refresh)
-- [x] Full data persistence — all SOPs and departments synced to Firebase in real-time
+- [x] Session persistence (stays logged in on refresh, backward-compatible with old `userName` auth)
+- [x] Full data persistence — all SOPs and departments synced to Firebase RTDB in real-time
+- [x] **Cloud sync always trusts Firebase as source of truth** (new-browser login pulls from cloud)
 - [x] Autosave every 1.2s while editing
-- [x] Dashboard with stats and quick actions (removed dummy team activity feed for a cleaner UI)
+- [x] Dashboard with stats and quick actions (no dummy data)
 - [x] Sidebar with department navigation
 - [x] All SOPs grid/list view with search + status filter
 - [x] SOP Editor — split pane (Markdown | Live Preview)
-- [x] Custom Markdown renderer (no library needed)
-- [x] Click-to-Edit Scroll Sync (clicking preview elements jumps editor to the exact line)
-- [x] Full Screen Preview Toggle (expands preview pane to 100% width)
-- [x] Mermaid.js flowchart support in editor
-- [x] Loom video embed support in editor
+- [x] Custom Markdown renderer — supports headings, bold, italic, links, images `![alt](url)`, code, tables, blockquotes, checklists, HR
+- [x] Click-to-Edit Scroll Sync (clicking preview jumps editor cursor to exact source line)
+- [x] Full Screen Preview Toggle (hides editor, preview takes 100% width)
+- [x] Mermaid.js flowchart support
+- [x] Loom video embed support
 - [x] Insert toolbar (H2, List, Checklist, Callout, Loom, Flowchart, Table, Divider)
-- [x] Flowchart builder modal (visual step editor)
+- [x] Flowchart builder modal
 - [x] Loom embed modal
-- [x] Department manager modal (add/remove/color picker)
-- [x] Version history drawer (with actual snapshots and restore)
-- [x] PDF Export (native browser print via `@media print`, robust CSS, light-mode SVG forced)
+- [x] Department manager modal
+- [x] Version history drawer — unified save logic (Save SOP auto-snapshots on change), restore fixed
+- [x] PDF Export — native `window.print()`, auto-names PDF from SOP title, light-mode SVG
 - [x] Command palette (`⌘K`)
 - [x] Confirm-delete dialog
 - [x] Toast notifications
 - [x] Word count + read time in editor footer
 - [x] Grid/List layout toggle
-- [x] Firebase RTDB cloud sync (background, non-blocking)
-- [x] Offline-first: works without internet, syncs when available
+- [x] Firebase RTDB cloud sync (background, non-blocking, offline-first)
+- [x] Favicon — premium `S.` lettermark PNG (black rounded square, matches LeadLab brand style)
+- [x] `SYSTEMLAB_USER_GUIDE.md` — comprehensive user-facing documentation
 
 ---
 
@@ -197,11 +200,19 @@ npx netlify-cli deploy --prod --dir=dist
 
 ## 🔄 Agent Handoff Protocol
 
+> **⚠️ MANDATORY — DO NOT SKIP. EVER.**
+> After EVERY task — no matter how small — you MUST:
+> 1. Append what was done to the latest `chat_history/` session file
+> 2. Update the features list + bug history in this file (`SYSTEMLAB_MASTER_HANDOFF.md`)
+> 3. Commit and push: `git add . && git commit -m "..." && git push origin main`
+>
+> Do NOT wait to be reminded. Do NOT batch it for later. Do it IMMEDIATELY after every change.
+
 Every session, the agent MUST:
 1. Read this file (`SYSTEMLAB_MASTER_HANDOFF.md`) first
 2. Read the latest `chat_history/` session file to understand recent changes
 3. Only edit `systemlab-v2.html` for app changes
-4. After completing work: update this handoff + write a new session log to `chat_history/`
+4. **After EVERY task: update this handoff + append to session chat log**
 5. Commit and push everything: `git add . && git commit -m "..." && git push origin main`
 
 **⚠️ Separation of concerns:**
@@ -215,4 +226,6 @@ Every session, the agent MUST:
 ## ⚠️ Critical Bug History
 - **Session 09 (Script Block)**: `printDoc()` had literal `<script>` tags inside a JS template literal. HTML parser closed the main `<script>` block early, making all JS after line ~1346 unreachable. Fixed by using `<${'script'}>` escape.
 - **Session 09 (PDF Export popup blocker)**: `window.open` used for PDF export was unreliable (popup blockers, missing CSS). Replaced with robust `@media print` rules and direct `window.print()` call.
-- **Session 09 (CSS Grid Selector)**: The CSS rule `.preview-full-mode .ed-body` was failing to collapse the editor layout to a single column because both classes exist on the same element. It was correctly rewritten as `.ed-body.preview-full-mode{grid-template-columns:1fr}`.
+- **Session 09 (CSS Grid Selector)**: The CSS rule `.preview-full-mode .ed-body` was failing to collapse the editor layout to a single column because both classes exist on the same element. Correctly rewritten as `.ed-body.preview-full-mode{grid-template-columns:1fr}`.
+- **Session 09 (Cloud Sync Wipe)**: On a new browser login, `tryCloudSync()` checked `if (existing)` — Firebase returned `{}` (truthy) but `existing.data` was undefined. Parse silently failed and local empty state was pushed to Firebase, wiping all data. Fixed: check `if (existing && existing.data)`. Firebase is always the source of truth.
+- **Session 09 (Markdown Image vs Link regex order)**: `![alt](url)` must be matched BEFORE `[text](url)` in `inlineRender()` or the image syntax is swallowed by the link regex, rendering only the alt text as a link.
