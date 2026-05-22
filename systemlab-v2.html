@@ -416,7 +416,7 @@ select option{background:var(--canvas-card)}
   <div id="sidebar">
     <div class="sidebar-scroll">
       <div class="sidebar-section">
-        <div class="nav-item active" data-view="dashboard" onclick="showView('dashboard',this)">
+        <div class="nav-item active" data-view="dashboard" onclick="ttShowView('dashboard',this)">
           <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/></svg>
           Dashboard
         </div>
@@ -447,7 +447,14 @@ select option{background:var(--canvas-card)}
   <div id="main">
 
     <!-- DASHBOARD -->
-    <div id="v-dashboard" class="view active">
+    <div id="v-dashboard" class="view active" style="display:flex; flex-direction:column; flex:1; overflow:hidden;">
+
+      <div class="dash-tabs">
+        <button class="dash-tab active" onclick="switchDashTab('overview')">Overview</button>
+        <button class="dash-tab" onclick="switchDashTab('teamtrack')">TeamTrack</button>
+      </div>
+      <div id="dash-overview-tab" style="display:flex; flex-direction:column; flex:1; overflow:hidden; overflow-y:auto">
+        
       <div class="dash-head">
         <div class="dash-h1" id="greeting">Loading...</div>
         <div class="dash-sub">Your team's operating system — every process, SOP, and system in one place.</div>
@@ -497,7 +504,111 @@ select option{background:var(--canvas-card)}
       </div>
     </div>
 
-    <!-- ALL SOPs / DEPT VIEW -->
+    
+      </div>
+      <div id="dash-tt-tab" style="display:none; flex-direction:column; flex:1; overflow:hidden">
+        <div id="tt-app" style="height:100%; border:none;">
+          
+
+<!-- SIDEBAR -->
+<div id="tt-sidebar">
+  <div class="sidebar-scroll">
+    <div class="sidebar-section">
+      <div class="tt-nav-item active" onclick="ttShowView('today',this)" data-view="today">
+        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/></svg>
+        Today
+      </div>
+      <div class="tt-nav-item" onclick="ttShowView('dashboard',this)" data-view="dashboard">
+        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg>
+        Dashboard
+      </div>
+      <div class="tt-nav-item" onclick="showView('history',this)" data-view="history">
+        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+        History
+      </div>
+    </div>
+    <div class="sidebar-section">
+      <div class="sidebar-lbl">Employees</div>
+      <div id="empNavList"></div>
+    </div>
+  </div>
+  <div class="sidebar-bottom" id="sidebarFooter"></div>
+</div>
+
+<!-- MAIN -->
+<div id="tt-main">
+
+  <!-- TODAY VIEW -->
+  <div id="v-today" class="tt-view active">
+    <div class="tt-view-head">
+      <div class="view-h1">Today</div>
+      <div class="view-sub" id="todayDateLabel"></div>
+    </div>
+    <div class="stats-strip" id="todayStats" style="grid-template-columns:repeat(4,1fr)"></div>
+    <div class="view-body">
+      <div class="section-hd"><div class="section-title">Team Status</div></div>
+      <div class="emp-grid" id="empGrid"></div>
+    </div>
+  </div>
+
+  <!-- DASHBOARD VIEW -->
+  <div id="v-dashboard" class="tt-view">
+    <div class="tt-view-head">
+      <div class="view-h1">Dashboard</div>
+      <div style="margin-left:auto">
+        <div class="month-sel">
+          <button onclick="shiftMonth(-1)">‹</button>
+          <div class="cur-month" id="curMonthLabel"></div>
+          <button onclick="shiftMonth(1)">›</button>
+        </div>
+      </div>
+    </div>
+    <div class="view-body" id="dashBody"></div>
+  </div>
+
+  <!-- EMPLOYEE DETAIL -->
+  <div id="v-employee" class="tt-view">
+    <div class="tt-view-head" id="empDetailHead"></div>
+    <div class="att-bar" id="empAttBar"></div>
+    <div class="stats-strip" id="empMetrics" style="grid-template-columns:repeat(4,1fr)"></div>
+    <div class="hour-prog-row" id="hourProg"></div>
+    <div class="task-toolbar">
+      <input id="taskInput" placeholder="What needs to get done today…" onkeydown="if(event.key==='Enter')addTask()">
+      <select id="taskDur">
+        <option value="5">5 min</option>
+        <option value="10">10 min</option>
+        <option value="15">15 min</option>
+        <option value="30">30 min</option>
+        <option value="45">45 min</option>
+        <option value="60" selected>1 hr</option>
+        <option value="90">1.5 hr</option>
+        <option value="120">2 hr</option>
+        <option value="180">3 hr</option>
+        <option value="240">4 hr</option>
+      </select>
+      <button class="btn btn-primary btn-sm" onclick="addTask()">Add</button>
+    </div>
+    <div class="task-thead">
+      <span></span><span>Task</span><span>Duration</span><span>Logged</span><span>Completed At</span><span></span>
+    </div>
+    <div class="task-scroll" id="taskList"></div>
+  </div>
+
+  <!-- HISTORY VIEW -->
+  <div id="v-history" class="tt-view">
+    <div class="tt-view-head">
+      <div class="view-h1">History</div>
+      <div class="view-sub">All attendance records</div>
+    </div>
+    <div class="hist-tabs" id="histTabs"></div>
+    <div style="flex:1;overflow-y:auto;padding:18px 24px" id="histBody"></div>
+  </div>
+
+</div>
+
+        </div>
+      </div>
+<!-- ALL SOPs / DEPT VIEW -->
     <div id="v-all" class="view">
       <div class="listview-head">
         <div class="listview-dot" id="lv-dot"></div>
@@ -756,10 +867,15 @@ let S = {
   ],
   sops: [],
   workspaceName: 'My Workspace',
-  cur: null,          // current SOP id in editor
-  deptFilter: null,   // dept id for list view
+  cur: null,
+  deptFilter: null,
   layout: 'grid',
   canvasMode: false,
+  
+  // TeamTrack data
+  employees: [],
+  att: {},
+  tasks: {}
 };
 
 const STARTER = `# SOP Title
@@ -1768,7 +1884,7 @@ const PAL_STATIC = [
   {g:'Actions',icon:'✍️',title:'New SOP',short:['⌘','N'],fn:()=>newSOP()},
   {g:'Actions',icon:'⬡', title:'Build Flowchart',short:[],fn:()=>openFlowModal()},
   {g:'Actions',icon:'🏢',title:'Manage Departments',short:[],fn:()=>openDeptManager()},
-  {g:'Navigate',icon:'🏠',title:'Go to Dashboard',short:['G','D'],fn:()=>showView('dashboard',document.querySelector('.nav-item[data-view="dashboard"]'))},
+  {g:'Navigate',icon:'🏠',title:'Go to Dashboard',short:['G','D'],fn:()=>ttShowView('dashboard',document.querySelector('.nav-item[data-view="dashboard"]'))},
   {g:'Navigate',icon:'📋',title:'All SOPs',short:['G','A'],fn:()=>showView('all',document.querySelector('.nav-item[data-view="all"]'))},
 ];
 
