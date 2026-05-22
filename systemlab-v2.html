@@ -2557,12 +2557,16 @@ function downloadMonthlyReport() {
 
 function deleteEmployee() {
   if (!curEmp) return;
-  requestConfirm("Remove Team Member", "Are you sure? This cannot be undone.", () => {
-    S.employees = S.employees.filter(x => x.id !== curEmp);
-    delete S.att[curEmp];
-    if(window.persist) persist();
-    showView('team');
-  });
+  if (!confirm("Are you sure you want to completely remove this team member? All their tasks and attendance data will be permanently deleted.")) return;
+  
+  S.employees = S.employees.filter(x => x.id !== curEmp);
+  if (S.att && S.att[curEmp]) delete S.att[curEmp];
+  if (S.tasks && S.tasks[curEmp]) delete S.tasks[curEmp];
+  
+  curEmp = null;
+  persist();
+  renderTeam();
+  showView('team', document.querySelector('.nav-item[data-view="team"]'));
 }
 
 function openAddEmpModal() {
