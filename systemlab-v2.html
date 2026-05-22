@@ -1068,6 +1068,9 @@ async function connectToWorkspace(workspaceId, userName) {
       S.depts = remoteS.depts || S.depts;
       S.sops = remoteS.sops || [];
       S.workspaceName = remoteS.workspaceName || S.workspaceName;
+      S.employees = remoteS.employees || [];
+      S.tasks = remoteS.tasks || [];
+      S.att = remoteS.att || {};
       loadedFromCloud = true;
       cloudEnabled = true;
       console.log('Loaded workspace from Firebase:', workspaceId);
@@ -1089,6 +1092,9 @@ async function connectToWorkspace(workspaceId, userName) {
         S.depts = d.depts || S.depts;
         S.sops = d.sops || [];
         S.workspaceName = d.workspaceName || S.workspaceName;
+        S.employees = d.employees || [];
+        S.tasks = d.tasks || [];
+        S.att = d.att || {};
         console.log('Loaded workspace from localStorage:', workspaceId);
       } catch(e) {}
     }
@@ -1104,11 +1110,11 @@ async function connectToWorkspace(workspaceId, userName) {
 
   // ─── STEP 4: Save auth + cache locally ───
   localStorage.setItem('systemlab_auth', JSON.stringify({workspaceId, userEmail: userName}));
-  localStorage.setItem(localKey, JSON.stringify({depts: S.depts, sops: S.sops, workspaceName: S.workspaceName}));
+  localStorage.setItem(localKey, JSON.stringify({depts: S.depts, sops: S.sops, workspaceName: S.workspaceName, employees: S.employees||[], tasks: S.tasks||[], att: S.att||{}}));
 
   // ─── STEP 5: If cloud was empty but we have data, push to cloud ───
   if (cloudEnabled && !loadedFromCloud) {
-    rtdbSet(path, { data: JSON.stringify({depts: S.depts, sops: S.sops, workspaceName: S.workspaceName}) })
+    rtdbSet(path, { data: JSON.stringify({depts: S.depts, sops: S.sops, workspaceName: S.workspaceName, employees: S.employees||[], tasks: S.tasks||[], att: S.att||{}}) })
       .then(() => console.log('Pushed local data to Firebase.'))
       .catch(e => console.log('Firebase push failed:', e.message));
   }
@@ -1136,13 +1142,16 @@ async function connectToWorkspace(workspaceId, userName) {
       if (!remoteData || !remoteData.data) return;
       try {
         const remoteS = JSON.parse(remoteData.data);
-        const localStr = JSON.stringify({depts: S.depts, sops: S.sops, workspaceName: S.workspaceName});
-        const remoteStr = JSON.stringify({depts: remoteS.depts, sops: remoteS.sops, workspaceName: remoteS.workspaceName});
+        const localStr = JSON.stringify({depts: S.depts, sops: S.sops, workspaceName: S.workspaceName, employees: S.employees||[], tasks: S.tasks||[], att: S.att||{}});
+        const remoteStr = JSON.stringify({depts: remoteS.depts, sops: remoteS.sops, workspaceName: remoteS.workspaceName, employees: remoteS.employees||[], tasks: remoteS.tasks||[], att: remoteS.att||{}});
         if (remoteStr !== localStr) {
           S.depts = remoteS.depts || S.depts;
           S.sops = remoteS.sops || S.sops;
           if (remoteS.workspaceName) S.workspaceName = remoteS.workspaceName;
-          localStorage.setItem(localKey, JSON.stringify({depts: S.depts, sops: S.sops, workspaceName: S.workspaceName}));
+          S.employees = remoteS.employees || S.employees || [];
+          S.tasks = remoteS.tasks || S.tasks || [];
+          S.att = remoteS.att || S.att || {};
+          localStorage.setItem(localKey, JSON.stringify({depts: S.depts, sops: S.sops, workspaceName: S.workspaceName, employees: S.employees, tasks: S.tasks, att: S.att}));
           renderSidebar();
           renderDashboard();
           updateGreeting();
@@ -1163,7 +1172,7 @@ async function connectToWorkspace(workspaceId, userName) {
 
 
 function persist() {
-  const payload = {depts: S.depts, sops: S.sops, workspaceName: S.workspaceName};
+  const payload = {depts: S.depts, sops: S.sops, workspaceName: S.workspaceName, employees: S.employees||[], tasks: S.tasks||[], att: S.att||{}};
   const str = JSON.stringify(payload);
   localStorage.setItem('systemlab_v2', str);
   if (currentWorkspaceId) {
@@ -1996,7 +2005,7 @@ document.getElementById('ed-preview').addEventListener('click', e => {
 
 
 // --- NATIVE TEAM LOGIC ---
-const TT_TODAY = new Date().toISOString().split('T')[0];
+let TT_TODAY = new Date().toISOString().split('T')[0];
 const TT_COLORS = [
   {bg:'#fecaca',fg:'#991b1b'},{bg:'#fef08a',fg:'#854d0e'},{bg:'#bbf7d0',fg:'#166534'},
   {bg:'#bfdbfe',fg:'#1e40af'},{bg:'#e9d5ff',fg:'#6b21a8'},{bg:'#fbcfe8',fg:'#9d174d'}
@@ -2010,6 +2019,28 @@ let curEmp = null;
 
 // --- TEAMTRACK ESSENTIALS ---
 if (!S.tasks) S.tasks = [];
+
+
+function changeTTDate(offset) {
+  const d = new Date(TT_TODAY);
+  d.setDate(d.getDate() + offset);
+  TT_TODAY = d.toISOString().split('T')[0];
+  
+  if (document.getElementById('v-team').classList.contains('active')) {
+    renderTeam();
+  } else if (document.getElementById('v-employee').classList.contains('active')) {
+    openEmployee(curEmp);
+  }
+}
+
+function formatTTDate() {
+  const today = new Date().toISOString().split('T')[0];
+  if (TT_TODAY === today) return 'Today';
+  const d = new Date(TT_TODAY);
+  // Add timezone offset to fix UTC shifting
+  const localDate = new Date(d.getTime() + d.getTimezoneOffset() * 60000);
+  return localDate.toLocaleDateString('en-US', {weekday:'short', month:'short', day:'numeric'});
+}
 
 function getTasks(eid, date) {
   return S.tasks.filter(t => t.empId === eid && t.date === date);
@@ -2062,7 +2093,19 @@ function renderTeam() {
   
   const absent = S.employees.filter(e => S.att[e.id] && S.att[e.id][TT_TODAY] === 'absent').length;
   
+
+  // Update header inside #v-team (we'll assume the user is looking at v-team)
+  // Let's inject a date navigator above the stats
   document.getElementById('team-stats').innerHTML = `
+    <div style="grid-column: 1 / -1; display:flex; justify-content:space-between; align-items:center; margin-bottom:8px">
+      <div style="display:flex; align-items:center; gap:8px; background:rgba(255,255,255,0.02); padding:4px; border-radius:var(--r-pill); border:1px solid var(--hairline);">
+        <button class="btn" style="padding:2px 8px; border:none; background:transparent" onclick="changeTTDate(-1)">❮</button>
+        <div style="font-size:12px; font-weight:600; min-width:80px; text-align:center; color:var(--ink)">${formatTTDate()}</div>
+        <button class="btn" style="padding:2px 8px; border:none; background:transparent" onclick="changeTTDate(1)">❯</button>
+      </div>
+      <button class="btn btn-sm" onclick="downloadMonthlyReport()"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="7 10 12 15 17 10"></polyline><line x1="12" y1="15" x2="12" y2="3"></line></svg> Download Report</button>
+    </div>
+
     <div class="stat-cell"><div class="stat-n">${total}</div><div class="stat-lbl eyebrow">Total Members</div></div>
     <div class="stat-cell"><div class="stat-n" style="color:var(--green)">${present}</div><div class="stat-lbl eyebrow">Present Today</div></div>
     <div class="stat-cell"><div class="stat-n" style="color:var(--red)">${absent}</div><div class="stat-lbl eyebrow">Absent Today</div></div>
@@ -2207,13 +2250,21 @@ function openEmployee(eid) {
   // HEAD
   const deptObj = S.depts.find(d => d.id === e.dept);
   const deptName = deptObj ? deptObj.name : 'No Dept';
-  document.getElementById('empDetailHead').innerHTML = `
+document.getElementById('empDetailHead').innerHTML = `
     <div class="emp-av" style="background:${c.bg};color:${c.fg};width:34px;height:34px;font-size:11px;font-weight:700;border-radius:50%;display:flex;align-items:center;justify-content:center;flex-shrink:0">${tt_initials(e.name)}</div>
     <div><div class="dash-h1" style="font-size:18px">${e.name}</div><div class="dash-sub" style="font-size:12px;margin-top:2px">${e.role || 'Role'} · ${deptName}</div></div>
-    <div style="margin-left:auto;display:flex;gap:6px">
+    
+    <div style="margin-left:auto; display:flex; align-items:center; gap:8px; background:rgba(255,255,255,0.02); padding:4px; border-radius:var(--r-pill); border:1px solid var(--hairline); margin-right:12px">
+      <button class="btn" style="padding:2px 8px; border:none; background:transparent" onclick="changeTTDate(-1)">❮</button>
+      <div style="font-size:12px; font-weight:600; min-width:80px; text-align:center; color:var(--ink)">${formatTTDate()}</div>
+      <button class="btn" style="padding:2px 8px; border:none; background:transparent" onclick="changeTTDate(1)">❯</button>
+    </div>
+    
+    <div style="display:flex;gap:6px">
       <button class="btn btn-danger btn-xs" onclick="deleteEmployee()">Remove Employee</button>
     </div>
   `;
+  // Ignore the old replacement by commenting out next lines in python logic
 
   // ATT BAR
   let attBtns = '';
@@ -2276,6 +2327,60 @@ function openEmployee(eid) {
   showView('employee', document.querySelector('.nav-item[data-view="team"]'));
 }
 
+
+
+function downloadMonthlyReport() {
+  const d = new Date(TT_TODAY);
+  // Get local year and month
+  const localDate = new Date(d.getTime() + d.getTimezoneOffset() * 60000);
+  const year = localDate.getFullYear();
+  const month = localDate.getMonth();
+  const monthName = localDate.toLocaleDateString('en-US', {month:'long'});
+  
+  let csv = 'Employee,Role,Days Present,Days Absent,Tasks Assigned,Tasks Completed,Completion %,Total Hours Logged\n';
+  
+  S.employees.forEach(e => {
+    let present = 0, absent = 0;
+    let assigned = 0, completed = 0;
+    let totalMins = 0;
+    
+    // Check all days in month
+    const daysInMonth = new Date(year, month + 1, 0).getDate();
+    for (let i = 1; i <= daysInMonth; i++) {
+      const dateStr = `${year}-${String(month+1).padStart(2,'0')}-${String(i).padStart(2,'0')}`;
+      
+      if (S.att[e.id] && S.att[e.id][dateStr]) {
+        if (S.att[e.id][dateStr].status === 'present') present++;
+        if (S.att[e.id][dateStr].status === 'absent') absent++;
+      }
+      
+      const dailyTasks = getTasks(e.id, dateStr);
+      assigned += dailyTasks.length;
+      dailyTasks.forEach(t => {
+        if (t.done) {
+          completed++;
+          totalMins += t.mins;
+        }
+      });
+    }
+    
+    const compPct = assigned > 0 ? Math.round((completed/assigned)*100) : 0;
+    const hours = (totalMins / 60).toFixed(1);
+    
+    csv += `"${e.name}","${e.role}",${present},${absent},${assigned},${completed},${compPct}%,${hours}\n`;
+  });
+  
+  const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.setAttribute('href', url);
+  a.setAttribute('download', `SystemLab_Report_${monthName}_${year}.csv`);
+  document.body.appendChild(a);
+  a.click();
+  document.body.removeChild(a);
+  
+  showToast(`📊 Downloaded report for ${monthName} ${year}`);
+}
 
 function deleteEmployee() {
   if (!curEmp) return;
