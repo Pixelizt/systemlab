@@ -680,8 +680,18 @@ select option{background:var(--canvas-card)}
       </div>
       <div class="stats-row" id="team-stats" style="margin-bottom:24px;"></div>
       <div class="dash-body">
-        <div class="panel-hd">Team Roster</div>
-        <div id="team-roster" style="background:var(--canvas-card); border:1px solid var(--hairline); border-radius:var(--r-md); overflow:hidden;">
+        <div style="display:flex; flex-direction:column; gap:16px;">
+          <div class="panel-hd" style="margin:0">Team Roster</div>
+          <div id="team-roster" style="background:var(--canvas-card); border:1px solid var(--hairline); border-radius:var(--r-md); overflow:hidden;">
+          </div>
+        </div>
+        <div style="display:flex; flex-direction:column; gap:24px;">
+          <div style="background:var(--canvas-card); border:1px solid var(--hairline); border-radius:var(--r-md); padding:20px;">
+            <div class="panel-hd" style="margin-bottom:16px">Team Highlights</div>
+            <div id="team-insights-content" style="display:flex; flex-direction:column; gap:16px;">
+              <!-- Populated by renderTeam -->
+            </div>
+          </div>
         </div>
       </div>
     </div>
@@ -2261,6 +2271,35 @@ function renderTeam() {
     }
   }
   document.getElementById('team-roster').innerHTML = rosterHtml;
+  
+  // Render Team Insights
+  let insightsHtml = '';
+  if (total === 0) {
+    insightsHtml = `<div style="font-size:12px; color:var(--mute)">No data to display.</div>`;
+  } else {
+    // Top Streaks
+    const streakers = S.employees.map(e => ({ name: e.name, ci: e.ci, streak: calcStreak(e.id) })).sort((a,b) => b.streak - a.streak).slice(0,3);
+    if (streakers[0] && streakers[0].streak > 0) {
+      insightsHtml += `<div style="font-size:11px; font-weight:600; color:var(--mute); text-transform:uppercase; letter-spacing:0.05em; margin-bottom:8px">🔥 Top Streaks</div>`;
+      streakers.forEach(s => {
+        if (s.streak > 0) {
+          insightsHtml += `
+            <div style="display:flex; align-items:center; justify-content:space-between; margin-bottom:12px">
+              <div style="display:flex; align-items:center; gap:8px">
+                <div style="width:20px;height:20px;border-radius:50%;background:${tt_col(s.ci).bg};color:${tt_col(s.ci).fg};display:flex;align-items:center;justify-content:center;font-size:8px;font-weight:700">${tt_initials(s.name)}</div>
+                <div style="font-size:13px; color:var(--body)">${s.name}</div>
+              </div>
+              <div style="font-size:12px; font-weight:600; color:var(--sunset)">${s.streak} Days</div>
+            </div>
+          `;
+        }
+      });
+    } else {
+      insightsHtml += `<div style="font-size:12px; color:var(--mute)">No active streaks yet. Mark attendance to build streaks.</div>`;
+    }
+  }
+  document.getElementById('team-insights-content').innerHTML = insightsHtml;
+
 }
 
 function setAtt(eid, status) {
