@@ -78,6 +78,39 @@ select option{background:var(--canvas-card)}
 .team-stat-val { font-size: 24px; font-weight: 600; color: var(--ink); font-family: var(--f-mono, monospace); }
 .team-stat-lbl { font-size: 11px; color: var(--mute); font-weight: 500; text-transform: uppercase; letter-spacing: 0.05em; }
 
+/* ── EMPLOYEE DETAIL */
+.att-bar{display:flex;align-items:center;gap:14px;padding:11px 24px;border-bottom:1px solid var(--hairline);flex-shrink:0;background:rgba(255,255,255,0.01)}
+.att-bar-left{display:flex;align-items:center;gap:14px;flex:1}
+#v-employee .time-block{display:flex;flex-direction:column;gap:2px}
+#v-employee .time-block-label{font-size:9px;font-weight:600;letter-spacing:0.1em;text-transform:uppercase;color:var(--mute2)}
+#v-employee .time-block-val{font-size:13px;font-weight:600;color:var(--ink)}
+.time-block-val.empty{color:var(--mute2);font-weight:400}
+#v-employee .divider-v{width:1px;height:30px;background:var(--hairline);flex-shrink:0}
+#v-employee .hour-prog-row{display:flex;align-items:center;gap:8px;padding:7px 24px;border-bottom:1px solid var(--hairline);flex-shrink:0;font-size:11px;font-weight:500;color:var(--mute)}
+#v-employee .hp-bar{flex:1;height:4px;background:var(--hairline);border-radius:2px;overflow:hidden}
+#v-employee .hp-fill{height:100%;border-radius:2px;background:var(--sunset);transition:width 0.3s}
+#v-employee .task-toolbar{display:flex;align-items:center;gap:7px;padding:9px 24px;border-bottom:1px solid var(--hairline);flex-shrink:0}
+.task-toolbar input{flex:1;padding:6px 11px;font-size:13px}
+.task-toolbar select{padding:6px 10px;font-size:12px}
+#v-employee .task-thead{display:grid;grid-template-columns:28px 1fr 72px 72px 100px 26px;padding:6px 24px;border-bottom:1px solid var(--hairline);flex-shrink:0;background:rgba(255,255,255,0.01)}
+.task-thead span{font-size:10px;font-weight:600;letter-spacing:0.07em;text-transform:uppercase;color:var(--mute2)}
+#v-employee .task-scroll{flex:1;overflow-y:auto}
+#v-employee .task-row{display:grid;grid-template-columns:28px 1fr 72px 72px 100px 26px;padding:9px 24px;border-bottom:1px solid var(--hairline);align-items:center;transition:background 0.1s}
+.task-row:hover{background:rgba(255,255,255,0.02)}
+.task-row.done{opacity:0.55}
+#v-employee .tcheck{width:18px;height:18px;border-radius:5px;border:1.5px solid var(--hairline-mid);cursor:pointer;display:flex;align-items:center;justify-content:center;transition:all 0.13s;background:transparent;flex-shrink:0}
+.tcheck:hover{border-color:rgba(255,255,255,0.3)}
+.tcheck.checked{background:var(--green);border-color:var(--green)}
+.tcheck.checked::after{content:'✓';font-size:10px;color:#000;font-weight:800}
+#v-employee .tname{font-size:13px;font-weight:400;color:var(--body);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;padding-right:8px}
+.tname.struck{text-decoration:line-through;color:var(--mute2)}
+#v-employee .tdur,.tlogged,.tdoneat{font-size:12px;font-weight:500;color:var(--mute)}
+#v-employee .tlogged.has{color:var(--green)}
+#v-employee .tdoneat.has{color:var(--mute);font-size:11px}
+#v-employee .tdel{width:22px;height:22px;border-radius:5px;border:none;background:transparent;color:var(--mute2);cursor:pointer;display:flex;align-items:center;justify-content:center;font-size:14px;line-height:1;transition:all 0.13s}
+.tdel:hover{color:var(--red);background:rgba(239,68,68,0.08)}
+
+
 /* APP SHELL */
 #app{display:none;grid-template-columns:220px 1fr;grid-template-rows:48px 1fr;height:100vh;overflow:hidden}
 
@@ -653,30 +686,36 @@ select option{background:var(--canvas-card)}
       </div>
     </div>
 
+
     <!-- EMPLOYEE DETAIL VIEW -->
     <div id="v-employee" class="view">
-      <div class="dash-head" style="border-bottom:1px solid var(--hairline); padding-bottom:20px; margin-bottom:20px; display:flex; gap:16px; align-items:center;">
+      <div class="dash-head" style="border-bottom:1px solid var(--hairline); padding-bottom:20px; display:flex; gap:16px; align-items:center;">
         <button class="btn btn-xs btn-ghost" onclick="showView('team')" style="padding:4px"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><polyline points="15 18 9 12 15 6"/></svg></button>
-        <div id="emp-det-avatar" class="emp-avatar" style="width:40px;height:40px;font-size:16px;"></div>
-        <div style="flex:1;">
-          <div class="dash-h1" id="emp-det-name">Name</div>
-          <div class="dash-sub" id="emp-det-role">Role</div>
-        </div>
-        <button class="btn btn-xs btn-danger" onclick="deleteEmployee()">Remove Employee</button>
+        <div id="empDetailHead" style="display:flex;gap:14px;align-items:center;flex:1"></div>
       </div>
-      <div class="dash-body">
-        <div class="panel-hd">Recent Activity</div>
-        <div id="emp-activity" style="padding:40px 0;">
-          <div class="empty">
-            <div class="empty-icon">
-              <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg>
-            </div>
-            <div style="font-weight:600;color:var(--body);margin-bottom:4px">No Activity Found</div>
-            <div style="font-size:12px">This employee hasn't executed any SOPs recently.</div>
-          </div>
-        </div>
+      <div id="empAttBar" class="att-bar"></div>
+      <div class="stats-row" id="empMetrics" style="border-bottom:1px solid var(--hairline)"></div>
+      <div class="hour-prog-row" id="hourProg"></div>
+      
+      <div class="task-toolbar">
+        <input type="text" id="newTaskInput" placeholder="Add a task for today (e.g. Daily Standup)" onkeydown="if(event.key==='Enter') addTask()">
+        <select id="newTaskDur">
+          <option value="15">15m</option>
+          <option value="30" selected>30m</option>
+          <option value="45">45m</option>
+          <option value="60">1h</option>
+          <option value="90">1.5h</option>
+          <option value="120">2h</option>
+          <option value="240">4h</option>
+        </select>
+        <button class="btn btn-primary btn-sm" onclick="addTask()">Add Task</button>
       </div>
+      <div class="task-thead">
+        <span></span><span>Task</span><span>Est</span><span>Logged</span><span>Done At</span><span></span>
+      </div>
+      <div class="task-scroll" id="taskList"></div>
     </div>
+
 
   </div>
 </div>
@@ -1968,12 +2007,59 @@ function tt_initials(n) { return n.split(' ').map(x=>x[0]).join('').substring(0,
 
 let curEmp = null;
 
+
+// --- TEAMTRACK ESSENTIALS ---
+if (!S.tasks) S.tasks = [];
+
+function getTasks(eid, date) {
+  return S.tasks.filter(t => t.empId === eid && t.date === date);
+}
+
+function getAtt(eid, date) {
+  if (!S.att[eid]) return null;
+  return S.att[eid][date] || null;
+}
+
+function fmtMins(m) {
+  const h = Math.floor(m / 60);
+  const mn = m % 60;
+  if (h > 0 && mn > 0) return `${h}h ${mn}m`;
+  if (h > 0) return `${h}h`;
+  return `${mn}m`;
+}
+
+function calcDur(start, end) {
+  if (!start || !end) return '';
+  const [h1, m1] = start.split(':').map(Number);
+  const [h2, m2] = end.split(':').map(Number);
+  let diff = (h2 * 60 + m2) - (h1 * 60 + m1);
+  if (diff < 0) diff += 24 * 60;
+  return fmtMins(diff);
+}
+
+function calcStreak(eid) {
+  const attMap = S.att[eid] || {};
+  const keys = Object.keys(attMap).sort().reverse();
+  let streak = 0;
+  for (const k of keys) {
+    if (attMap[k]?.status === 'present') streak++;
+    else break;
+  }
+  return streak;
+}
+
+function nowTime() {
+  const d = new Date();
+  return d.getHours().toString().padStart(2,'0')+':'+d.getMinutes().toString().padStart(2,'0');
+}
+
 function renderTeam() {
   if (!S.employees) S.employees = [];
   if (!S.att) S.att = {};
   
   const total = S.employees.length;
-  const present = S.employees.filter(e => S.att[e.id] && S.att[e.id][TT_TODAY] === 'present').length;
+  const present = S.employees.filter(e => S.att[e.id] && S.att[e.id][TT_TODAY]?.status === 'present').length;
+  
   const absent = S.employees.filter(e => S.att[e.id] && S.att[e.id][TT_TODAY] === 'absent').length;
   
   document.getElementById('team-stats').innerHTML = `
@@ -1988,17 +2074,34 @@ function renderTeam() {
   } else {
     S.employees.forEach(e => {
       const c = tt_col(e.ci);
-      const status = (S.att[e.id] && S.att[e.id][TT_TODAY]) || null;
+      const status = (S.att[e.id] && S.att[e.id][TT_TODAY]?.status) || null;
+const tasks = getTasks(e.id, TT_TODAY);
+      const done = tasks.filter(t => t.done).length;
+      const doneH = tasks.filter(t => t.done).reduce((a,t) => a + t.mins, 0) / 60;
+      const pct = Math.min(100, (doneH / 8) * 100);
       rosterHtml += `
         <div class="emp-row" onclick="openEmployee('${e.id}')">
           <div class="emp-avatar" style="background:${c.bg}; color:${c.fg}">${tt_initials(e.name)}</div>
-          <div class="emp-details">
+          <div class="emp-details" style="flex:2">
             <div class="emp-name">${e.name}</div>
             <div class="emp-role">${e.role || 'No Role'}</div>
           </div>
-          <div class="att-toggle" onclick="event.stopPropagation()">
-            <button class="att-btn present ${status==='present'?'active':''}" onclick="setAtt('${e.id}','present')">Present</button>
-            <button class="att-btn absent ${status==='absent'?'active':''}" onclick="setAtt('${e.id}','absent')">Absent</button>
+          <div style="flex: 3; display:flex; flex-direction:column; justify-content:center; gap:4px">
+            <div style="display:flex; justify-content:space-between; font-size:10px; color:var(--mute); font-weight:600; text-transform:uppercase; letter-spacing:0.05em">
+              <span>Task Progress</span>
+              <span style="color:var(--ink)">${pct.toFixed(0)}%</span>
+            </div>
+            <div style="height:4px; background:var(--hairline); border-radius:2px; overflow:hidden">
+              <div style="height:100%; background:var(--sunset); border-radius:2px; width:${pct}%"></div>
+            </div>
+            <div style="display:flex; gap:12px; font-size:11px; color:var(--mute); margin-top:2px">
+              <span><strong style="color:var(--body)">${done}/${tasks.length}</strong> Tasks Done</span>
+              <span><strong style="color:var(--body)">${doneH.toFixed(1)}h</strong> Logged</span>
+            </div>
+          </div>
+          <div class="att-toggle" onclick="event.stopPropagation()" style="margin-left:auto">
+            <button class="att-btn present ${status==='present'?'active':''}" onclick="markAtt('${e.id}','present')">Present</button>
+            <button class="att-btn absent ${status==='absent'?'active':''}" onclick="markAtt('${e.id}','absent')">Absent</button>
           </div>
         </div>
       `;
@@ -2018,20 +2121,161 @@ function setAtt(eid, status) {
   renderTeam();
 }
 
+
+// Add task functionality
+function addTask() {
+  const input = document.getElementById('newTaskInput');
+  const dur = document.getElementById('newTaskDur');
+  const name = input.value.trim();
+  if (!name) return;
+  
+  S.tasks.push({
+    id: 't_' + Date.now().toString(36),
+    empId: curEmp,
+    date: TT_TODAY,
+    name: name,
+    mins: parseInt(dur.value, 10),
+    done: false,
+    doneAt: null
+  });
+  
+  input.value = '';
+  if(window.persist) persist();
+  openEmployee(curEmp);
+}
+
+function toggleTask(tid) {
+  const t = S.tasks.find(x => x.id === tid);
+  if (!t) return;
+  t.done = !t.done;
+  t.doneAt = t.done ? nowTime() : null;
+  if(window.persist) persist();
+  openEmployee(curEmp);
+}
+
+function deleteTask(tid) {
+  S.tasks = S.tasks.filter(x => x.id !== tid);
+  if(window.persist) persist();
+  openEmployee(curEmp);
+}
+
+// Attendance
+function markAtt(eid, st) {
+  if (!S.att[eid]) S.att[eid] = {};
+  if (!S.att[eid][TT_TODAY]) S.att[eid][TT_TODAY] = {};
+  
+  S.att[eid][TT_TODAY].status = st;
+  
+  if (st === 'present' && !S.att[eid][TT_TODAY].loginTime) {
+    S.att[eid][TT_TODAY].loginTime = nowTime();
+  }
+  
+  if(window.persist) persist();
+  if (curEmp === eid && document.getElementById('v-employee').classList.contains('active')) {
+    openEmployee(eid);
+  } else {
+    renderTeam();
+  }
+}
+
+function markLogout(eid) {
+  if (S.att[eid] && S.att[eid][TT_TODAY]) {
+    S.att[eid][TT_TODAY].logoutTime = nowTime();
+    if(window.persist) persist();
+    openEmployee(curEmp);
+  }
+}
+
+// Override openEmployee
 function openEmployee(eid) {
   curEmp = eid;
   const e = S.employees.find(x => x.id === eid);
   if (!e) return;
   const c = tt_col(e.ci);
+  const tasks = getTasks(e.id, TT_TODAY);
+  const att = getAtt(e.id, TT_TODAY);
   
-  document.getElementById('emp-det-avatar').style.background = c.bg;
-  document.getElementById('emp-det-avatar').style.color = c.fg;
-  document.getElementById('emp-det-avatar').textContent = tt_initials(e.name);
-  document.getElementById('emp-det-name').textContent = e.name;
-  document.getElementById('emp-det-role').textContent = e.role || 'No Role';
+  const status = att?.status || null;
+  const loginT = att?.loginTime || null;
+  const logoutT = att?.logoutTime || null;
+  
+  const done = tasks.filter(t => t.done).length;
+  const doneH = tasks.filter(t => t.done).reduce((a,t) => a + t.mins, 0) / 60;
+  const totalH = tasks.reduce((a,t) => a + t.mins, 0) / 60;
+  const pct = Math.min(100, (doneH / 8) * 100);
+
+  // HEAD
+  const deptObj = S.depts.find(d => d.id === e.dept);
+  const deptName = deptObj ? deptObj.name : 'No Dept';
+  document.getElementById('empDetailHead').innerHTML = `
+    <div class="emp-av" style="background:${c.bg};color:${c.fg};width:34px;height:34px;font-size:11px;font-weight:700;border-radius:50%;display:flex;align-items:center;justify-content:center;flex-shrink:0">${tt_initials(e.name)}</div>
+    <div><div class="dash-h1" style="font-size:18px">${e.name}</div><div class="dash-sub" style="font-size:12px;margin-top:2px">${e.role || 'Role'} · ${deptName}</div></div>
+    <div style="margin-left:auto;display:flex;gap:6px">
+      <button class="btn btn-danger btn-xs" onclick="deleteEmployee()">Remove Employee</button>
+    </div>
+  `;
+
+  // ATT BAR
+  let attBtns = '';
+  if (!status) {
+    attBtns = `
+      <button class="btn btn-sm" style="color:var(--green);border-color:rgba(34,197,94,0.3)" onclick="markAtt('${e.id}','present')">Mark Present</button>
+      <button class="btn btn-sm" style="color:var(--red);border-color:rgba(239,68,68,0.3)" onclick="markAtt('${e.id}','absent')">Mark Absent</button>`;
+  } else if (status === 'present') {
+    attBtns = `
+      <button class="btn btn-sm" onclick="markLogout('${e.id}')" ${logoutT?'disabled style="opacity:0.35;cursor:not-allowed"':''}>${logoutT?'Logged Out':'Log Out Now'}</button>
+      <button class="btn btn-ghost btn-xs" onclick="markAtt('${e.id}','absent')">Switch Absent</button>`;
+  } else {
+    attBtns = `<button class="btn btn-xs" style="color:var(--green);border-color:rgba(34,197,94,0.3)" onclick="markAtt('${e.id}','present')">Switch Present</button>`;
+  }
+  
+  document.getElementById('empAttBar').innerHTML = `
+    <div class="att-bar-left">
+      ${status?`<span class="badge badge-${status}" style="font-size:10px;font-weight:600;text-transform:uppercase;padding:2px 8px;border-radius:999px;display:inline-flex;align-items:center;gap:4px; ${status==='present'?'color:var(--green);background:rgba(34,197,94,0.1);border:1px solid rgba(34,197,94,0.2)':'color:var(--red);background:rgba(239,68,68,0.1);border:1px solid rgba(239,68,68,0.2)'}"><span style="width:5px;height:5px;border-radius:50%;background:currentColor"></span>${status}</span>`:`<span style="font-size:11px;color:var(--mute);padding:2px 8px;border:1px solid var(--hairline);border-radius:999px">Not marked</span>`}
+      <div class="time-block"><span class="time-block-label">Login</span><span class="time-block-val ${loginT?'':'empty'}">${loginT||'—'}</span></div>
+      <div class="divider-v"></div>
+      <div class="time-block"><span class="time-block-label">Logout</span><span class="time-block-val ${logoutT?'':'empty'}">${logoutT||'—'}</span></div>
+      ${loginT&&logoutT?`<div class="divider-v"></div><div class="time-block"><span class="time-block-label">Duration</span><span class="time-block-val" style="color:var(--sunset)">${calcDur(loginT,logoutT)}</span></div>`:''}
+    </div>
+    <div style="display:flex;gap:6px">${attBtns}</div>`;
+
+  // METRICS
+  const compRate = tasks.length ? Math.round(done/tasks.length*100) : 0;
+  const streak = calcStreak(e.id);
+  document.getElementById('empMetrics').innerHTML = `
+    <div class="stat-cell" style="padding:16px 24px;border-right:1px solid var(--hairline);flex:1"><div class="stat-n" style="color:${c.fg};font-size:24px;font-weight:700">${done}/${tasks.length}</div><div style="font-size:10px;color:var(--mute);text-transform:uppercase;font-weight:600;letter-spacing:0.05em;margin-top:2px">Tasks Done</div></div>
+    <div class="stat-cell" style="padding:16px 24px;border-right:1px solid var(--hairline);flex:1"><div class="stat-n" style="color:var(--green);font-size:24px;font-weight:700">${doneH.toFixed(1)}h</div><div style="font-size:10px;color:var(--mute);text-transform:uppercase;font-weight:600;letter-spacing:0.05em;margin-top:2px">Hours Logged</div></div>
+    <div class="stat-cell" style="padding:16px 24px;border-right:1px solid var(--hairline);flex:1"><div class="stat-n" style="color:var(--sunset);font-size:24px;font-weight:700">${compRate}%</div><div style="font-size:10px;color:var(--mute);text-transform:uppercase;font-weight:600;letter-spacing:0.05em;margin-top:2px">Completion</div></div>
+    <div class="stat-cell" style="padding:16px 24px;flex:1"><div class="stat-n" style="color:var(--yellow);font-size:24px;font-weight:700">${streak}d</div><div style="font-size:10px;color:var(--mute);text-transform:uppercase;font-weight:600;letter-spacing:0.05em;margin-top:2px">Present Streak</div></div>`;
+
+  // HOUR PROGRESS
+  document.getElementById('hourProg').innerHTML = `
+    <div class="hp-bar"><div class="hp-fill" style="width:${pct.toFixed(0)}%"></div></div>
+    <span style="color:var(--sunset);font-weight:600">${doneH.toFixed(1)}h</span>
+    <span>of 8h target</span>
+    <span style="color:var(--mute2)">·</span>
+    <span>${Math.max(0,8-doneH).toFixed(1)}h left</span>
+    <span style="color:var(--mute2)">·</span>
+    <span style="color:var(--sunset);font-weight:600">${pct.toFixed(0)}%</span>`;
+
+  // TASKS
+  if (!tasks.length) {
+    document.getElementById('taskList').innerHTML = `<div class="empty" style="padding:40px;text-align:center;color:var(--mute)"><div style="font-size:28px;opacity:0.2;margin-bottom:8px">📋</div><div style="font-weight:600;color:var(--body)">No tasks yet</div><div style="font-size:12px;margin-top:4px">Add tasks above — plan for 8 hours</div></div>`;
+  } else {
+    document.getElementById('taskList').innerHTML = tasks.map(t => `
+      <div class="task-row ${t.done?'done':''}">
+        <div class="tcheck ${t.done?'checked':''}" onclick="toggleTask('${t.id}')"></div>
+        <div class="tname ${t.done?'struck':''}">${t.name}</div>
+        <div class="tdur">${fmtMins(t.mins)}</div>
+        <div class="tlogged ${t.done?'has':''}">${t.done ? fmtMins(t.mins) : '—'}</div>
+        <div class="tdoneat ${t.doneAt?'has':''}">${t.doneAt || '—'}</div>
+        <button class="tdel" onclick="deleteTask('${t.id}')">×</button>
+      </div>`).join('');
+  }
   
   showView('employee', document.querySelector('.nav-item[data-view="team"]'));
 }
+
 
 function deleteEmployee() {
   if (!curEmp) return;
