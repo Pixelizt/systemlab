@@ -92,10 +92,10 @@ select option{background:var(--canvas-card)}
 #v-employee .task-toolbar{display:flex;align-items:center;gap:7px;padding:9px 24px;border-bottom:1px solid var(--hairline);flex-shrink:0}
 .task-toolbar input{flex:1;padding:6px 11px;font-size:13px}
 .task-toolbar select{padding:6px 10px;font-size:12px}
-#v-employee .task-thead{display:grid;grid-template-columns:28px 1fr 72px 72px 100px 26px;padding:6px 24px;border-bottom:1px solid var(--hairline);flex-shrink:0;background:rgba(255,255,255,0.01)}
+#v-employee .task-thead{display:grid;grid-template-columns:28px 1fr 72px 72px 100px 52px;padding:6px 24px;border-bottom:1px solid var(--hairline);flex-shrink:0;background:rgba(255,255,255,0.01)}
 .task-thead span{font-size:10px;font-weight:600;letter-spacing:0.07em;text-transform:uppercase;color:var(--mute2)}
 #v-employee .task-scroll{flex:1;overflow-y:auto}
-#v-employee .task-row{display:grid;grid-template-columns:28px 1fr 72px 72px 100px 26px;padding:9px 24px;border-bottom:1px solid var(--hairline);align-items:center;transition:background 0.1s}
+#v-employee .task-row{display:grid;grid-template-columns:28px 1fr 72px 72px 100px 52px;padding:9px 24px;border-bottom:1px solid var(--hairline);align-items:center;transition:background 0.1s}
 .task-row:hover{background:rgba(255,255,255,0.02)}
 .task-row.done{opacity:0.55}
 #v-employee .tcheck{width:18px;height:18px;border-radius:5px;border:1.5px solid var(--hairline-mid);cursor:pointer;display:flex;align-items:center;justify-content:center;transition:all 0.13s;background:transparent;flex-shrink:0}
@@ -735,6 +735,53 @@ select option{background:var(--canvas-card)}
   </div>
 </div>
 
+
+
+<!-- EDIT TASK MODAL -->
+<div class="modal-overlay" id="edit-task-modal">
+  <div class="modal" style="width:400px">
+    <div class="modal-head">
+      <div class="modal-title">✎ Edit Task</div>
+      <button class="btn btn-xs btn-ghost" onclick="this.closest('.modal-overlay').classList.remove('open')">✕</button>
+    </div>
+    <div class="modal-body">
+      <input type="hidden" id="editTaskId">
+      <div class="form-group" style="margin-bottom:12px">
+        <label>Task Name</label>
+        <input type="text" id="editTaskName" class="inp" placeholder="Task Name">
+      </div>
+      <div class="form-group" style="margin-bottom:16px">
+        <label>Duration</label>
+        <select id="editTaskDur" class="inp">
+          <option value="5">5m</option>
+          <option value="15">15m</option>
+          <option value="30">30m</option>
+          <option value="45">45m</option>
+          <option value="60">1h</option>
+          <option value="90">1.5h</option>
+          <option value="120">2h</option>
+          <option value="240">4h</option>
+        </select>
+      </div>
+      <button class="btn btn-primary" style="width:100%; justify-content:center" onclick="saveEditTask()">Save Changes</button>
+    </div>
+  </div>
+</div>
+
+<!-- MEMO MODAL -->
+<div class="modal-overlay" id="memo-modal">
+  <div class="modal" style="width:400px">
+    <div class="modal-head">
+      <div class="modal-title">📝 Team Member Memo</div>
+      <button class="btn btn-xs btn-ghost" onclick="this.closest('.modal-overlay').classList.remove('open')">✕</button>
+    </div>
+    <div class="modal-body">
+      <div style="font-size:12px; color:var(--mute); margin-bottom:12px;">This is a general, persistent memo for this team member.</div>
+      <textarea id="empMemoText" class="inp" style="height:120px; resize:none; margin-bottom:16px;" placeholder="Write any notes, reminders, or details about this team member..."></textarea>
+      <button class="btn btn-primary" style="width:100%; justify-content:center" onclick="saveMemo()">Save Memo</button>
+    </div>
+  </div>
+</div>
 
 <!-- RECURRING MODAL -->
 <div class="modal-overlay" id="recurring-modal">
@@ -2538,7 +2585,15 @@ function openEmployee(eid) {
   const deptName = deptObj ? deptObj.name : 'No Dept';
 document.getElementById('empDetailHead').innerHTML = `
     
-    <div style="padding-left:8px;"><div class="dash-h1" style="font-size:18px">${e.name}</div><div class="dash-sub" style="font-size:12px;margin-top:2px">${e.role || 'Role'} · ${deptName}</div></div>
+    <div style="padding-left:8px;">
+      <div class="dash-h1" style="font-size:18px; display:flex; align-items:center; gap:8px;">
+        ${e.name}
+        <button class="btn btn-ghost btn-xs" style="padding:4px; color:${e.memo ? 'var(--blue)' : 'var(--mute)'}" onclick="openMemoModal()">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><polyline points="14 2 14 8 20 8"></polyline><line x1="16" y1="13" x2="8" y2="13"></line><line x1="16" y1="17" x2="8" y2="17"></line><polyline points="10 9 9 9 8 9"></polyline></svg>
+        </button>
+      </div>
+      <div class="dash-sub" style="font-size:12px;margin-top:2px">${e.role || 'Role'} · ${deptName}</div>
+    </div>
     
     <div style="margin-left:auto; display:flex; align-items:center; gap:8px; background:rgba(255,255,255,0.02); padding:4px; border-radius:var(--r-pill); border:1px solid var(--hairline); margin-right:12px">
       <button class="btn" style="padding:2px 8px; border:none; background:transparent" onclick="changeTTDate(-1)">❮</button>
@@ -2607,7 +2662,10 @@ document.getElementById('empDetailHead').innerHTML = `
         <div class="tdur">${fmtMins(t.mins)}</div>
         <div class="tlogged ${t.done?'has':''}">${t.done ? fmtMins(t.mins) : '—'}</div>
         <div class="tdoneat ${t.doneAt?'has':''}">${t.doneAt || '—'}</div>
-        <button class="tdel" onclick="deleteTask('${t.id}')">×</button>
+        <div style="display:flex; gap:4px">
+          <button class="tdel" style="font-size:12px; color:var(--mute)" onclick="openEditTask('${t.id}')">✎</button>
+          <button class="tdel" onclick="deleteTask('${t.id}')">×</button>
+        </div>
         ${!t.done ? `
           <div style="grid-column: 2 / -1; margin-top: 4px; margin-bottom: 8px; padding: 6px 12px; background: rgba(255,100,100,0.05); border: 1px solid rgba(255,100,100,0.1); border-radius: var(--r-sm); display: flex; align-items: center; justify-content: space-between;">
             ${t.note ? `<div style="font-size:11px; color:var(--red); font-weight:500;">Blocker: ${t.note}</div><button style="background:transparent;border:none;color:var(--mute);cursor:pointer;font-size:10px" onclick="promptNote('${t.id}')">Edit</button>` : `<button class="btn btn-xs btn-ghost" style="font-size:10px; color:var(--red); padding:2px 6px; margin:0;" onclick="promptNote('${t.id}')">+ Add Blocker Note</button>`}
