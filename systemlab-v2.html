@@ -770,14 +770,14 @@ select option{background:var(--canvas-card)}
 
 <!-- MEMO MODAL -->
 <div class="modal-overlay" id="memo-modal">
-  <div class="modal" style="width:400px">
+  <div class="modal" style="width:600px; max-width:90vw;">
     <div class="modal-head">
       <div class="modal-title">📝 Team Member Memo</div>
       <button class="btn btn-xs btn-ghost" onclick="this.closest('.modal-overlay').classList.remove('open')">✕</button>
     </div>
-    <div class="modal-body">
+    <div class="modal-body" style="display:flex; flex-direction:column;">
       <div style="font-size:12px; color:var(--mute); margin-bottom:12px;">This is a general, persistent memo for this team member.</div>
-      <textarea id="empMemoText" class="inp" style="height:120px; resize:none; margin-bottom:16px;" placeholder="Write any notes, reminders, or details about this team member..."></textarea>
+      <textarea id="empMemoText" class="inp" style="width:100%; box-sizing:border-box; height:300px; resize:none; margin-bottom:16px; font-family:var(--body-font); padding:12px;" placeholder="Write any notes, reminders, or details about this team member..."></textarea>
       <button class="btn btn-primary" style="width:100%; justify-content:center" onclick="saveMemo()">Save Memo</button>
     </div>
   </div>
@@ -1353,7 +1353,7 @@ async function connectToWorkspace(workspaceId, userName) {
 
 
 function persist() {
-  const payload = {depts: S.depts, sops: S.sops, workspaceName: S.workspaceName, employees: S.employees||[], tasks: S.tasks||[], att: S.att||{}};
+  const payload = {depts: S.depts, sops: S.sops, workspaceName: S.workspaceName, employees: S.employees||[], tasks: S.tasks||[], att: S.att||{}, recurring: S.recurring||[]};
   const str = JSON.stringify(payload);
   localStorage.setItem('systemlab_v2', str);
   if (currentWorkspaceId) {
