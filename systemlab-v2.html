@@ -1323,8 +1323,8 @@ async function connectToWorkspace(workspaceId, userName) {
       if (!remoteData || !remoteData.data) return;
       try {
         const remoteS = JSON.parse(remoteData.data);
-        const localStr = JSON.stringify({depts: S.depts, sops: S.sops, workspaceName: S.workspaceName, employees: S.employees||[], tasks: S.tasks||[], att: S.att||{}});
-        const remoteStr = JSON.stringify({depts: remoteS.depts, sops: remoteS.sops, workspaceName: remoteS.workspaceName, employees: remoteS.employees||[], tasks: remoteS.tasks||[], att: remoteS.att||{}});
+        const localStr = JSON.stringify({depts: S.depts, sops: S.sops, workspaceName: S.workspaceName, employees: S.employees||[], tasks: S.tasks||[], att: S.att||{}, recurring: S.recurring||[]});
+        const remoteStr = JSON.stringify({depts: remoteS.depts, sops: remoteS.sops, workspaceName: remoteS.workspaceName, employees: remoteS.employees||[], tasks: remoteS.tasks||[], att: remoteS.att||{}, recurring: remoteS.recurring||[]});
         if (remoteStr !== localStr) {
           S.depts = remoteS.depts || S.depts;
           S.sops = remoteS.sops || S.sops;
@@ -1332,12 +1332,16 @@ async function connectToWorkspace(workspaceId, userName) {
           S.employees = remoteS.employees || S.employees || [];
           S.tasks = remoteS.tasks || S.tasks || [];
           S.att = remoteS.att || S.att || {};
-          localStorage.setItem(localKey, JSON.stringify({depts: S.depts, sops: S.sops, workspaceName: S.workspaceName, employees: S.employees, tasks: S.tasks, att: S.att}));
+          S.recurring = remoteS.recurring || S.recurring || [];
+          localStorage.setItem(localKey, JSON.stringify({depts: S.depts, sops: S.sops, workspaceName: S.workspaceName, employees: S.employees, tasks: S.tasks, att: S.att, recurring: S.recurring}));
           renderSidebar();
           renderDashboard();
           updateGreeting();
+          if (typeof renderTeam === 'function') renderTeam();
+          if (typeof renderRecurringList === 'function') renderRecurringList();
+          if (typeof curEmp !== 'undefined' && curEmp && typeof openEmployee === 'function') openEmployee(curEmp);
           showToast('🔄 Workspace updated from another session');
-          const activeId = curSOP()?.id;
+          const activeId = typeof curSOP === 'function' ? curSOP()?.id : null;
           if (activeId) {
             const updatedSOP = S.sops.find(s=>s.id===activeId);
             if (updatedSOP && document.getElementById('ed-ta').value !== updatedSOP.body) {
