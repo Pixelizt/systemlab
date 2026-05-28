@@ -1360,7 +1360,7 @@ async function rtdbSet(path, data) {
 }
 
 function rtdbListen(path, callback) {
-  const url = `${RTDB_URL}/${path}.json`;
+  const url = `${RTDB_URL}/${path}.json?sse=${Date.now()}`;
   const evtSource = new EventSource(url);
   evtSource.addEventListener('put', (e) => {
     try {
