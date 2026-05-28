@@ -1389,7 +1389,9 @@ async function connectToWorkspace(workspaceId, userName) {
   const localKey = 'systemlab_ws_' + workspaceId;
 
   // ─── OPTIMISTIC UI UPDATE ───
-  // Update email right away
+  document.getElementById('login-screen').style.display = 'none';
+  document.getElementById('app').style.display = 'grid';
+  
   const emailEl = document.getElementById('topbar-email');
   if (emailEl) emailEl.textContent = userName || '';
   
@@ -1399,6 +1401,16 @@ async function connectToWorkspace(workspaceId, userName) {
     try {
       const d = JSON.parse(localData);
       if (d.workspaceName) S.workspaceName = d.workspaceName;
+      
+      // Optimistically render UI from local cache
+      S.depts = d.depts || S.depts;
+      S.sops = d.sops || [];
+      S.employees = d.employees || [];
+      S.tasks = d.tasks || [];
+      S.att = d.att || {};
+      S.leadgen = d.leadgen || {};
+      renderSidebar();
+      renderDashboard();
     } catch(e) {}
   }
   updateGreeting();
@@ -1466,8 +1478,6 @@ async function connectToWorkspace(workspaceId, userName) {
   }
 
   // ─── STEP 6: Show UI ───
-  document.getElementById('login-screen').style.display = 'none';
-  document.getElementById('app').style.display = 'grid';
 
   renderSidebar();
   renderDashboard();
@@ -3330,7 +3340,8 @@ function lgRenderPipeline() {
         const moData = S.leadgen[ch][mo];
         if (moData && moData.leads) {
           moData.leads.forEach(l => {
-            if (l.status === 'positive' || !l.status) leads.push({ ...l, channel: ch, monthKey: mo });
+            const isDone = l.status === 'meeting' || l.status === 'converted' || l.status === 'lost';
+            if (!isDone) leads.push({ ...l, channel: ch, monthKey: mo });
           });
         }
       });
