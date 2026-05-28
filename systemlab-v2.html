@@ -2579,10 +2579,11 @@ function renderTeam() {
   `;
 
   document.getElementById('team-stats').style.gridTemplateColumns = 'repeat(3, 1fr)';
+  document.getElementById('team-stats').style.gap = '24px';
   document.getElementById('team-stats').innerHTML = !TT_REPORT_MODE ? `
-    <div class="lg-stat"><div class="lg-stat-val">${total}</div><div class="lg-stat-label">Total Members</div></div>
-    <div class="lg-stat"><div class="lg-stat-val" style="color:var(--green)">${present}</div><div class="stat-lbl lg-stat-label">Present Today</div></div>
-    <div class="lg-stat"><div class="lg-stat-val" style="color:var(--red)">${absent}</div><div class="stat-lbl lg-stat-label">Absent Today</div></div>
+    <div class="lg-stat" style="padding: 24px;"><div class="lg-stat-val">${total}</div><div class="lg-stat-label">Total Members</div></div>
+    <div class="lg-stat" style="padding: 24px;"><div class="lg-stat-val" style="color:var(--green)">${present}</div><div class="stat-lbl lg-stat-label">Present Today</div></div>
+    <div class="lg-stat" style="padding: 24px;"><div class="lg-stat-val" style="color:var(--red)">${absent}</div><div class="stat-lbl lg-stat-label">Absent Today</div></div>
   ` : '';
 
   
