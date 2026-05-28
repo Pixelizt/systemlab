@@ -386,13 +386,13 @@ select option{background:var(--canvas-card)}
 
 /* PRINT STYLES */
 @media print {
-  html, body { height: auto !important; overflow: visible !important; }
+  html, body { height: auto !important; overflow: visible !important; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
   body { background: #fff !important; color: #000 !important; }
   #topbar, #sidebar, .ed-bar, .ed-meta, .ins-bar, .ed-foot, .pane-head, .ed-pane:first-child, .drawer-bg, .ver-drawer, .pal-overlay, #toast, .modal-overlay, .confirm-box, .lg-toolbar, .lg-tabs { display: none !important; }
   #app { display: block !important; height: auto !important; overflow: visible !important; }
   #main { display: block !important; height: auto !important; overflow: visible !important; background: #fff !important; }
   .view { display: none !important; }
-  .view.active { display: flex !important; height: auto !important; overflow: visible !important; }
+  .view.active { display: flex !important; height: auto !important; overflow: visible !important; flex-direction: column; }
   
   /* Editor specific print */
   .ed-body { display: block !important; height: auto !important; overflow: visible !important; }
@@ -426,8 +426,8 @@ select option{background:var(--canvas-card)}
   .mermaid-wrap svg .edgeLabel { background: #fff !important; color: #000 !important; }
 }
 /* ── LEAD GENERATION ── */
-.lg-head{display:flex;justify-content:space-between;align-items:flex-end;padding:24px 28px 18px;border-bottom:1px solid var(--hairline);flex-shrink:0}
-.lg-tabs{display:flex;gap:4px;padding:8px 28px;border-bottom:1px solid var(--hairline);flex-shrink:0;background:rgba(255,255,255,0.01)}
+.lg-head{display:flex;justify-content:space-between;align-items:flex-end;padding:32px 32px 18px;border-bottom:1px solid var(--hairline);flex-shrink:0}
+.lg-tabs{display:flex;gap:4px;padding:8px 32px;border-bottom:1px solid var(--hairline);flex-shrink:0;background:rgba(255,255,255,0.01)}
 .lg-tab{padding:6px 14px;font-size:12px;font-weight:500;color:var(--mute);border-radius:var(--r-pill);cursor:pointer;transition:all 0.13s;border:1px solid transparent;background:transparent}
 .lg-tab:hover{color:var(--body);background:rgba(255,255,255,0.03)}
 .lg-tab.active{color:var(--ink);background:rgba(255,255,255,0.06);border-color:var(--hairline)}
@@ -435,12 +435,12 @@ select option{background:var(--canvas-card)}
 .lg-month-nav button{padding:2px 8px;border:none;background:transparent;color:var(--mute);cursor:pointer;font-size:14px}
 .lg-month-nav button:hover{color:var(--ink)}
 .lg-month-label{font-size:12px;font-weight:600;min-width:100px;text-align:center;color:var(--ink)}
-.lg-stats{display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:12px;padding:16px 28px;border-bottom:1px solid var(--hairline);flex-shrink:0}
+.lg-stats{display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:12px;padding:16px 32px;border-bottom:1px solid var(--hairline);flex-shrink:0}
 .lg-stat{background:var(--canvas-card);border:1px solid var(--hairline);border-radius:var(--r-md);padding:14px 16px;display:flex;flex-direction:column;gap:4px}
 .lg-stat-val{font-size:22px;font-weight:600;letter-spacing:-0.03em;line-height:1}
 .lg-stat-label{font-size:10px;color:var(--mute);text-transform:uppercase;letter-spacing:0.06em;font-weight:600}
 .lg-stat-sub{font-size:10px;color:var(--mute2);font-family:var(--mono)}
-.lg-grid-wrap{flex:1;overflow:auto;padding:0 28px 28px}
+.lg-grid-wrap{flex:1;overflow:auto;padding:0 32px 32px}
 .lg-grid{width:100%;border-collapse:collapse;margin-top:14px}
 .lg-grid th{position:sticky;top:0;background:var(--canvas-card);font-size:10px;font-weight:600;letter-spacing:0.06em;text-transform:uppercase;color:var(--mute);padding:8px 10px;text-align:center;border-bottom:2px solid var(--hairline);z-index:2;white-space:nowrap}
 .lg-grid th:first-child,.lg-grid td:first-child{text-align:left;padding-left:14px}
@@ -817,12 +817,12 @@ select option{background:var(--canvas-card)}
 
     <!-- LEAD GENERATION VIEW -->
     <div id="v-leadgen" class="view">
-      <div class="lg-head" style="display:flex; justify-content:space-between; align-items:center; width:100%; flex-wrap:nowrap;">
+      <div class="lg-head">
         <div>
           <div class="dash-h1">Lead Generation</div>
           <div class="dash-sub">Track outreach, conversions, and revenue across all channels.</div>
         </div>
-        <div class="lg-month-nav" style="margin-left:auto;">
+        <div class="lg-month-nav">
           <button onclick="lgChangeMonth(-1)">❮</button>
           <div class="lg-month-label" id="lg-month-label">May 2026</div>
           <button onclick="lgChangeMonth(1)">❯</button>
@@ -884,9 +884,13 @@ select option{background:var(--canvas-card)}
         <label style="font-size:11px;color:var(--mute);margin-bottom:4px;display:block">Profile Link / Phone / Email</label>
         <input type="text" id="addLeadLink" class="inp" placeholder="https://linkedin.com/in/..." style="width:100%;box-sizing:border-box">
       </div>
-      <div class="form-group" style="margin-bottom:16px">
+      <div class="form-group" style="margin-bottom:12px">
         <label style="font-size:11px;color:var(--mute);margin-bottom:4px;display:block">Notes</label>
         <textarea id="addLeadNotes" class="inp" placeholder="What they said, next steps..." style="width:100%;box-sizing:border-box;height:80px;resize:none"></textarea>
+      </div>
+      <div class="form-group" style="margin-bottom:16px">
+        <label style="font-size:11px;color:var(--mute);margin-bottom:4px;display:block">Next Followup Date</label>
+        <input type="date" id="addLeadFollowupDate" class="inp" style="width:100%;box-sizing:border-box">
       </div>
       <button class="btn btn-primary" style="width:100%;justify-content:center" onclick="lgSaveLeadDetail()">Save Lead</button>
     </div>
@@ -3298,7 +3302,7 @@ function lgRenderOverview() {
   `;
 }
 
-let lgPipelineFilter = 'month';
+let lgPipelineFilter = 'all_channels';
 
 function lgSetPipelineFilter(filter) {
   lgPipelineFilter = filter;
@@ -3310,42 +3314,46 @@ function lgRenderPipeline() {
   document.getElementById('lg-btn-followups-month').style.display = 'none';
   document.getElementById('lg-btn-followups-all').style.display = 'none';
 
-  document.getElementById('lg-stats').innerHTML = `
-    <div style="display:flex; gap:8px;">
-      <button class="btn btn-sm ${lgPipelineFilter === 'month' ? 'active' : ''}" onclick="lgSetPipelineFilter('month')">This Month</button>
-      <button class="btn btn-sm ${lgPipelineFilter === 'all' ? 'active' : ''}" onclick="lgSetPipelineFilter('all')">All Time</button>
-    </div>
-  `;
+  let filterHtml = `<button class="btn btn-sm ${lgPipelineFilter === 'all_channels' ? 'active' : ''}" onclick="lgSetPipelineFilter('all_channels')">All Channels</button>`;
+  Object.keys(LG_CHANNELS).forEach(ch => {
+    filterHtml += `<button class="btn btn-sm ${lgPipelineFilter === ch ? 'active' : ''}" onclick="lgSetPipelineFilter('${ch}')">${LG_CHANNELS[ch].icon} ${LG_CHANNELS[ch].label}</button>`;
+  });
+
+  document.getElementById('lg-stats').style.flexDirection = 'row';
+  document.getElementById('lg-stats').innerHTML = `<div style="display:flex; gap:8px; align-items:center; flex-wrap:wrap; width:100%">${filterHtml}</div>`;
 
   let leads = [];
-  if (lgPipelineFilter === 'month') {
-    Object.keys(LG_CHANNELS).forEach(ch => {
-      const data = lgGetData(ch);
-      if (data.leads) {
-        data.leads.forEach(l => leads.push({ ...l, channel: ch, monthKey: lgMonthKey() }));
-      }
-    });
-  } else {
-    Object.keys(LG_CHANNELS).forEach(ch => {
-      if (S.leadgen && S.leadgen[ch]) {
-        Object.keys(S.leadgen[ch]).forEach(mo => {
-          const moData = S.leadgen[ch][mo];
-          if (moData && moData.leads) {
-            moData.leads.forEach(l => leads.push({ ...l, channel: ch, monthKey: mo }));
-          }
-        });
-      }
-    });
+  Object.keys(LG_CHANNELS).forEach(ch => {
+    if (lgPipelineFilter !== 'all_channels' && lgPipelineFilter !== ch) return;
+    if (S.leadgen && S.leadgen[ch]) {
+      Object.keys(S.leadgen[ch]).forEach(mo => {
+        const moData = S.leadgen[ch][mo];
+        if (moData && moData.leads) {
+          moData.leads.forEach(l => {
+            if (l.status === 'positive' || !l.status) leads.push({ ...l, channel: ch, monthKey: mo });
+          });
+        }
+      });
+    }
+  });
+
+  leads.sort((a, b) => {
+    if (a.followupDate && b.followupDate) return new Date(a.followupDate) - new Date(b.followupDate);
+    if (a.followupDate) return -1;
+    if (b.followupDate) return 1;
+    return new Date(b.createdAt) - new Date(a.createdAt);
+  });
+
+  if (leads.length === 0) {
+    document.getElementById('lg-grid-wrap').innerHTML = '<div style="padding:40px; text-align:center; color:var(--mute)">No active followups in Pipeline.</div>';
+    return;
   }
 
-  leads.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
-
-  const columns = {
-    'positive': { label: 'Positive Reply', count: 0, html: '' },
-    'meeting': { label: 'Meeting Booked', count: 0, html: '' },
-    'converted': { label: 'Converted Client', count: 0, html: '' },
-    'lost': { label: 'Lost / Passed', count: 0, html: '' }
-  };
+  let html = `
+    <div style="padding-top:16px; max-width:800px; margin:0 auto;">
+      <div style="font-size:14px; font-weight:600; margin-bottom:16px; color:var(--ink)">Positive Replies Pipeline (${leads.length})</div>
+      <div style="display:flex; flex-direction:column; gap:12px;">
+  `;
 
   leads.forEach(l => {
     let dateDisplay = lgDateLabel(l.day);
@@ -3353,48 +3361,44 @@ function lgRenderPipeline() {
       const [y, m] = l.monthKey.split('-');
       dateDisplay = new Date(parseInt(y), parseInt(m)-1, l.day).toLocaleDateString('en-US',{month:'short',day:'numeric',year:'2-digit'});
     }
-    const statusStr = l.status || 'positive';
-    if (!columns[statusStr]) return;
     
-    columns[statusStr].count++;
-    columns[statusStr].html += `
-      <div class="lg-pipeline-card">
-        <div class="lg-pipeline-card-title">
-          <span>${l.name}</span>
-          <span style="font-size:11px;font-weight:400;color:var(--mute)">${LG_CHANNELS[l.channel].label}</span>
+    html += `
+      <div class="lg-pipeline-card" style="display:grid; grid-template-columns: 2fr 3fr 1fr; gap:16px; align-items:start;">
+        <div>
+          <div style="font-weight:600; color:var(--ink); font-size:14px; margin-bottom:4px;">${l.name}</div>
+          <div style="font-size:11px; color:var(--mute); margin-bottom:8px;">${LG_CHANNELS[l.channel].icon} ${LG_CHANNELS[l.channel].label} • Added: ${dateDisplay}</div>
+          ${l.link ? `<a href="${l.link}" target="_blank" style="font-size:11px; color:var(--blue); text-decoration:none">🔗 View Profile</a>` : ''}
         </div>
-        <div class="lg-pipeline-card-meta">
-          <span>Added: ${dateDisplay}</span>
-          ${l.link ? `<a href="${l.link}" target="_blank" style="color:var(--blue)">Link</a>` : ''}
+        <div>
+          <div style="font-size:10px; text-transform:uppercase; letter-spacing:0.05em; color:var(--mute); margin-bottom:4px; font-weight:600">Notes & Next Steps</div>
+          <div style="font-size:12px; color:var(--body); line-height:1.4; background:rgba(0,0,0,0.02); padding:8px; border-radius:4px; min-height:40px;">${l.notes || 'No notes provided.'}</div>
         </div>
-        ${l.notes ? `<div class="lg-pipeline-card-notes">${l.notes}</div>` : ''}
-        <div class="lg-pipeline-card-actions">
-          <select onchange="lgUpdateLeadStatusGlobal('${l.channel}','${l.id}','${l.monthKey}',this.value)">
-            <option value="positive" ${statusStr === 'positive' ? 'selected' : ''}>Positive Reply</option>
-            <option value="meeting" ${statusStr === 'meeting' ? 'selected' : ''}>Meeting Booked</option>
-            <option value="converted" ${statusStr === 'converted' ? 'selected' : ''}>Converted</option>
-            <option value="lost" ${statusStr === 'lost' ? 'selected' : ''}>Lost</option>
-          </select>
-          <button class="tdel" onclick="lgDeleteLeadGlobal('${l.channel}','${l.id}','${l.monthKey}')" style="color:var(--mute2)">×</button>
+        <div style="display:flex; flex-direction:column; gap:8px;">
+          <div style="font-size:10px; text-transform:uppercase; letter-spacing:0.05em; color:var(--mute); font-weight:600">Next Followup</div>
+          <input type="date" class="lg-inp" style="font-size:11px; padding:4px; border-color:var(--hairline)" value="${l.followupDate || ''}" onchange="lgUpdateLeadFollowup('${l.channel}', '${l.id}', '${l.monthKey}', this.value)">
+          <div style="display:flex; gap:4px; margin-top:8px;">
+            <button class="btn btn-xs" style="flex:1" onclick="lgUpdateLeadStatusGlobal('${l.channel}','${l.id}','${l.monthKey}','meeting')">✅ Booked</button>
+            <button class="btn btn-xs" style="color:var(--mute2); background:transparent; border:1px solid var(--hairline)" onclick="lgDeleteLeadGlobal('${l.channel}','${l.id}','${l.monthKey}')">✕</button>
+          </div>
         </div>
       </div>
     `;
   });
 
-  document.getElementById('lg-grid-wrap').innerHTML = `
-    <div class="lg-pipeline">
-      ${Object.keys(columns).map(k => `
-        <div class="lg-pipeline-col">
-          <div class="lg-pipeline-title">
-            <span>${columns[k].label}</span>
-            <span class="badge badge-active">${columns[k].count}</span>
-          </div>
-          ${columns[k].html || '<div style="font-size:12px;color:var(--mute);text-align:center;padding:20px 0;">No leads here</div>'}
-        </div>
-      `).join('')}
-    </div>
-  `;
+  html += `</div></div>`;
+  document.getElementById('lg-grid-wrap').innerHTML = html;
 }
+
+function lgUpdateLeadFollowup(channel, leadId, monthKey, dateVal) {
+  const data = S.leadgen[channel][monthKey];
+  const lead = (data.leads || []).find(l => l.id === leadId);
+  if (lead) {
+    lead.followupDate = dateVal;
+    persist();
+    showToast('Followup date saved');
+  }
+}
+window.lgUpdateLeadFollowup = lgUpdateLeadFollowup;
 
 function lgUpdateLeadStatusGlobal(channel, leadId, monthKey, newStatus) {
   const data = S.leadgen[channel][monthKey];
@@ -3403,7 +3407,7 @@ function lgUpdateLeadStatusGlobal(channel, leadId, monthKey, newStatus) {
     lead.status = newStatus;
     persist();
     lgRenderPipeline();
-    showToast('Lead status updated');
+    showToast('Moved to Meetings Booked');
   }
 }
 window.lgUpdateLeadStatusGlobal = lgUpdateLeadStatusGlobal;
@@ -3421,37 +3425,24 @@ function lgRenderStats() {
   if (lgChannel === 'overview') return;
   const cfg = LG_CHANNELS[lgChannel];
   const t = lgCalcTotals(lgChannel);
-  const data = lgGetData(lgChannel);
-  let statsHtml = '';
-  cfg.cols.forEach((col, i) => {
-    const val = t[col] || 0;
-    const isRevenue = col === 'revenue';
-    const isMoney = col === 'adSpent';
-    const display = isRevenue || isMoney ? '₹' + val.toLocaleString('en-IN') : val.toLocaleString();
-    let sub = '';
-    if (col === 'accepted' && t.requestsSent > 0) sub = `${(val/t.requestsSent*100).toFixed(1)}% accept rate`;
-    if (col === 'positiveReplies' && t.accepted > 0) sub = `${(val/t.accepted*100).toFixed(1)}% reply rate`;
-    if (col === 'replies' && (t.messagesSent > 0 || t.emailsSent > 0)) {
-      const sent = t.messagesSent || t.emailsSent;
-      sub = `${(val/sent*100).toFixed(1)}% reply rate`;
-    }
-    if (col === 'meetingsBooked') {
-      const firstCol = t[cfg.cols[0]] || 0;
-      if (firstCol > 0) sub = `${(val/firstCol*100).toFixed(1)}% conv rate`;
-    }
-    if (col === 'clientsConverted' && t.meetingsBooked > 0) sub = `${(val/t.meetingsBooked*100).toFixed(1)}% close rate`;
-    if (col === 'connected' && t.callsMade > 0) sub = `${(val/t.callsMade*100).toFixed(1)}% connect rate`;
-    if (col === 'interested' && t.connected > 0) sub = `${(val/t.connected*100).toFixed(1)}% interest rate`;
-    if (col === 'opens' && t.emailsSent > 0) sub = `${(val/t.emailsSent*100).toFixed(1)}% open rate`;
-    statsHtml += `<div class="lg-stat"><div class="lg-stat-val" style="color:${cfg.color}">${display}</div><div class="lg-stat-label">${cfg.headers[i]}</div>${sub ? `<div class="lg-stat-sub">${sub}</div>` : ''}</div>`;
-  });
   
-  if (cfg.hasBudget) {
-    statsHtml = `<div class="lg-stat"><div class="lg-stat-val" style="color:var(--yellow)">₹${(data.budget || 0).toLocaleString('en-IN')}</div><div class="lg-stat-label">Ad Budget</div></div>` + statsHtml;
-  }
+  const primaryCol = cfg.cols[0];
+  const primaryVal = t[primaryCol] || 0;
+  const primaryLabel = cfg.headers[0];
   
-  document.getElementById('lg-stats').style.flexDirection = 'row';
-  document.getElementById('lg-stats').innerHTML = statsHtml;
+  const meetings = t.meetingsBooked || 0;
+  const converted = t.clientsConverted || 0;
+  const revenue = t.revenue || 0;
+  
+  const isPrimaryMoney = primaryCol === 'adSpent';
+  const primaryDisplay = isPrimaryMoney ? '₹' + primaryVal.toLocaleString('en-IN') : primaryVal.toLocaleString();
+
+  document.getElementById('lg-stats').innerHTML = `
+    <div class="lg-stat"><div class="lg-stat-val">${primaryDisplay}</div><div class="lg-stat-label">${primaryLabel}</div></div>
+    <div class="lg-stat"><div class="lg-stat-val">${meetings}</div><div class="lg-stat-label">Meetings Booked</div></div>
+    <div class="lg-stat"><div class="lg-stat-val">${converted}</div><div class="lg-stat-label">Clients Converted</div></div>
+    <div class="lg-stat"><div class="lg-stat-val">₹${revenue.toLocaleString('en-IN')}</div><div class="lg-stat-label">Total Revenue</div></div>
+  `;
 }
 
 function lgRenderChannel(ch) {
@@ -3552,6 +3543,7 @@ function lgOpenAddLead(ch, day, type) {
   document.getElementById('addLeadName').value = '';
   document.getElementById('addLeadLink').value = '';
   document.getElementById('addLeadNotes').value = '';
+  document.getElementById('addLeadFollowupDate').value = '';
   document.getElementById('add-lead-title').textContent = `+ Add Lead — ${LG_CHANNELS[ch].label} — ${lgDateLabel(day)}`;
   document.getElementById('add-lead-modal').classList.add('open');
   document.getElementById('addLeadName').focus();
@@ -3564,13 +3556,14 @@ function lgSaveLeadDetail() {
   const name = document.getElementById('addLeadName').value.trim();
   const link = document.getElementById('addLeadLink').value.trim();
   const notes = document.getElementById('addLeadNotes').value.trim();
+  const followupDate = document.getElementById('addLeadFollowupDate').value;
   if (!name) { showToast('Please enter a name','error'); return; }
 
   const data = lgGetData(lgChannel);
   if (!data.leads) data.leads = [];
   data.leads.push({
     id: 'lg_' + Date.now().toString(36),
-    day, type, name, link, notes,
+    day, type, name, link, notes, followupDate,
     createdAt: new Date().toISOString(),
     status: type
   });
@@ -3714,29 +3707,46 @@ function lgExportCSV() {
   } else {
     const cfg = LG_CHANNELS[lgChannel];
     const data = lgGetData(lgChannel);
-    csv += `${cfg.label} Report - ${lgMonthLabel()}\n\n`;
-    csv += 'Date,Day,' + cfg.headers.join(',') + '\n';
-    const totals = {};
-    cfg.cols.forEach(c => totals[c] = 0);
+    const totals = lgCalcTotals(lgChannel);
+    
+    csv += `SYSTEMLAB FOUNDER REPORT\n`;
+    csv += `Channel: ${cfg.label}\n`;
+    csv += `Month: ${lgMonthLabel()}\n\n`;
+
+    // Executive Summary
+    csv += `EXECUTIVE SUMMARY\n`;
+    cfg.cols.forEach((col, i) => {
+      csv += `${cfg.headers[i]},${totals[col] || 0}\n`;
+    });
+    if (totals.meetingsBooked > 0 && totals.clientsConverted > 0) {
+      csv += `Close Rate,${((totals.clientsConverted/totals.meetingsBooked)*100).toFixed(1)}%\n`;
+    }
+    csv += `\n`;
+
+    // Followups
+    if (data.leads && data.leads.length > 0) {
+      csv += `PENDING PIPELINE FOLLOWUPS\n`;
+      csv += `Added Date,Name,Profile Link,Notes,Next Followup Date\n`;
+      data.leads.forEach(l => {
+        if (l.status === 'positive' || !l.status) {
+          csv += `${lgDateLabel(l.day)},"${l.name}","${l.link || ''}","${l.notes || ''}",${l.followupDate || 'Not set'}\n`;
+        }
+      });
+      csv += `\n`;
+    }
+
+    // Daily Breakdown
+    csv += `DAILY BREAKDOWN\n`;
+    csv += `Date,Day,` + cfg.headers.join(',') + `\n`;
 
     for (let d = 1; d <= days; d++) {
       const row = data.days[d] || {};
       csv += `${lgDateLabel(d)},${lgDayLabel(d)},`;
-      csv += cfg.cols.map(c => {
-        const v = row[c] || 0;
-        totals[c] += v;
-        return v;
-      }).join(',') + '\n';
+      csv += cfg.cols.map(c => row[c] || 0).join(',') + `\n`;
     }
-    csv += 'Total,,' + cfg.cols.map(c => totals[c]).join(',') + '\n';
+    csv += `Total,,` + cfg.cols.map(c => totals[c] || 0).join(',') + `\n`;
 
-    if (data.leads && data.leads.length > 0) {
-      csv += '\nFollowups\nDate,Name,Link,Notes,Status\n';
-      data.leads.forEach(l => {
-        csv += `${lgDateLabel(l.day)},"${l.name}","${l.link || ''}","${l.notes || ''}",${l.status}\n`;
-      });
-    }
-    filename = `SystemLab_${cfg.label}_${lgMonthLabel().replace(' ','_')}.csv`;
+    filename = `SystemLab_${cfg.label}_Founder_Report_${lgMonthLabel().replace(' ','_')}.csv`;
   }
 
   const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
