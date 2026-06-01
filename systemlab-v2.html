@@ -3143,8 +3143,15 @@ window.renderRecurringList = renderRecurringList;
 
 function deleteRecurring(rid) {
   S.recurring = S.recurring.filter(r => r.id !== rid);
+  // Remove any tasks spawned from this recurring template that are NOT completed yet
+  if (S.tasks) {
+    S.tasks = S.tasks.filter(t => !(t.spawnedFrom === rid && !t.done));
+  }
   persist();
   renderRecurringList();
+  if (typeof curEmp !== 'undefined' && curEmp) {
+    openEmployee(curEmp);
+  }
 }
 window.deleteRecurring = deleteRecurring;
 
