@@ -1385,6 +1385,7 @@ function rtdbListen(path, callback) {
 }
 
 let cloudEnabled = false;
+let isSyncing = false;
 
 async function connectToWorkspace(workspaceId, userName) {
   currentWorkspaceId = workspaceId;
@@ -1479,7 +1480,7 @@ async function connectToWorkspace(workspaceId, userName) {
   localStorage.setItem(localKey, JSON.stringify({depts: S.depts, sops: S.sops, workspaceName: S.workspaceName, employees: S.employees||[], tasks: S.tasks||[], att: S.att||{}, recurring: S.recurring||[], leadgen: S.leadgen||{}}));
 
   // ─── STEP 4b: Spawn all recurring tasks for today on boot ───
-  spawnAllRecurring();
+  spawnRecurringForDate(getLocalISODate());
 
   // ─── STEP 5: If cloud was empty but we have data, push to cloud ───
   if (cloudEnabled && !loadedFromCloud) {
@@ -1508,9 +1509,17 @@ async function connectToWorkspace(workspaceId, userName) {
       if (!remoteData || !remoteData.data) return;
       try {
         const remoteS = JSON.parse(remoteData.data);
-        const localStr = JSON.stringify({depts: S.depts, sops: S.sops, workspaceName: S.workspaceName, employees: S.employees||[], tasks: S.tasks||[], att: S.att||{}, recurring: S.recurring||[], leadgen: S.leadgen||{}});
-        const remoteStr = JSON.stringify({depts: remoteS.depts, sops: remoteS.sops, workspaceName: remoteS.workspaceName, employees: remoteS.employees||[], tasks: remoteS.tasks||[], att: remoteS.att||{}, recurring: remoteS.recurring||[], leadgen: remoteS.leadgen||{}});
-        if (remoteStr !== localStr) {
+        if (!remoteS._rev) {
+          const localStr = JSON.stringify({depts: S.depts, sops: S.sops, workspaceName: S.workspaceName, employees: S.employees||[], tasks: S.tasks||[], att: S.att||{}, recurring: S.recurring||[], leadgen: S.leadgen||{}});
+          const remoteStr = JSON.stringify({depts: remoteS.depts, sops: remoteS.sops, workspaceName: remoteS.workspaceName, employees: remoteS.employees||[], tasks: remoteS.tasks||[], att: remoteS.att||{}, recurring: remoteS.recurring||[], leadgen: remoteS.leadgen||{}});
+          if (remoteStr === localStr) return;
+        } else if (remoteS._rev && S._rev && remoteS._rev === S._rev) {
+          return;
+        }
+        
+        isSyncing = true;
+        try {
+          S._rev = remoteS._rev || Date.now();
           S.depts = remoteS.depts || S.depts;
           S.sops = remoteS.sops || S.sops;
           if (remoteS.workspaceName) S.workspaceName = remoteS.workspaceName;
@@ -1519,7 +1528,7 @@ async function connectToWorkspace(workspaceId, userName) {
           S.att = remoteS.att || S.att || {};
           S.recurring = remoteS.recurring || S.recurring || [];
           S.leadgen = remoteS.leadgen || S.leadgen || {};
-          localStorage.setItem(localKey, JSON.stringify({depts: S.depts, sops: S.sops, workspaceName: S.workspaceName, employees: S.employees, tasks: S.tasks, att: S.att, recurring: S.recurring, leadgen: S.leadgen}));
+          localStorage.setItem(localKey, JSON.stringify({_rev: S._rev, depts: S.depts, sops: S.sops, workspaceName: S.workspaceName, employees: S.employees, tasks: S.tasks, att: S.att, recurring: S.recurring, leadgen: S.leadgen}));
           renderSidebar();
           renderDashboard();
           updateGreeting();
@@ -1544,6 +1553,8 @@ async function connectToWorkspace(workspaceId, userName) {
               }
             }
           }
+        } finally {
+          isSyncing = false;
         }
       } catch(e) { console.error('Poll parse error', e); }
     });
@@ -1555,10 +1566,17 @@ async function connectToWorkspace(workspaceId, userName) {
       const remoteData = await rtdbGet(path);
       if (!remoteData || !remoteData.data) return;
       const remoteS = JSON.parse(remoteData.data);
-      const localStr = JSON.stringify({depts: S.depts, sops: S.sops, workspaceName: S.workspaceName, employees: S.employees||[], tasks: S.tasks||[], att: S.att||{}, recurring: S.recurring||[], leadgen: S.leadgen||{}});
-      const remoteStr = JSON.stringify({depts: remoteS.depts, sops: remoteS.sops, workspaceName: remoteS.workspaceName, employees: remoteS.employees||[], tasks: remoteS.tasks||[], att: remoteS.att||{}, recurring: remoteS.recurring||[], leadgen: remoteS.leadgen||{}});
+      if (!remoteS._rev) {
+        const localStr = JSON.stringify({depts: S.depts, sops: S.sops, workspaceName: S.workspaceName, employees: S.employees||[], tasks: S.tasks||[], att: S.att||{}, recurring: S.recurring||[], leadgen: S.leadgen||{}});
+        const remoteStr = JSON.stringify({depts: remoteS.depts, sops: remoteS.sops, workspaceName: remoteS.workspaceName, employees: remoteS.employees||[], tasks: remoteS.tasks||[], att: remoteS.att||{}, recurring: remoteS.recurring||[], leadgen: remoteS.leadgen||{}});
+        if (remoteStr === localStr) return;
+      } else if (remoteS._rev && S._rev && remoteS._rev === S._rev) {
+        return;
+      }
       
-      if (remoteStr !== localStr) {
+      isSyncing = true;
+      try {
+        S._rev = remoteS._rev || Date.now();
         S.depts = remoteS.depts || S.depts;
         S.sops = remoteS.sops || S.sops;
         if (remoteS.workspaceName) S.workspaceName = remoteS.workspaceName;
@@ -1568,7 +1586,7 @@ async function connectToWorkspace(workspaceId, userName) {
         S.recurring = remoteS.recurring || S.recurring || [];
         S.leadgen = remoteS.leadgen || S.leadgen || {};
         
-        localStorage.setItem(localKey, JSON.stringify({depts: S.depts, sops: S.sops, workspaceName: S.workspaceName, employees: S.employees, tasks: S.tasks, att: S.att, recurring: S.recurring, leadgen: S.leadgen}));
+        localStorage.setItem(localKey, JSON.stringify({_rev: S._rev, depts: S.depts, sops: S.sops, workspaceName: S.workspaceName, employees: S.employees, tasks: S.tasks, att: S.att, recurring: S.recurring, leadgen: S.leadgen}));
         if (typeof renderSidebar === 'function') renderSidebar();
         if (typeof renderDashboard === 'function') renderDashboard();
         if (typeof updateGreeting === 'function') updateGreeting();
@@ -1585,26 +1603,31 @@ async function connectToWorkspace(workspaceId, userName) {
           openEmployee(curEmp);
         }
         if (typeof lgRender === 'function' && leadgenView && leadgenView.classList.contains('active')) lgRender();
+      } finally {
+        isSyncing = false;
       }
     } catch (err) {}
   }, 4000);
 }
 
 
-// ─── SPAWN ALL RECURRING TASKS ON BOOT ───
-// This runs once when the app loads to ensure all recurring tasks exist for today
-function spawnAllRecurring() {
+function getLocalISODate(d = new Date()) {
+  const tzo = d.getTimezoneOffset() * 60000;
+  return new Date(d.getTime() - tzo).toISOString().split('T')[0];
+}
+
+// ─── SPAWN RECURRING TASKS FOR A SPECIFIC DATE ───
+function spawnRecurringForDate(targetDate) {
   if (!S.recurring || !S.recurring.length || !S.employees || !S.employees.length) return;
   
-  const today = new Date().toISOString().split('T')[0];
-  const d = new Date(today + "T12:00:00Z");
+  const d = new Date(targetDate + "T12:00:00Z");
   const dayOfWeek = d.getUTCDay();
   const dayOfMonth = d.getUTCDate();
   let spawned = false;
   
   S.employees.forEach(emp => {
     const empRecurring = S.recurring.filter(r => r.empId === emp.id);
-    const empTasks = S.tasks.filter(t => t.empId === emp.id && t.date === today);
+    const empTasks = S.tasks.filter(t => t.empId === emp.id && t.date === targetDate);
     
     empRecurring.forEach(r => {
       // Skip if already spawned for today
@@ -1625,7 +1648,7 @@ function spawnAllRecurring() {
         S.tasks.push({
           id: 'tt_' + Math.random().toString(36).substr(2, 9),
           empId: emp.id,
-          date: today,
+          date: targetDate,
           name: r.name,
           mins: parseInt(r.mins),
           done: false,
@@ -1638,13 +1661,15 @@ function spawnAllRecurring() {
   });
   
   if (spawned) {
-    console.log('Auto-spawned recurring tasks for today');
+    console.log('Auto-spawned recurring tasks for ' + targetDate);
     persist();
   }
 }
 
 function persist() {
-  const payload = {depts: S.depts, sops: S.sops, workspaceName: S.workspaceName, employees: S.employees||[], tasks: S.tasks||[], att: S.att||{}, recurring: S.recurring||[], leadgen: S.leadgen||{}};
+  if (isSyncing) return;
+  S._rev = Date.now();
+  const payload = {_rev: S._rev, depts: S.depts, sops: S.sops, workspaceName: S.workspaceName, employees: S.employees||[], tasks: S.tasks||[], att: S.att||{}, recurring: S.recurring||[], leadgen: S.leadgen||{}};
   const str = JSON.stringify(payload);
   localStorage.setItem('systemlab_v2', str);
   if (currentWorkspaceId) {
@@ -2484,12 +2509,12 @@ document.getElementById('ed-preview').addEventListener('click', e => {
 
 
 // --- NATIVE TEAM LOGIC ---
-let TT_TODAY = new Date().toISOString().split('T')[0];
+let TT_TODAY = getLocalISODate();
 let isCustomDate = false;
 
 function refreshToday() {
   if (!isCustomDate) {
-    const realToday = new Date().toISOString().split('T')[0];
+    const realToday = getLocalISODate();
     if (TT_TODAY !== realToday) {
       TT_TODAY = realToday;
       if (typeof curEmp !== 'undefined' && curEmp && document.getElementById('v-employee').classList.contains('active')) {
@@ -2520,18 +2545,19 @@ if (!S.tasks) S.tasks = [];
 
 
 function changeTTMonth(offset) {
-  const d = new Date(TT_TODAY);
-  d.setMonth(d.getMonth() + offset);
-  TT_TODAY = d.toISOString().split('T')[0];
+  const [y, m, d] = TT_TODAY.split('-');
+  const dateObj = new Date(y, parseInt(m)-1 + offset, d);
+  TT_TODAY = getLocalISODate(dateObj);
   renderTeam();
 }
 
 function changeTTDate(offset) {
-  const d = new Date(TT_TODAY);
-  d.setDate(d.getDate() + offset);
-  TT_TODAY = d.toISOString().split('T')[0];
-  const realToday = new Date().toISOString().split('T')[0];
+  const [y, m, d] = TT_TODAY.split('-');
+  const dateObj = new Date(y, parseInt(m)-1, parseInt(d) + offset);
+  TT_TODAY = getLocalISODate(dateObj);
+  const realToday = getLocalISODate();
   isCustomDate = (TT_TODAY !== realToday);
+  spawnRecurringForDate(TT_TODAY);
   persist();
   if (document.getElementById('v-team').classList.contains('active')) {
     renderTeam();
@@ -2541,58 +2567,16 @@ function changeTTDate(offset) {
 }
 
 function formatTTDate() {
-  const today = new Date().toISOString().split('T')[0];
+  const today = getLocalISODate();
   if (TT_TODAY === today) return 'Today';
-  const d = new Date(TT_TODAY);
-  // Add timezone offset to fix UTC shifting
-  const localDate = new Date(d.getTime() + d.getTimezoneOffset() * 60000);
+  const [y, m, d] = TT_TODAY.split('-');
+  const localDate = new Date(y, parseInt(m)-1, d);
   return localDate.toLocaleDateString('en-US', {weekday:'short', month:'short', day:'numeric'});
 }
 
 function getTasks(eid, date) {
   if (!S.recurring) S.recurring = [];
   let tasks = S.tasks.filter(t => t.empId === eid && t.date === date);
-  
-  // JIT Spawn Logic for Recurring Tasks
-  let spawned = false;
-  const d = new Date(date + "T12:00:00Z"); // Safe noon parse
-  const dayOfWeek = d.getUTCDay(); // 0-6
-  const dayOfMonth = d.getUTCDate();
-  
-  S.recurring.filter(r => r.empId === eid).forEach(r => {
-    // Check if we already spawned this template for this date
-    if (tasks.find(t => t.spawnedFrom === r.id)) return;
-    
-    let shouldSpawn = false;
-    if (r.type === 'daily') shouldSpawn = true;
-    else if (r.type === 'weekly') {
-      const days = r.val.split(',').map(n => parseInt(n.trim()));
-      if (days.includes(dayOfWeek)) shouldSpawn = true;
-    }
-    else if (r.type === 'monthly') {
-      const dates = r.val.split(',').map(n => parseInt(n.trim()));
-      if (dates.includes(dayOfMonth)) shouldSpawn = true;
-    }
-    
-    if (shouldSpawn) {
-      const newTask = {
-        id: 'tt_' + Math.random().toString(36).substr(2, 9),
-        empId: eid,
-        date: date,
-        name: r.name,
-        mins: parseInt(r.mins),
-        done: false,
-        spawnedFrom: r.id,
-        order: Date.now()
-      };
-      S.tasks.push(newTask);
-      tasks.push(newTask);
-      spawned = true;
-    }
-  });
-  
-  if (spawned) persist();
-  
   return tasks.sort((a,b) => (a.order || 0) - (b.order || 0));
 }
 
