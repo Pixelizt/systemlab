@@ -1501,25 +1501,15 @@ async function connectToWorkspace(workspaceId, userName) {
   if (loadedFromCloud) showToast('✅ Workspace synced from cloud');
   else if (cloudEnabled) showToast('☁️ Cloud sync active');
 
-let isSyncing = false;
-
   // ─── STEP 7: Start live polling for changes from other browsers ───
   if (unsubSnapshot) unsubSnapshot();
     unsubSnapshot = rtdbListen(path, (remoteData) => {
       if (!remoteData || !remoteData.data) return;
       try {
         const remoteS = JSON.parse(remoteData.data);
-        if (remoteS._rev && S._rev && remoteS._rev === S._rev) return;
-        
-        if (!remoteS._rev) {
-          const localStr = JSON.stringify({depts: S.depts, sops: S.sops, workspaceName: S.workspaceName, employees: S.employees||[], tasks: S.tasks||[], att: S.att||{}, recurring: S.recurring||[], leadgen: S.leadgen||{}});
-          const remoteStr = JSON.stringify({depts: remoteS.depts, sops: remoteS.sops, workspaceName: remoteS.workspaceName, employees: remoteS.employees||[], tasks: remoteS.tasks||[], att: remoteS.att||{}, recurring: remoteS.recurring||[], leadgen: remoteS.leadgen||{}});
-          if (remoteStr === localStr) return;
-        }
-
-        isSyncing = true;
-        try {
-          S._rev = remoteS._rev || Date.now();
+        const localStr = JSON.stringify({depts: S.depts, sops: S.sops, workspaceName: S.workspaceName, employees: S.employees||[], tasks: S.tasks||[], att: S.att||{}, recurring: S.recurring||[], leadgen: S.leadgen||{}});
+        const remoteStr = JSON.stringify({depts: remoteS.depts, sops: remoteS.sops, workspaceName: remoteS.workspaceName, employees: remoteS.employees||[], tasks: remoteS.tasks||[], att: remoteS.att||{}, recurring: remoteS.recurring||[], leadgen: remoteS.leadgen||{}});
+        if (remoteStr !== localStr) {
           S.depts = remoteS.depts || S.depts;
           S.sops = remoteS.sops || S.sops;
           if (remoteS.workspaceName) S.workspaceName = remoteS.workspaceName;
@@ -1528,11 +1518,10 @@ let isSyncing = false;
           S.att = remoteS.att || S.att || {};
           S.recurring = remoteS.recurring || S.recurring || [];
           S.leadgen = remoteS.leadgen || S.leadgen || {};
-          localStorage.setItem(localKey, JSON.stringify({_rev: S._rev, depts: S.depts, sops: S.sops, workspaceName: S.workspaceName, employees: S.employees, tasks: S.tasks, att: S.att, recurring: S.recurring, leadgen: S.leadgen}));
-          
-          if (typeof renderSidebar === 'function') renderSidebar();
-          if (typeof renderDashboard === 'function') renderDashboard();
-          if (typeof updateGreeting === 'function') updateGreeting();
+          localStorage.setItem(localKey, JSON.stringify({depts: S.depts, sops: S.sops, workspaceName: S.workspaceName, employees: S.employees, tasks: S.tasks, att: S.att, recurring: S.recurring, leadgen: S.leadgen}));
+          renderSidebar();
+          renderDashboard();
+          updateGreeting();
           if (typeof renderTeam === 'function') renderTeam();
           if (typeof renderRecurringList === 'function') renderRecurringList();
           if (typeof curEmp !== 'undefined' && curEmp && typeof openEmployee === 'function') {
@@ -1542,7 +1531,6 @@ let isSyncing = false;
             }
           }
           if (typeof lgRender === 'function' && document.getElementById('v-leadgen').classList.contains('active')) lgRender();
-          
           showToast('🔄 Workspace updated from another session');
           const activeId = typeof curSOP === 'function' ? curSOP()?.id : null;
           if (activeId) {
@@ -1555,8 +1543,6 @@ let isSyncing = false;
               }
             }
           }
-        } finally {
-          isSyncing = false;
         }
       } catch(e) { console.error('Poll parse error', e); }
     });
@@ -1568,18 +1554,10 @@ let isSyncing = false;
       const remoteData = await rtdbGet(path);
       if (!remoteData || !remoteData.data) return;
       const remoteS = JSON.parse(remoteData.data);
+      const localStr = JSON.stringify({depts: S.depts, sops: S.sops, workspaceName: S.workspaceName, employees: S.employees||[], tasks: S.tasks||[], att: S.att||{}, recurring: S.recurring||[], leadgen: S.leadgen||{}});
+      const remoteStr = JSON.stringify({depts: remoteS.depts, sops: remoteS.sops, workspaceName: remoteS.workspaceName, employees: remoteS.employees||[], tasks: remoteS.tasks||[], att: remoteS.att||{}, recurring: remoteS.recurring||[], leadgen: remoteS.leadgen||{}});
       
-      if (remoteS._rev && S._rev && remoteS._rev === S._rev) return;
-      
-      if (!remoteS._rev) {
-        const localStr = JSON.stringify({depts: S.depts, sops: S.sops, workspaceName: S.workspaceName, employees: S.employees||[], tasks: S.tasks||[], att: S.att||{}, recurring: S.recurring||[], leadgen: S.leadgen||{}});
-        const remoteStr = JSON.stringify({depts: remoteS.depts, sops: remoteS.sops, workspaceName: remoteS.workspaceName, employees: remoteS.employees||[], tasks: remoteS.tasks||[], att: remoteS.att||{}, recurring: remoteS.recurring||[], leadgen: remoteS.leadgen||{}});
-        if (remoteStr === localStr) return;
-      }
-      
-      isSyncing = true;
-      try {
-        S._rev = remoteS._rev || Date.now();
+      if (remoteStr !== localStr) {
         S.depts = remoteS.depts || S.depts;
         S.sops = remoteS.sops || S.sops;
         if (remoteS.workspaceName) S.workspaceName = remoteS.workspaceName;
@@ -1589,8 +1567,7 @@ let isSyncing = false;
         S.recurring = remoteS.recurring || S.recurring || [];
         S.leadgen = remoteS.leadgen || S.leadgen || {};
         
-        localStorage.setItem(localKey, JSON.stringify({_rev: S._rev, depts: S.depts, sops: S.sops, workspaceName: S.workspaceName, employees: S.employees, tasks: S.tasks, att: S.att, recurring: S.recurring, leadgen: S.leadgen}));
-        
+        localStorage.setItem(localKey, JSON.stringify({depts: S.depts, sops: S.sops, workspaceName: S.workspaceName, employees: S.employees, tasks: S.tasks, att: S.att, recurring: S.recurring, leadgen: S.leadgen}));
         if (typeof renderSidebar === 'function') renderSidebar();
         if (typeof renderDashboard === 'function') renderDashboard();
         if (typeof updateGreeting === 'function') updateGreeting();
@@ -1607,8 +1584,6 @@ let isSyncing = false;
           openEmployee(curEmp);
         }
         if (typeof lgRender === 'function' && leadgenView && leadgenView.classList.contains('active')) lgRender();
-      } finally {
-        isSyncing = false;
       }
     } catch (err) {}
   }, 4000);
@@ -1668,9 +1643,7 @@ function spawnAllRecurring() {
 }
 
 function persist() {
-  if (isSyncing) return; // Prevent overwriting during a sync render
-  S._rev = Date.now();
-  const payload = {_rev: S._rev, depts: S.depts, sops: S.sops, workspaceName: S.workspaceName, employees: S.employees||[], tasks: S.tasks||[], att: S.att||{}, recurring: S.recurring||[], leadgen: S.leadgen||{}};
+  const payload = {depts: S.depts, sops: S.sops, workspaceName: S.workspaceName, employees: S.employees||[], tasks: S.tasks||[], att: S.att||{}, recurring: S.recurring||[], leadgen: S.leadgen||{}};
   const str = JSON.stringify(payload);
   localStorage.setItem('systemlab_v2', str);
   if (currentWorkspaceId) {
