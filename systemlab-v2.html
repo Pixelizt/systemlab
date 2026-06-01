@@ -25,6 +25,7 @@
   --shadow:0 0 0 1px var(--hairline);
   --serif:'Playfair Display',serif;
 }
+.sop-content * { box-sizing: border-box; }
 html,body{height:100%;overflow:hidden;background:var(--canvas)}
 body{font-family:var(--sans);font-size:14px;line-height:1.5;color:var(--ink);-webkit-font-smoothing:antialiased}
 ::-webkit-scrollbar{width:4px;height:4px}
@@ -2066,7 +2067,7 @@ function insDivider()  { insAt('---'); }
    MARKDOWN RENDERER
 ════════════════════════════════ */
 async function updatePreview() {
-  document.getElementById('ed-preview').innerHTML = mdRender(document.getElementById('ed-ta').value);
+  document.getElementById('ed-preview').innerHTML = `<div class="sop-content">${mdRender(document.getElementById('ed-ta').value)}</div>`;
   if (window.mermaid) {
     try {
       await window.mermaid.run({ querySelector: '.mermaid' });
@@ -2130,6 +2131,7 @@ function mdRender(md) {
     else if (/^\d+\. /.test(line)) html+=`<ol data-line="${i}" class="sync-block"><li>${inlineRender(line.replace(/^\d+\. /,''))}</li></ol>`;
     else if (line.trim()==='---') html+=`<hr data-line="${i}" class="sync-block">`;
     else if (line.trim()==='') html+='';
+    else if (line.trim().startsWith('<')) html+=`${inlineRender(line)}\n`;
     else html+=`<p data-line="${i}" class="sync-block">${inlineRender(line)}</p>`;
   }
   if (inTable) flushTable();
@@ -2137,7 +2139,7 @@ function mdRender(md) {
 }
 
 function inlineRender(s) {
-  s = esc(s);
+  s = String(s);
   s = s.replace(/\*\*(.+?)\*\*/g,'<strong>$1</strong>');
   s = s.replace(/\*(.+?)\*/g,'<em>$1</em>');
   s = s.replace(/`(.+?)`/g,'<code>$1</code>');
@@ -2354,7 +2356,7 @@ function selectVer(i) {
     document.getElementById('diff-content').innerHTML = `<div style="padding:10px 16px"><span class="eyebrow" style="color:var(--mute)">This is the current version</span></div>`;
     return;
   }
-  document.getElementById('diff-content').innerHTML = `<div class="md-out" style="padding:14px;background:var(--canvas-soft);overflow-y:auto;flex:1">${mdRender(v.body||'')}</div>`;
+  document.getElementById('diff-content').innerHTML = `<div class="md-out sop-content" style="padding:14px;background:var(--canvas-soft);overflow-y:auto;flex:1">${mdRender(v.body||'')}</div>`;
 }
 
 function restoreVer(i) { 
