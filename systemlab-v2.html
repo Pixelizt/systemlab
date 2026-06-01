@@ -3,6 +3,9 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
+<meta http-equiv="Pragma" content="no-cache">
+<meta http-equiv="Expires" content="0">
 <title>SystemLab — Team Operating System</title>
 <link rel="icon" type="image/png" href="favicon.png" sizes="48x48">
 <link rel="icon" type="image/png" href="favicon.png" sizes="512x512">
@@ -1402,13 +1405,18 @@ async function connectToWorkspace(workspaceId, userName) {
   if (emailEl) emailEl.textContent = userName || '';
   
   // Try to load workspace name from local storage immediately so greeting isn't blank
+  let localRev = 0;
+  let localParsed = null;
   const localData = localStorage.getItem(localKey);
   if (localData) {
     try {
       const d = JSON.parse(localData);
+      localParsed = d;
+      localRev = d._rev || 0;
       if (d.workspaceName) S.workspaceName = d.workspaceName;
       
       // Optimistically render UI from local cache
+      S._rev = localRev;
       S.depts = d.depts || S.depts;
       S.sops = d.sops || [];
       S.employees = d.employees || [];
@@ -1422,24 +1430,35 @@ async function connectToWorkspace(workspaceId, userName) {
   }
   updateGreeting();
 
-  // ─── STEP 1: Try cloud FIRST (this is the source of truth) ───
+  // ─── STEP 1: Try cloud and COMPARE with local ───
   let loadedFromCloud = false;
+  let cloudRev = 0;
   try {
     const existing = await rtdbGet(path);
     if (existing && existing.data) {
       const remoteS = JSON.parse(existing.data);
-      S._rev = remoteS._rev || Date.now();
-      S.depts = remoteS.depts || S.depts;
-      S.sops = remoteS.sops || [];
-      S.workspaceName = remoteS.workspaceName || S.workspaceName;
-      S.employees = remoteS.employees || [];
-      S.tasks = remoteS.tasks || [];
-      S.att = remoteS.att || {};
-      S.recurring = remoteS.recurring || [];
-      S.leadgen = remoteS.leadgen || {};
-      loadedFromCloud = true;
+      cloudRev = remoteS._rev || 0;
       cloudEnabled = true;
-      console.log('Loaded workspace from Firebase:', workspaceId, '_rev:', S._rev);
+      
+      // CRITICAL: Only use cloud data if it is NEWER than local data
+      if (cloudRev >= localRev) {
+        // Cloud is newer or equal — use cloud data
+        S._rev = cloudRev || Date.now();
+        S.depts = remoteS.depts || S.depts;
+        S.sops = remoteS.sops || [];
+        S.workspaceName = remoteS.workspaceName || S.workspaceName;
+        S.employees = remoteS.employees || [];
+        S.tasks = remoteS.tasks || [];
+        S.att = remoteS.att || {};
+        S.recurring = remoteS.recurring || [];
+        S.leadgen = remoteS.leadgen || {};
+        loadedFromCloud = true;
+        console.log('Cloud data is newer or equal, using cloud. Cloud _rev:', cloudRev, 'Local _rev:', localRev);
+      } else {
+        // LOCAL is newer — keep local data, push it to cloud
+        console.log('LOCAL data is newer! Keeping local. Cloud _rev:', cloudRev, 'Local _rev:', localRev);
+        loadedFromCloud = false; // Will trigger push to cloud in Step 5
+      }
     } else {
       // Cloud node exists but is empty
       cloudEnabled = true;
@@ -1449,8 +1468,8 @@ async function connectToWorkspace(workspaceId, userName) {
     console.warn('Firebase unreachable, will use local data.');
   }
 
-  // ─── STEP 2: If cloud had nothing, try localStorage ───
-  if (!loadedFromCloud) {
+  // ─── STEP 2: If cloud had nothing AND local had nothing, try old localStorage key ───
+  if (!loadedFromCloud && !localParsed) {
     const localData = localStorage.getItem(localKey);
     if (localData) {
       try {
@@ -1483,10 +1502,13 @@ async function connectToWorkspace(workspaceId, userName) {
   // ─── STEP 4b: Spawn all recurring tasks for today on boot ───
   spawnRecurringForDate(getLocalISODate());
 
-  // ─── STEP 5: If cloud was empty but we have data, push to cloud ───
+  // ─── STEP 5: Push to cloud if local is newer OR cloud was empty ───
   if (cloudEnabled && !loadedFromCloud) {
-    rtdbSet(path, { data: JSON.stringify({_rev: S._rev || Date.now(), depts: S.depts, sops: S.sops, workspaceName: S.workspaceName, employees: S.employees||[], tasks: S.tasks||[], att: S.att||{}, recurring: S.recurring||[], leadgen: S.leadgen||{}}) })
-      .then(() => console.log('Pushed local data to Firebase.'))
+    S._rev = Date.now(); // Fresh timestamp for the push
+    const pushPayload = JSON.stringify({_rev: S._rev, depts: S.depts, sops: S.sops, workspaceName: S.workspaceName, employees: S.employees||[], tasks: S.tasks||[], att: S.att||{}, recurring: S.recurring||[], leadgen: S.leadgen||{}});
+    localStorage.setItem(localKey, pushPayload); // Update local cache with new _rev
+    rtdbSet(path, { data: pushPayload })
+      .then(() => console.log('Pushed local data to Firebase (local was newer or cloud was empty).'))
       .catch(e => console.log('Firebase push failed:', e.message));
   }
 
@@ -1510,11 +1532,14 @@ async function connectToWorkspace(workspaceId, userName) {
       if (!remoteData || !remoteData.data) return;
       try {
         const remoteS = JSON.parse(remoteData.data);
+        // Skip if remote has no new data
         if (!remoteS._rev) {
+          // Legacy data without _rev: use full JSON comparison
           const localStr = JSON.stringify({depts: S.depts, sops: S.sops, workspaceName: S.workspaceName, employees: S.employees||[], tasks: S.tasks||[], att: S.att||{}, recurring: S.recurring||[], leadgen: S.leadgen||{}});
           const remoteStr = JSON.stringify({depts: remoteS.depts, sops: remoteS.sops, workspaceName: remoteS.workspaceName, employees: remoteS.employees||[], tasks: remoteS.tasks||[], att: remoteS.att||{}, recurring: remoteS.recurring||[], leadgen: remoteS.leadgen||{}});
           if (remoteStr === localStr) return;
-        } else if (remoteS._rev && S._rev && remoteS._rev === S._rev) {
+        } else if (S._rev && remoteS._rev <= S._rev) {
+          // Remote is same age or OLDER than local — skip
           return;
         }
         
@@ -1571,7 +1596,8 @@ async function connectToWorkspace(workspaceId, userName) {
         const localStr = JSON.stringify({depts: S.depts, sops: S.sops, workspaceName: S.workspaceName, employees: S.employees||[], tasks: S.tasks||[], att: S.att||{}, recurring: S.recurring||[], leadgen: S.leadgen||{}});
         const remoteStr = JSON.stringify({depts: remoteS.depts, sops: remoteS.sops, workspaceName: remoteS.workspaceName, employees: remoteS.employees||[], tasks: remoteS.tasks||[], att: remoteS.att||{}, recurring: remoteS.recurring||[], leadgen: remoteS.leadgen||{}});
         if (remoteStr === localStr) return;
-      } else if (remoteS._rev && S._rev && remoteS._rev === S._rev) {
+      } else if (S._rev && remoteS._rev <= S._rev) {
+        // Remote is same age or OLDER than local — skip
         return;
       }
       
@@ -1677,19 +1703,37 @@ function persist() {
     localStorage.setItem('systemlab_ws_' + currentWorkspaceId, str);
     window._lastPersistPayload = str;
     window._persistDirty = true;
-    rtdbSet('workspaces/' + currentWorkspaceId, { data: str })
-      .then(() => { cloudEnabled = true; window._persistDirty = false; })
-      .catch(e => {
-        console.warn('Firebase write failed, will retry:', e.message);
-        // Retry once after 2 seconds
-        setTimeout(() => {
-          if (window._persistDirty && currentWorkspaceId) {
-            rtdbSet('workspaces/' + currentWorkspaceId, { data: window._lastPersistPayload })
-              .then(() => { cloudEnabled = true; window._persistDirty = false; console.log('Retry succeeded'); })
-              .catch(e2 => console.warn('Retry also failed:', e2.message));
+    window._persistRetryCount = 0;
+    
+    function attemptWrite() {
+      rtdbSet('workspaces/' + currentWorkspaceId, { data: window._lastPersistPayload })
+        .then(() => {
+          cloudEnabled = true;
+          window._persistDirty = false;
+          window._persistRetryCount = 0;
+          // Clear any retry timer
+          if (window._persistRetryTimer) { clearTimeout(window._persistRetryTimer); window._persistRetryTimer = null; }
+        })
+        .catch(e => {
+          window._persistRetryCount = (window._persistRetryCount || 0) + 1;
+          console.warn('Firebase write failed (attempt ' + window._persistRetryCount + '):', e.message);
+          if (window._persistRetryCount < 10) {
+            // Retry with exponential backoff: 3s, 6s, 9s... up to 30s
+            const delay = Math.min(3000 * window._persistRetryCount, 30000);
+            window._persistRetryTimer = setTimeout(() => {
+              if (window._persistDirty && currentWorkspaceId) {
+                attemptWrite();
+              }
+            }, delay);
+          } else {
+            showToast('⚠️ Unable to save to cloud. Your data is safe locally and will sync when connection returns.');
           }
-        }, 2000);
-      });
+        });
+    }
+    
+    // Clear any existing retry timer before starting a new write
+    if (window._persistRetryTimer) { clearTimeout(window._persistRetryTimer); window._persistRetryTimer = null; }
+    attemptWrite();
   }
 }
 
