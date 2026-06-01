@@ -1179,6 +1179,11 @@ let S = {
     {id:'d6',name:'Website',    color:'#34d399'},
   ],
   sops: [],
+  employees: [],
+  tasks: [],
+  att: {},
+  recurring: [],
+  leadgen: {},
   workspaceName: 'My Workspace',
   cur: null,          // current SOP id in editor
   deptFilter: null,   // dept id for list view
@@ -1407,6 +1412,7 @@ async function connectToWorkspace(workspaceId, userName) {
       S.employees = d.employees || [];
       S.tasks = d.tasks || [];
       S.att = d.att || {};
+      S.recurring = d.recurring || [];
       S.leadgen = d.leadgen || {};
       renderSidebar();
       renderDashboard();
@@ -1426,6 +1432,7 @@ async function connectToWorkspace(workspaceId, userName) {
       S.employees = remoteS.employees || [];
       S.tasks = remoteS.tasks || [];
       S.att = remoteS.att || {};
+      S.recurring = remoteS.recurring || [];
       S.leadgen = remoteS.leadgen || {};
       loadedFromCloud = true;
       cloudEnabled = true;
@@ -1451,6 +1458,7 @@ async function connectToWorkspace(workspaceId, userName) {
         S.employees = d.employees || [];
         S.tasks = d.tasks || [];
         S.att = d.att || {};
+        S.recurring = d.recurring || [];
         S.leadgen = d.leadgen || {};
         console.log('Loaded workspace from localStorage:', workspaceId);
       } catch(e) {}
@@ -1467,11 +1475,14 @@ async function connectToWorkspace(workspaceId, userName) {
 
   // ─── STEP 4: Save auth + cache locally ───
   localStorage.setItem('systemlab_auth', JSON.stringify({workspaceId, userEmail: userName}));
-  localStorage.setItem(localKey, JSON.stringify({depts: S.depts, sops: S.sops, workspaceName: S.workspaceName, employees: S.employees||[], tasks: S.tasks||[], att: S.att||{}, leadgen: S.leadgen||{}}));
+  localStorage.setItem(localKey, JSON.stringify({depts: S.depts, sops: S.sops, workspaceName: S.workspaceName, employees: S.employees||[], tasks: S.tasks||[], att: S.att||{}, recurring: S.recurring||[], leadgen: S.leadgen||{}}));
+
+  // ─── STEP 4b: Spawn all recurring tasks for today on boot ───
+  spawnAllRecurring();
 
   // ─── STEP 5: If cloud was empty but we have data, push to cloud ───
   if (cloudEnabled && !loadedFromCloud) {
-    rtdbSet(path, { data: JSON.stringify({depts: S.depts, sops: S.sops, workspaceName: S.workspaceName, employees: S.employees||[], tasks: S.tasks||[], att: S.att||{}, leadgen: S.leadgen||{}}) })
+    rtdbSet(path, { data: JSON.stringify({depts: S.depts, sops: S.sops, workspaceName: S.workspaceName, employees: S.employees||[], tasks: S.tasks||[], att: S.att||{}, recurring: S.recurring||[], leadgen: S.leadgen||{}}) })
       .then(() => console.log('Pushed local data to Firebase.'))
       .catch(e => console.log('Firebase push failed:', e.message));
   }
@@ -1578,6 +1589,58 @@ async function connectToWorkspace(workspaceId, userName) {
   }, 4000);
 }
 
+
+// ─── SPAWN ALL RECURRING TASKS ON BOOT ───
+// This runs once when the app loads to ensure all recurring tasks exist for today
+function spawnAllRecurring() {
+  if (!S.recurring || !S.recurring.length || !S.employees || !S.employees.length) return;
+  
+  const today = new Date().toISOString().split('T')[0];
+  const d = new Date(today + "T12:00:00Z");
+  const dayOfWeek = d.getUTCDay();
+  const dayOfMonth = d.getUTCDate();
+  let spawned = false;
+  
+  S.employees.forEach(emp => {
+    const empRecurring = S.recurring.filter(r => r.empId === emp.id);
+    const empTasks = S.tasks.filter(t => t.empId === emp.id && t.date === today);
+    
+    empRecurring.forEach(r => {
+      // Skip if already spawned for today
+      if (empTasks.find(t => t.spawnedFrom === r.id)) return;
+      
+      let shouldSpawn = false;
+      if (r.type === 'daily') shouldSpawn = true;
+      else if (r.type === 'weekly') {
+        const days = r.val.split(',').map(n => parseInt(n.trim()));
+        if (days.includes(dayOfWeek)) shouldSpawn = true;
+      }
+      else if (r.type === 'monthly') {
+        const dates = r.val.split(',').map(n => parseInt(n.trim()));
+        if (dates.includes(dayOfMonth)) shouldSpawn = true;
+      }
+      
+      if (shouldSpawn) {
+        S.tasks.push({
+          id: 'tt_' + Math.random().toString(36).substr(2, 9),
+          empId: emp.id,
+          date: today,
+          name: r.name,
+          mins: parseInt(r.mins),
+          done: false,
+          spawnedFrom: r.id,
+          order: Date.now()
+        });
+        spawned = true;
+      }
+    });
+  });
+  
+  if (spawned) {
+    console.log('Auto-spawned recurring tasks for today');
+    persist();
+  }
+}
 
 function persist() {
   const payload = {depts: S.depts, sops: S.sops, workspaceName: S.workspaceName, employees: S.employees||[], tasks: S.tasks||[], att: S.att||{}, recurring: S.recurring||[], leadgen: S.leadgen||{}};
@@ -2595,7 +2658,7 @@ function renderTeam() {
   const total = S.employees.length;
   const present = S.employees.filter(e => S.att[e.id] && S.att[e.id][TT_TODAY]?.status === 'present').length;
   
-  const absent = S.employees.filter(e => S.att[e.id] && S.att[e.id][TT_TODAY] === 'absent').length;
+  const absent = S.employees.filter(e => S.att[e.id] && S.att[e.id][TT_TODAY]?.status === 'absent').length;
   
 
   // Update header inside #v-team (we'll assume the user is looking at v-team)
@@ -2773,16 +2836,7 @@ function renderTeam() {
 
 }
 
-function setAtt(eid, status) {
-  if (!S.att[eid]) S.att[eid] = {};
-  if (S.att[eid][TT_TODAY] === status) {
-    delete S.att[eid][TT_TODAY]; // Toggle off
-  } else {
-    S.att[eid][TT_TODAY] = status;
-  }
-  persist();
-  renderTeam();
-}
+// setAtt removed — replaced by markAtt which stores attendance as objects {status, loginTime, logoutTime}
 
 
 // Add task functionality
