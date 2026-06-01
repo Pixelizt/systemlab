@@ -1428,6 +1428,7 @@ async function connectToWorkspace(workspaceId, userName) {
     const existing = await rtdbGet(path);
     if (existing && existing.data) {
       const remoteS = JSON.parse(existing.data);
+      S._rev = remoteS._rev || Date.now();
       S.depts = remoteS.depts || S.depts;
       S.sops = remoteS.sops || [];
       S.workspaceName = remoteS.workspaceName || S.workspaceName;
@@ -1438,7 +1439,7 @@ async function connectToWorkspace(workspaceId, userName) {
       S.leadgen = remoteS.leadgen || {};
       loadedFromCloud = true;
       cloudEnabled = true;
-      console.log('Loaded workspace from Firebase:', workspaceId);
+      console.log('Loaded workspace from Firebase:', workspaceId, '_rev:', S._rev);
     } else {
       // Cloud node exists but is empty
       cloudEnabled = true;
@@ -1477,14 +1478,14 @@ async function connectToWorkspace(workspaceId, userName) {
 
   // ─── STEP 4: Save auth + cache locally ───
   localStorage.setItem('systemlab_auth', JSON.stringify({workspaceId, userEmail: userName}));
-  localStorage.setItem(localKey, JSON.stringify({depts: S.depts, sops: S.sops, workspaceName: S.workspaceName, employees: S.employees||[], tasks: S.tasks||[], att: S.att||{}, recurring: S.recurring||[], leadgen: S.leadgen||{}}));
+  localStorage.setItem(localKey, JSON.stringify({_rev: S._rev, depts: S.depts, sops: S.sops, workspaceName: S.workspaceName, employees: S.employees||[], tasks: S.tasks||[], att: S.att||{}, recurring: S.recurring||[], leadgen: S.leadgen||{}}));
 
   // ─── STEP 4b: Spawn all recurring tasks for today on boot ───
   spawnRecurringForDate(getLocalISODate());
 
   // ─── STEP 5: If cloud was empty but we have data, push to cloud ───
   if (cloudEnabled && !loadedFromCloud) {
-    rtdbSet(path, { data: JSON.stringify({depts: S.depts, sops: S.sops, workspaceName: S.workspaceName, employees: S.employees||[], tasks: S.tasks||[], att: S.att||{}, recurring: S.recurring||[], leadgen: S.leadgen||{}}) })
+    rtdbSet(path, { data: JSON.stringify({_rev: S._rev || Date.now(), depts: S.depts, sops: S.sops, workspaceName: S.workspaceName, employees: S.employees||[], tasks: S.tasks||[], att: S.att||{}, recurring: S.recurring||[], leadgen: S.leadgen||{}}) })
       .then(() => console.log('Pushed local data to Firebase.'))
       .catch(e => console.log('Firebase push failed:', e.message));
   }
@@ -1674,11 +1675,46 @@ function persist() {
   localStorage.setItem('systemlab_v2', str);
   if (currentWorkspaceId) {
     localStorage.setItem('systemlab_ws_' + currentWorkspaceId, str);
+    window._lastPersistPayload = str;
+    window._persistDirty = true;
     rtdbSet('workspaces/' + currentWorkspaceId, { data: str })
-      .then(() => { cloudEnabled = true; })
-      .catch(e => console.log('Firebase write skipped (offline):', e.message));
+      .then(() => { cloudEnabled = true; window._persistDirty = false; })
+      .catch(e => {
+        console.warn('Firebase write failed, will retry:', e.message);
+        // Retry once after 2 seconds
+        setTimeout(() => {
+          if (window._persistDirty && currentWorkspaceId) {
+            rtdbSet('workspaces/' + currentWorkspaceId, { data: window._lastPersistPayload })
+              .then(() => { cloudEnabled = true; window._persistDirty = false; console.log('Retry succeeded'); })
+              .catch(e2 => console.warn('Retry also failed:', e2.message));
+          }
+        }, 2000);
+      });
   }
 }
+
+// Emergency save: flush to Firebase when user is about to leave
+window.addEventListener('beforeunload', () => {
+  if (window._persistDirty && currentWorkspaceId && window._lastPersistPayload) {
+    // Use synchronous XHR for reliable delivery during page close (sendBeacon only does POST, Firebase needs PUT)
+    try {
+      const xhr = new XMLHttpRequest();
+      xhr.open('PUT', RTDB_URL + '/workspaces/' + currentWorkspaceId + '.json', false); // synchronous
+      xhr.setRequestHeader('Content-Type', 'application/json');
+      xhr.send(JSON.stringify({ data: window._lastPersistPayload }));
+      window._persistDirty = false;
+    } catch(e) {}
+  }
+});
+
+// Also flush when tab goes to background (user switches tabs or minimizes)
+document.addEventListener('visibilitychange', () => {
+  if (document.visibilityState === 'hidden' && window._persistDirty && currentWorkspaceId && window._lastPersistPayload) {
+    rtdbSet('workspaces/' + currentWorkspaceId, { data: window._lastPersistPayload })
+      .then(() => { window._persistDirty = false; })
+      .catch(() => {});
+  }
+});
 
 function logoutApp() {
   localStorage.removeItem('systemlab_auth');
@@ -2651,8 +2687,8 @@ function renderTeam() {
   // Let's inject a date navigator above the stats
 
   // Generate Month String
-  const d = new Date(TT_TODAY);
-  const localDate = new Date(d.getTime() + d.getTimezoneOffset() * 60000);
+  const [_y, _m, _d] = TT_TODAY.split('-');
+  const localDate = new Date(parseInt(_y), parseInt(_m)-1, parseInt(_d));
   const monthName = localDate.toLocaleDateString('en-US', {month:'long', year:'numeric'});
 
   document.getElementById('team-toolbar').innerHTML = `
@@ -3129,14 +3165,19 @@ window.renderRecurringList = renderRecurringList;
 
 function deleteRecurring(rid) {
   S.recurring = S.recurring.filter(r => r.id !== rid);
-  // Remove any tasks spawned from this recurring template that are NOT completed yet
+  // Remove ALL tasks spawned from this recurring template (both done and not done)
   if (S.tasks) {
-    S.tasks = S.tasks.filter(t => !(t.spawnedFrom === rid && !t.done));
+    S.tasks = S.tasks.filter(t => t.spawnedFrom !== rid);
   }
   persist();
   renderRecurringList();
   if (typeof curEmp !== 'undefined' && curEmp) {
     openEmployee(curEmp);
+  }
+  // Also refresh team view if it's visible
+  const teamView = document.getElementById('v-team');
+  if (teamView && teamView.classList.contains('active')) {
+    renderTeam();
   }
 }
 window.deleteRecurring = deleteRecurring;
