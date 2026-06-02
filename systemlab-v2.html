@@ -1425,12 +1425,24 @@ async function connectToWorkspace(workspaceId, userName) {
   }
   updateGreeting();
 
+  // ─── CONNECTION STATE MONITORING ───
+  if (!_fbConnRef) {
+    _fbConnRef = db.ref('.info/connected');
+    _fbConnRef.on('value', (snap) => {
+      updateConnectionBadge(snap.val() === true);
+    });
+  }
+
   // ─── One-time cloud load to determine initial state ───
   let loadedFromCloud = false;
   _fbRef = db.ref(path);
   
   try {
-    const snapshot = await _fbRef.once('value');
+    // Add a 3-second timeout so it doesn't hang forever if network is poor
+    const snapshot = await Promise.race([
+      _fbRef.once('value'),
+      new Promise((_, reject) => setTimeout(() => reject(new Error('timeout')), 3000))
+    ]);
     const existing = snapshot.val();
     if (existing && existing.data) {
       const remoteS = JSON.parse(existing.data);
@@ -1457,7 +1469,7 @@ async function connectToWorkspace(workspaceId, userName) {
       console.log('Firebase reachable but workspace is empty');
     }
   } catch(e) {
-    console.warn('Firebase initial load failed, using local data:', e.message);
+    console.warn('Firebase initial load failed or timed out, using local data:', e.message);
   }
 
   // ─── If truly first time, load seeds ───
@@ -1552,11 +1564,7 @@ async function connectToWorkspace(workspaceId, userName) {
   _fbRef.on('value', onValueCallback);
   unsubSnapshot = () => _fbRef.off('value', onValueCallback);
 
-  // ─── CONNECTION STATE MONITORING ───
-  _fbConnRef = db.ref('.info/connected');
-  _fbConnRef.on('value', (snap) => {
-    updateConnectionBadge(snap.val() === true);
-  });
+  // (Connection state monitoring moved to top of function)
 }
 
 // ─── HELPER: Build payload string ───
