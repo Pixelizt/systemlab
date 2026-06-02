@@ -13,6 +13,8 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600&family=JetBrains+Mono:wght@400;500&family=Playfair+Display:ital,wght@1,500;1,700&display=swap" rel="stylesheet">
+<script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-database-compat.js"></script>
 <style>
 *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
 :root{
@@ -1350,45 +1352,42 @@ async function loginApp() {
   }
 }
 
+// ─── FIREBASE SDK INITIALIZATION ───
 const RTDB_URL = 'https://system-labs-default-rtdb.firebaseio.com';
-
-async function rtdbGet(path) {
-  const res = await fetch(`${RTDB_URL}/${path}.json?_t=${Date.now()}`, { cache: 'no-store' });
-  if (!res.ok) throw new Error('RTDB read failed: ' + res.status);
-  return res.json();
-}
-
-async function rtdbSet(path, data) {
-  const res = await fetch(`${RTDB_URL}/${path}.json`, {
-    method: 'PUT',
-    headers: {'Content-Type': 'application/json'},
-    body: JSON.stringify(data)
-  });
-  if (!res.ok) throw new Error('RTDB write failed: ' + res.status);
-  return res.json();
-}
-
-function rtdbListen(path, callback) {
-  const url = `${RTDB_URL}/${path}.json?sse=${Date.now()}`;
-  const evtSource = new EventSource(url);
-  evtSource.addEventListener('put', (e) => {
-    try {
-      const payload = JSON.parse(e.data);
-      if (payload.path === "/") {
-        callback(payload.data);
-      } else {
-        rtdbGet(path).then(callback).catch(() => {});
-      }
-    } catch(err) {}
-  });
-  evtSource.addEventListener('patch', (e) => {
-    rtdbGet(path).then(callback).catch(() => {});
-  });
-  return () => evtSource.close();
-}
+const firebaseApp = firebase.initializeApp({ databaseURL: RTDB_URL });
+const db = firebase.database();
+let _fbRef = null;       // Reference to workspace node
+let _fbConnRef = null;   // Reference to .info/connected
 
 let cloudEnabled = false;
 let isSyncing = false;
+
+// ─── CONNECTION STATUS INDICATOR ───
+function updateConnectionBadge(connected) {
+  let badge = document.getElementById('conn-badge');
+  if (!badge) {
+    const topbar = document.querySelector('.topbar-right') || document.getElementById('topbar-email')?.parentElement;
+    if (topbar) {
+      badge = document.createElement('span');
+      badge.id = 'conn-badge';
+      badge.style.cssText = 'display:inline-flex;align-items:center;gap:4px;font-size:10px;font-weight:600;padding:2px 8px;border-radius:999px;margin-right:8px;transition:all 0.3s';
+      topbar.prepend(badge);
+    }
+  }
+  if (badge) {
+    if (connected) {
+      badge.style.color = 'var(--green, #22c55e)';
+      badge.style.background = 'rgba(34,197,94,0.1)';
+      badge.style.border = '1px solid rgba(34,197,94,0.2)';
+      badge.innerHTML = '<span style="width:5px;height:5px;border-radius:50%;background:currentColor"></span>Live';
+    } else {
+      badge.style.color = 'var(--yellow, #eab308)';
+      badge.style.background = 'rgba(234,179,8,0.1)';
+      badge.style.border = '1px solid rgba(234,179,8,0.2)';
+      badge.innerHTML = '<span style="width:5px;height:5px;border-radius:50%;background:currentColor"></span>Offline';
+    }
+  }
+}
 
 async function connectToWorkspace(workspaceId, userName) {
   currentWorkspaceId = workspaceId;
@@ -1404,18 +1403,14 @@ async function connectToWorkspace(workspaceId, userName) {
   const emailEl = document.getElementById('topbar-email');
   if (emailEl) emailEl.textContent = userName || '';
   
-  // Try to load workspace name from local storage immediately so greeting isn't blank
+  // ─── Load from localStorage for instant UI ───
   let localRev = 0;
-  let localParsed = null;
   const localData = localStorage.getItem(localKey);
   if (localData) {
     try {
       const d = JSON.parse(localData);
-      localParsed = d;
       localRev = d._rev || 0;
       if (d.workspaceName) S.workspaceName = d.workspaceName;
-      
-      // Optimistically render UI from local cache
       S._rev = localRev;
       S.depts = d.depts || S.depts;
       S.sops = d.sops || [];
@@ -1430,19 +1425,19 @@ async function connectToWorkspace(workspaceId, userName) {
   }
   updateGreeting();
 
-  // ─── STEP 1: Try cloud and COMPARE with local ───
+  // ─── One-time cloud load to determine initial state ───
   let loadedFromCloud = false;
-  let cloudRev = 0;
+  _fbRef = db.ref(path);
+  
   try {
-    const existing = await rtdbGet(path);
+    const snapshot = await _fbRef.once('value');
+    const existing = snapshot.val();
     if (existing && existing.data) {
       const remoteS = JSON.parse(existing.data);
-      cloudRev = remoteS._rev || 0;
+      const cloudRev = remoteS._rev || 0;
       cloudEnabled = true;
       
-      // CRITICAL: Only use cloud data if it is NEWER than local data
       if (cloudRev >= localRev) {
-        // Cloud is newer or equal — use cloud data
         S._rev = cloudRev || Date.now();
         S.depts = remoteS.depts || S.depts;
         S.sops = remoteS.sops || [];
@@ -1453,67 +1448,42 @@ async function connectToWorkspace(workspaceId, userName) {
         S.recurring = remoteS.recurring || [];
         S.leadgen = remoteS.leadgen || {};
         loadedFromCloud = true;
-        console.log('Cloud data is newer or equal, using cloud. Cloud _rev:', cloudRev, 'Local _rev:', localRev);
+        console.log('Cloud is newer, using cloud. Cloud _rev:', cloudRev, 'Local _rev:', localRev);
       } else {
-        // LOCAL is newer — keep local data, push it to cloud
-        console.log('LOCAL data is newer! Keeping local. Cloud _rev:', cloudRev, 'Local _rev:', localRev);
-        loadedFromCloud = false; // Will trigger push to cloud in Step 5
+        console.log('LOCAL is newer! Keeping local. Cloud _rev:', cloudRev, 'Local _rev:', localRev);
       }
     } else {
-      // Cloud node exists but is empty
       cloudEnabled = true;
-      console.log('Firebase reachable but workspace is empty:', workspaceId);
+      console.log('Firebase reachable but workspace is empty');
     }
   } catch(e) {
-    console.warn('Firebase unreachable, will use local data.');
+    console.warn('Firebase initial load failed, using local data:', e.message);
   }
 
-  // ─── STEP 2: If cloud had nothing AND local had nothing, try old localStorage key ───
-  if (!loadedFromCloud && !localParsed) {
-    const localData = localStorage.getItem(localKey);
-    if (localData) {
-      try {
-        const d = JSON.parse(localData);
-        S.depts = d.depts || S.depts;
-        S.sops = d.sops || [];
-        S.workspaceName = d.workspaceName || S.workspaceName;
-        S.employees = d.employees || [];
-        S.tasks = d.tasks || [];
-        S.att = d.att || {};
-        S.recurring = d.recurring || [];
-        S.leadgen = d.leadgen || {};
-        console.log('Loaded workspace from localStorage:', workspaceId);
-      } catch(e) {}
-    }
-  }
-
-  // ─── STEP 3: If STILL empty (truly first time), load seeds ───
+  // ─── If truly first time, load seeds ───
   if (S.sops.length === 0) {
     S.depts = [{id:'d1',name:'Operations',color:'#ff7a17'},{id:'d2',name:'Sales',color:'#22c55e'},{id:'d3',name:'Marketing',color:'#60a5fa'},{id:'d4',name:'HR',color:'#a78bfa'}];
     S.workspaceName = 'My Workspace';
     SEEDS.forEach((s,i) => S.sops.push({...s, id:'s'+i, versions:makeVersions(s.body)}));
-    console.log('Loaded seed data for new workspace.');
   }
 
-  // ─── STEP 4: Save auth + cache locally ───
+  // ─── Save auth + cache locally ───
   localStorage.setItem('systemlab_auth', JSON.stringify({workspaceId, userEmail: userName}));
-  localStorage.setItem(localKey, JSON.stringify({_rev: S._rev, depts: S.depts, sops: S.sops, workspaceName: S.workspaceName, employees: S.employees||[], tasks: S.tasks||[], att: S.att||{}, recurring: S.recurring||[], leadgen: S.leadgen||{}}));
+  saveLocal(localKey);
 
-  // ─── STEP 4b: Spawn all recurring tasks for today on boot ───
+  // ─── Spawn recurring tasks for today ───
   spawnRecurringForDate(getLocalISODate());
 
-  // ─── STEP 5: Push to cloud if local is newer OR cloud was empty ───
+  // ─── If local was newer or cloud was empty, push to cloud ───
   if (cloudEnabled && !loadedFromCloud) {
-    S._rev = Date.now(); // Fresh timestamp for the push
-    const pushPayload = JSON.stringify({_rev: S._rev, depts: S.depts, sops: S.sops, workspaceName: S.workspaceName, employees: S.employees||[], tasks: S.tasks||[], att: S.att||{}, recurring: S.recurring||[], leadgen: S.leadgen||{}});
-    localStorage.setItem(localKey, pushPayload); // Update local cache with new _rev
-    rtdbSet(path, { data: pushPayload })
-      .then(() => console.log('Pushed local data to Firebase (local was newer or cloud was empty).'))
-      .catch(e => console.log('Firebase push failed:', e.message));
+    S._rev = Date.now();
+    saveLocal(localKey);
+    _fbRef.set({ data: buildPayloadStr() })
+      .then(() => console.log('Pushed local data to Firebase'))
+      .catch(e => console.warn('Firebase push failed:', e.message));
   }
 
-  // ─── STEP 6: Show UI ───
-
+  // ─── Render UI ───
   renderSidebar();
   renderDashboard();
   updateGreeting();
@@ -1526,80 +1496,16 @@ async function connectToWorkspace(workspaceId, userName) {
   if (loadedFromCloud) showToast('✅ Workspace synced from cloud');
   else if (cloudEnabled) showToast('☁️ Cloud sync active');
 
-  // ─── STEP 7: Start live polling for changes from other browsers ───
-  if (unsubSnapshot) unsubSnapshot();
-    unsubSnapshot = rtdbListen(path, (remoteData) => {
-      if (!remoteData || !remoteData.data) return;
-      try {
-        const remoteS = JSON.parse(remoteData.data);
-        // Skip if remote has no new data
-        if (!remoteS._rev) {
-          // Legacy data without _rev: use full JSON comparison
-          const localStr = JSON.stringify({depts: S.depts, sops: S.sops, workspaceName: S.workspaceName, employees: S.employees||[], tasks: S.tasks||[], att: S.att||{}, recurring: S.recurring||[], leadgen: S.leadgen||{}});
-          const remoteStr = JSON.stringify({depts: remoteS.depts, sops: remoteS.sops, workspaceName: remoteS.workspaceName, employees: remoteS.employees||[], tasks: remoteS.tasks||[], att: remoteS.att||{}, recurring: remoteS.recurring||[], leadgen: remoteS.leadgen||{}});
-          if (remoteStr === localStr) return;
-        } else if (S._rev && remoteS._rev <= S._rev) {
-          // Remote is same age or OLDER than local — skip
-          return;
-        }
-        
-        isSyncing = true;
-        try {
-          S._rev = remoteS._rev || Date.now();
-          S.depts = remoteS.depts || S.depts;
-          S.sops = remoteS.sops || S.sops;
-          if (remoteS.workspaceName) S.workspaceName = remoteS.workspaceName;
-          S.employees = remoteS.employees || S.employees || [];
-          S.tasks = remoteS.tasks || S.tasks || [];
-          S.att = remoteS.att || S.att || {};
-          S.recurring = remoteS.recurring || S.recurring || [];
-          S.leadgen = remoteS.leadgen || S.leadgen || {};
-          localStorage.setItem(localKey, JSON.stringify({_rev: S._rev, depts: S.depts, sops: S.sops, workspaceName: S.workspaceName, employees: S.employees, tasks: S.tasks, att: S.att, recurring: S.recurring, leadgen: S.leadgen}));
-          renderSidebar();
-          renderDashboard();
-          updateGreeting();
-          if (typeof renderTeam === 'function') renderTeam();
-          if (typeof renderRecurringList === 'function') renderRecurringList();
-          if (typeof curEmp !== 'undefined' && curEmp && typeof openEmployee === 'function') {
-            const empView = document.getElementById('v-employee');
-            if (empView && empView.classList.contains('active')) {
-              openEmployee(curEmp);
-            }
-          }
-          if (typeof lgRender === 'function' && document.getElementById('v-leadgen').classList.contains('active')) lgRender();
-          showToast('🔄 Workspace updated from another session');
-          const activeId = typeof curSOP === 'function' ? curSOP()?.id : null;
-          if (activeId) {
-            const updatedSOP = S.sops.find(s=>s.id===activeId);
-            const edTa = document.getElementById('ed-ta');
-            if (updatedSOP && edTa && edTa.value !== updatedSOP.body) {
-              if (document.activeElement !== edTa) {
-                edTa.value = updatedSOP.body;
-                if (typeof onMdInput === 'function') onMdInput();
-              }
-            }
-          }
-        } finally {
-          isSyncing = false;
-        }
-      } catch(e) { console.error('Poll parse error', e); }
-    });
-
-  // HYBRID FALLBACK: Silent background polling every 4s to catch any dropped EventSource packets
-  if (window.hybridSyncInterval) clearInterval(window.hybridSyncInterval);
-  window.hybridSyncInterval = setInterval(async () => {
+  // ─── REAL-TIME LISTENER (Firebase SDK — true WebSocket, auto-reconnect) ───
+  if (unsubSnapshot) { unsubSnapshot(); unsubSnapshot = null; }
+  
+  const onValueCallback = (snapshot) => {
+    const val = snapshot.val();
+    if (!val || !val.data) return;
     try {
-      const remoteData = await rtdbGet(path);
-      if (!remoteData || !remoteData.data) return;
-      const remoteS = JSON.parse(remoteData.data);
-      if (!remoteS._rev) {
-        const localStr = JSON.stringify({depts: S.depts, sops: S.sops, workspaceName: S.workspaceName, employees: S.employees||[], tasks: S.tasks||[], att: S.att||{}, recurring: S.recurring||[], leadgen: S.leadgen||{}});
-        const remoteStr = JSON.stringify({depts: remoteS.depts, sops: remoteS.sops, workspaceName: remoteS.workspaceName, employees: remoteS.employees||[], tasks: remoteS.tasks||[], att: remoteS.att||{}, recurring: remoteS.recurring||[], leadgen: remoteS.leadgen||{}});
-        if (remoteStr === localStr) return;
-      } else if (S._rev && remoteS._rev <= S._rev) {
-        // Remote is same age or OLDER than local — skip
-        return;
-      }
+      const remoteS = JSON.parse(val.data);
+      // Only apply if remote is strictly newer
+      if (S._rev && remoteS._rev && remoteS._rev <= S._rev) return;
       
       isSyncing = true;
       try {
@@ -1612,31 +1518,60 @@ async function connectToWorkspace(workspaceId, userName) {
         S.att = remoteS.att || S.att || {};
         S.recurring = remoteS.recurring || S.recurring || [];
         S.leadgen = remoteS.leadgen || S.leadgen || {};
-        
-        localStorage.setItem(localKey, JSON.stringify({_rev: S._rev, depts: S.depts, sops: S.sops, workspaceName: S.workspaceName, employees: S.employees, tasks: S.tasks, att: S.att, recurring: S.recurring, leadgen: S.leadgen}));
-        if (typeof renderSidebar === 'function') renderSidebar();
-        if (typeof renderDashboard === 'function') renderDashboard();
-        if (typeof updateGreeting === 'function') updateGreeting();
-        
-        const empView = document.getElementById('v-employee');
-        const teamView = document.getElementById('v-team');
-        const recurModal = document.getElementById('recurring-modal');
-        const leadgenView = document.getElementById('v-leadgen');
-        
-        if (typeof renderTeam === 'function' && teamView && teamView.classList.contains('active')) renderTeam();
-        if (typeof renderRecurringList === 'function' && recurModal && recurModal.classList.contains('open')) renderRecurringList();
-        
-        if (typeof curEmp !== 'undefined' && curEmp && typeof openEmployee === 'function' && empView && empView.classList.contains('active')) {
-          openEmployee(curEmp);
+        saveLocal(localKey);
+        renderSidebar();
+        renderDashboard();
+        updateGreeting();
+        if (typeof renderTeam === 'function') renderTeam();
+        if (typeof renderRecurringList === 'function') renderRecurringList();
+        if (typeof curEmp !== 'undefined' && curEmp && typeof openEmployee === 'function') {
+          const empView = document.getElementById('v-employee');
+          if (empView && empView.classList.contains('active')) {
+            openEmployee(curEmp);
+          }
         }
-        if (typeof lgRender === 'function' && leadgenView && leadgenView.classList.contains('active')) lgRender();
+        if (typeof lgRender === 'function' && document.getElementById('v-leadgen')?.classList.contains('active')) lgRender();
+        showToast('🔄 Workspace updated from another session');
+        const activeId = typeof curSOP === 'function' ? curSOP()?.id : null;
+        if (activeId) {
+          const updatedSOP = S.sops.find(s=>s.id===activeId);
+          const edTa = document.getElementById('ed-ta');
+          if (updatedSOP && edTa && edTa.value !== updatedSOP.body) {
+            if (document.activeElement !== edTa) {
+              edTa.value = updatedSOP.body;
+              if (typeof onMdInput === 'function') onMdInput();
+            }
+          }
+        }
       } finally {
         isSyncing = false;
       }
-    } catch (err) {}
-  }, 4000);
+    } catch(e) { console.error('Sync parse error', e); }
+  };
+  
+  _fbRef.on('value', onValueCallback);
+  unsubSnapshot = () => _fbRef.off('value', onValueCallback);
+
+  // ─── CONNECTION STATE MONITORING ───
+  _fbConnRef = db.ref('.info/connected');
+  _fbConnRef.on('value', (snap) => {
+    updateConnectionBadge(snap.val() === true);
+  });
 }
 
+// ─── HELPER: Build payload string ───
+function buildPayloadStr() {
+  return JSON.stringify({_rev: S._rev, depts: S.depts, sops: S.sops, workspaceName: S.workspaceName, employees: S.employees||[], tasks: S.tasks||[], att: S.att||{}, recurring: S.recurring||[], leadgen: S.leadgen||{}});
+}
+
+// ─── HELPER: Save to localStorage ───
+function saveLocal(localKey) {
+  const str = buildPayloadStr();
+  localStorage.setItem('systemlab_v2', str);
+  if (currentWorkspaceId) {
+    localStorage.setItem('systemlab_ws_' + currentWorkspaceId, str);
+  }
+}
 
 function getLocalISODate(d = new Date()) {
   const tzo = d.getTimezoneOffset() * 60000;
@@ -1657,7 +1592,6 @@ function spawnRecurringForDate(targetDate) {
     const empTasks = S.tasks.filter(t => t.empId === emp.id && t.date === targetDate);
     
     empRecurring.forEach(r => {
-      // Skip if already spawned for today
       if (empTasks.find(t => t.spawnedFrom === r.id)) return;
       
       let shouldSpawn = false;
@@ -1696,73 +1630,27 @@ function spawnRecurringForDate(targetDate) {
 function persist() {
   if (isSyncing) return;
   S._rev = Date.now();
-  const payload = {_rev: S._rev, depts: S.depts, sops: S.sops, workspaceName: S.workspaceName, employees: S.employees||[], tasks: S.tasks||[], att: S.att||{}, recurring: S.recurring||[], leadgen: S.leadgen||{}};
-  const str = JSON.stringify(payload);
+  const str = buildPayloadStr();
+  
+  // Always save to localStorage immediately (crash-safe)
   localStorage.setItem('systemlab_v2', str);
   if (currentWorkspaceId) {
     localStorage.setItem('systemlab_ws_' + currentWorkspaceId, str);
-    window._lastPersistPayload = str;
-    window._persistDirty = true;
-    window._persistRetryCount = 0;
-    
-    function attemptWrite() {
-      rtdbSet('workspaces/' + currentWorkspaceId, { data: window._lastPersistPayload })
-        .then(() => {
-          cloudEnabled = true;
-          window._persistDirty = false;
-          window._persistRetryCount = 0;
-          // Clear any retry timer
-          if (window._persistRetryTimer) { clearTimeout(window._persistRetryTimer); window._persistRetryTimer = null; }
-        })
-        .catch(e => {
-          window._persistRetryCount = (window._persistRetryCount || 0) + 1;
-          console.warn('Firebase write failed (attempt ' + window._persistRetryCount + '):', e.message);
-          if (window._persistRetryCount < 10) {
-            // Retry with exponential backoff: 3s, 6s, 9s... up to 30s
-            const delay = Math.min(3000 * window._persistRetryCount, 30000);
-            window._persistRetryTimer = setTimeout(() => {
-              if (window._persistDirty && currentWorkspaceId) {
-                attemptWrite();
-              }
-            }, delay);
-          } else {
-            showToast('⚠️ Unable to save to cloud. Your data is safe locally and will sync when connection returns.');
-          }
-        });
-    }
-    
-    // Clear any existing retry timer before starting a new write
-    if (window._persistRetryTimer) { clearTimeout(window._persistRetryTimer); window._persistRetryTimer = null; }
-    attemptWrite();
+  }
+  
+  // Write to Firebase via SDK (auto-queued if offline, auto-synced when back online)
+  if (_fbRef) {
+    _fbRef.set({ data: str })
+      .then(() => { cloudEnabled = true; })
+      .catch(e => console.warn('Firebase write error:', e.message));
   }
 }
 
-// Emergency save: flush to Firebase when user is about to leave
-window.addEventListener('beforeunload', () => {
-  if (window._persistDirty && currentWorkspaceId && window._lastPersistPayload) {
-    // Use synchronous XHR for reliable delivery during page close (sendBeacon only does POST, Firebase needs PUT)
-    try {
-      const xhr = new XMLHttpRequest();
-      xhr.open('PUT', RTDB_URL + '/workspaces/' + currentWorkspaceId + '.json', false); // synchronous
-      xhr.setRequestHeader('Content-Type', 'application/json');
-      xhr.send(JSON.stringify({ data: window._lastPersistPayload }));
-      window._persistDirty = false;
-    } catch(e) {}
-  }
-});
-
-// Also flush when tab goes to background (user switches tabs or minimizes)
-document.addEventListener('visibilitychange', () => {
-  if (document.visibilityState === 'hidden' && window._persistDirty && currentWorkspaceId && window._lastPersistPayload) {
-    rtdbSet('workspaces/' + currentWorkspaceId, { data: window._lastPersistPayload })
-      .then(() => { window._persistDirty = false; })
-      .catch(() => {});
-  }
-});
-
 function logoutApp() {
   localStorage.removeItem('systemlab_auth');
-  if(unsubSnapshot) unsubSnapshot();
+  if (unsubSnapshot) { unsubSnapshot(); unsubSnapshot = null; }
+  if (_fbRef) _fbRef.off();
+  if (_fbConnRef) _fbConnRef.off();
   location.reload();
 }
 
@@ -3962,8 +3850,7 @@ window.lgRender = lgRender;
 </script>
 
 <script>
-  // Use Firebase RTDB REST API — no SDK needed
-  // bootApp uses rtdbGet/rtdbSet defined above via plain fetch()
+  // Firebase SDK initialized above — bootApp connects to workspace via SDK
   window.bootApp();
 </script>
 <script type="module">
