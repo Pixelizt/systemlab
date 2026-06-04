@@ -489,6 +489,53 @@ select option{background:var(--canvas-card)}
   .lg-grid-wrap{overflow:visible!important}
   .lg-head,.lg-tabs,.lg-toolbar,.sidebar,.topbar{display:none!important}
 }
+
+/* ═══════ DOCUMENT VAULT ═══════ */
+.docs-breadcrumb{display:flex;align-items:center;gap:4px;padding:0 0 12px;font-size:12px;color:var(--mute);flex-wrap:wrap}
+.docs-breadcrumb span{cursor:pointer;padding:2px 6px;border-radius:var(--r-sm);transition:all .15s}
+.docs-breadcrumb span:hover{background:var(--canvas-card);color:var(--ink)}
+.docs-breadcrumb .bc-sep{opacity:.4;cursor:default;padding:0}
+.docs-breadcrumb .bc-sep:hover{background:none;color:var(--mute)}
+.docs-breadcrumb .bc-current{color:var(--ink);font-weight:500}
+.docs-search-bar{margin-bottom:16px}
+.docs-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(220px,1fr));gap:12px}
+.doc-card{background:var(--canvas-card);border:1px solid var(--hairline);border-radius:var(--r-md);padding:16px;cursor:pointer;transition:all .15s;position:relative}
+.doc-card:hover{border-color:var(--hairline-mid);transform:translateY(-1px);box-shadow:0 4px 16px rgba(0,0,0,.2)}
+.doc-card-folder{border-left:3px solid var(--brand)}
+.doc-card-icon{font-size:28px;margin-bottom:8px}
+.doc-card-name{font-size:13px;font-weight:500;color:var(--ink);margin-bottom:4px;word-break:break-word}
+.doc-card-desc{font-size:11px;color:var(--mute);line-height:1.4;margin-bottom:8px;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
+.doc-card-meta{display:flex;align-items:center;gap:6px;flex-wrap:wrap}
+.doc-tag{font-size:9px;font-weight:600;text-transform:uppercase;letter-spacing:.04em;padding:2px 7px;border-radius:999px;background:rgba(255,122,23,.12);color:var(--brand)}
+.doc-card-actions{position:absolute;top:8px;right:8px;display:flex;gap:4px;opacity:0;transition:opacity .15s}
+.doc-card:hover .doc-card-actions{opacity:1}
+.doc-card-actions button{background:var(--canvas-mid);border:none;color:var(--mute);width:24px;height:24px;border-radius:var(--r-sm);cursor:pointer;font-size:11px;display:flex;align-items:center;justify-content:center}
+.doc-card-actions button:hover{color:var(--ink);background:var(--hairline-mid)}
+.doc-empty{grid-column:1/-1;text-align:center;padding:48px 0;color:var(--mute);font-size:13px}
+.doc-empty-icon{font-size:40px;margin-bottom:12px;opacity:.5}
+
+/* ═══════ PROMPT LIBRARY ═══════ */
+.prompts-toolbar{display:flex;align-items:center;gap:12px;margin-bottom:16px;flex-wrap:wrap}
+.prompts-cats{display:flex;gap:6px;flex-wrap:wrap}
+.prompt-cat-pill{font-size:11px;padding:4px 12px;border-radius:999px;border:1px solid var(--hairline);background:transparent;color:var(--mute);cursor:pointer;transition:all .15s;white-space:nowrap}
+.prompt-cat-pill:hover{border-color:var(--hairline-mid);color:var(--ink)}
+.prompt-cat-pill.active{background:var(--brand);border-color:var(--brand);color:#fff}
+.prompts-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(300px,1fr));gap:12px}
+.prompt-card{background:var(--canvas-card);border:1px solid var(--hairline);border-radius:var(--r-md);padding:16px;transition:all .15s;position:relative}
+.prompt-card:hover{border-color:var(--hairline-mid);box-shadow:0 4px 16px rgba(0,0,0,.2)}
+.prompt-card-head{display:flex;align-items:flex-start;justify-content:space-between;margin-bottom:8px}
+.prompt-card-title{font-size:14px;font-weight:500;color:var(--ink);flex:1;margin-right:8px}
+.prompt-card-cat{font-size:10px;font-weight:600;padding:2px 8px;border-radius:999px;white-space:nowrap}
+.prompt-card-body{font-size:12px;color:var(--mute);line-height:1.5;margin-bottom:12px;white-space:pre-wrap;display:-webkit-box;-webkit-line-clamp:3;-webkit-box-orient:vertical;overflow:hidden;font-family:var(--mono);background:var(--canvas-soft);padding:10px;border-radius:var(--r-sm)}
+.prompt-card-body.expanded{-webkit-line-clamp:unset;max-height:400px;overflow-y:auto}
+.prompt-card-footer{display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+.prompt-card-footer .doc-tag{cursor:default}
+.prompt-card-actions{display:flex;gap:4px;margin-left:auto}
+.prompt-card-actions button{background:var(--canvas-mid);border:none;color:var(--mute);padding:4px 10px;border-radius:var(--r-sm);cursor:pointer;font-size:11px;display:flex;align-items:center;gap:4px;transition:all .15s}
+.prompt-card-actions button:hover{color:var(--ink);background:var(--hairline-mid)}
+.prompt-card-fav{position:absolute;top:12px;right:12px;background:none;border:none;cursor:pointer;font-size:16px;opacity:.4;transition:opacity .15s}
+.prompt-card-fav:hover,.prompt-card-fav.active{opacity:1}
+.prompt-empty{grid-column:1/-1;text-align:center;padding:48px 0;color:var(--mute);font-size:13px}
 </style>
 </head>
 <body>
@@ -529,6 +576,8 @@ select option{background:var(--canvas-card)}
         <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="var(--mute)" stroke-width="2" stroke-linecap="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
         <span id="topbar-email" style="font-size:11px;color:var(--mute);font-family:var(--mono);letter-spacing:0.01em;max-width:160px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap"></span>
       </div>
+      <span style="cursor:pointer;color:var(--mute);font-size:11px;margin-left:10px" onclick="exportWorkspaceData()" title="Export workspace backup">📦</span>
+      <span style="cursor:pointer;color:var(--mute);font-size:11px;margin-left:4px" onclick="importWorkspaceData()" title="Import workspace backup">📥</span>
       <span style="cursor:pointer; color:var(--mute); font-size:11px; margin-left:10px" onclick="logoutApp()">Logout</span>
     </div>
   </div>
@@ -556,6 +605,17 @@ select option{background:var(--canvas-card)}
         <div class="nav-item" data-view="leadgen" onclick="showView('leadgen',this)">
           <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><path d="M22 12h-4l-3 9L9 3l-3 9H2"/></svg>
           Lead Generation
+        </div>
+      </div>
+      <div class="sidebar-section">
+        <div class="sidebar-label">Resources</div>
+        <div class="nav-item" data-view="docs" onclick="showView('docs',this)">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"/></svg>
+          Documents
+        </div>
+        <div class="nav-item" data-view="prompts" onclick="showView('prompts',this)">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/></svg>
+          Prompts
         </div>
       </div>
       <div class="sidebar-section">
@@ -817,6 +877,45 @@ select option{background:var(--canvas-card)}
         <span></span><span>Task</span><span>Est</span><span>Logged</span><span>Done At</span><span></span>
       </div>
       <div class="task-scroll" id="taskList"></div>
+    </div>
+
+
+    <!-- DOCUMENT VAULT VIEW -->
+    <div id="v-docs" class="view">
+      <div class="dash-head">
+        <div>
+          <div class="dash-h1">📁 Document Vault</div>
+          <div class="dash-sub">Organize your Google Drive links, files, and important resources.</div>
+        </div>
+        <div style="display:flex;gap:8px">
+          <button class="btn btn-sm" onclick="docAddFolder()">📂 New Folder</button>
+          <button class="btn btn-sm btn-primary" onclick="docAddLink()">🔗 Add Link</button>
+        </div>
+      </div>
+      <div class="docs-breadcrumb" id="docs-breadcrumb"></div>
+      <div class="docs-search-bar">
+        <input type="text" id="docs-search" placeholder="Search documents..." oninput="docRender()" class="input" style="max-width:320px">
+      </div>
+      <div class="docs-grid" id="docs-grid"></div>
+    </div>
+
+    <!-- PROMPT LIBRARY VIEW -->
+    <div id="v-prompts" class="view">
+      <div class="dash-head">
+        <div>
+          <div class="dash-h1">💡 Prompt Library</div>
+          <div class="dash-sub">Save, organize, and reuse your best prompts across the team.</div>
+        </div>
+        <div style="display:flex;gap:8px">
+          <button class="btn btn-sm" onclick="promptManageCategories()">⚙️ Categories</button>
+          <button class="btn btn-sm btn-primary" onclick="promptAdd()">✨ New Prompt</button>
+        </div>
+      </div>
+      <div class="prompts-toolbar">
+        <input type="text" id="prompts-search" placeholder="Search prompts..." oninput="promptRender()" class="input" style="max-width:280px">
+        <div class="prompts-cats" id="prompts-cats"></div>
+      </div>
+      <div class="prompts-grid" id="prompts-grid"></div>
     </div>
 
 
@@ -1190,12 +1289,38 @@ let S = {
   att: {},
   recurring: [],
   leadgen: {},
+  docs: [],              // Document Vault
+  prompts: [],           // Prompt Library
+  promptCategories: [
+    { id: 'pc_1', name: 'Ad Copy', color: '#f59e0b', icon: '📝' },
+    { id: 'pc_2', name: 'Email Marketing', color: '#22c55e', icon: '📧' },
+    { id: 'pc_3', name: 'SEO', color: '#60a5fa', icon: '🔍' },
+    { id: 'pc_4', name: 'Social Media', color: '#a78bfa', icon: '📱' },
+    { id: 'pc_5', name: 'Client Comms', color: '#f472b6', icon: '💬' },
+  ],
+  _changelog: [],        // Audit trail
   workspaceName: 'My Workspace',
   cur: null,          // current SOP id in editor
   deptFilter: null,   // dept id for list view
   layout: 'grid',
   canvasMode: false,
 };
+
+// ─── Safe merge helper: only replace if source has actual content ───
+function safeMerge(remote, local, fallback) {
+  if (remote === undefined || remote === null) return local || fallback;
+  if (Array.isArray(fallback)) {
+    // For arrays: use remote if it's a non-empty array, else keep local
+    if (Array.isArray(remote) && remote.length > 0) return remote;
+    return (local && Array.isArray(local) && local.length > 0) ? local : fallback;
+  }
+  if (typeof fallback === 'object') {
+    // For objects: use remote if it has keys, else keep local
+    if (typeof remote === 'object' && Object.keys(remote).length > 0) return remote;
+    return (local && typeof local === 'object' && Object.keys(local).length > 0) ? local : fallback;
+  }
+  return remote || local || fallback;
+}
 
 const STARTER = `# SOP Title
 
@@ -1416,9 +1541,13 @@ async function connectToWorkspace(workspaceId, userName) {
       S.sops = d.sops || [];
       S.employees = d.employees || [];
       S.tasks = d.tasks || [];
-      S.att = d.att || {};
+      S.att = safeMerge(d.att, S.att, {});
       S.recurring = d.recurring || [];
-      S.leadgen = d.leadgen || {};
+      S.leadgen = safeMerge(d.leadgen, S.leadgen, {});
+      S.docs = d.docs || [];
+      S.prompts = d.prompts || [];
+      S.promptCategories = d.promptCategories || S.promptCategories;
+      S._changelog = d._changelog || [];
       renderSidebar();
       renderDashboard();
     } catch(e) {}
@@ -1456,9 +1585,13 @@ async function connectToWorkspace(workspaceId, userName) {
         S.workspaceName = remoteS.workspaceName || S.workspaceName;
         S.employees = remoteS.employees || [];
         S.tasks = remoteS.tasks || [];
-        S.att = remoteS.att || {};
+        S.att = safeMerge(remoteS.att, S.att, {});
         S.recurring = remoteS.recurring || [];
-        S.leadgen = remoteS.leadgen || {};
+        S.leadgen = safeMerge(remoteS.leadgen, S.leadgen, {});
+        S.docs = safeMerge(remoteS.docs, S.docs, []);
+        S.prompts = safeMerge(remoteS.prompts, S.prompts, []);
+        S.promptCategories = safeMerge(remoteS.promptCategories, S.promptCategories, S.promptCategories);
+        S._changelog = remoteS._changelog || S._changelog || [];
         loadedFromCloud = true;
         console.log('Cloud is newer, using cloud. Cloud _rev:', cloudRev, 'Local _rev:', localRev);
       } else {
@@ -1482,6 +1615,9 @@ async function connectToWorkspace(workspaceId, userName) {
   // ─── Save auth + cache locally ───
   localStorage.setItem('systemlab_auth', JSON.stringify({workspaceId, userEmail: userName}));
   saveLocal(localKey);
+
+  // ─── Daily backup snapshot (before any mutations) ───
+  saveDailyBackup();
 
   // ─── Spawn recurring tasks for today ───
   spawnRecurringForDate(getLocalISODate());
@@ -1527,9 +1663,13 @@ async function connectToWorkspace(workspaceId, userName) {
         if (remoteS.workspaceName) S.workspaceName = remoteS.workspaceName;
         S.employees = remoteS.employees || S.employees || [];
         S.tasks = remoteS.tasks || S.tasks || [];
-        S.att = remoteS.att || S.att || {};
+        S.att = safeMerge(remoteS.att, S.att, {});
         S.recurring = remoteS.recurring || S.recurring || [];
-        S.leadgen = remoteS.leadgen || S.leadgen || {};
+        S.leadgen = safeMerge(remoteS.leadgen, S.leadgen, {});
+        S.docs = safeMerge(remoteS.docs, S.docs, []);
+        S.prompts = safeMerge(remoteS.prompts, S.prompts, []);
+        S.promptCategories = safeMerge(remoteS.promptCategories, S.promptCategories, S.promptCategories);
+        S._changelog = remoteS._changelog || S._changelog || [];
         saveLocal(localKey);
         renderSidebar();
         renderDashboard();
@@ -1543,6 +1683,8 @@ async function connectToWorkspace(workspaceId, userName) {
           }
         }
         if (typeof lgRender === 'function' && document.getElementById('v-leadgen')?.classList.contains('active')) lgRender();
+        if (typeof docRender === 'function' && document.getElementById('v-docs')?.classList.contains('active')) docRender();
+        if (typeof promptRender === 'function' && document.getElementById('v-prompts')?.classList.contains('active')) promptRender();
         showToast('🔄 Workspace updated from another session');
         const activeId = typeof curSOP === 'function' ? curSOP()?.id : null;
         if (activeId) {
@@ -1569,7 +1711,14 @@ async function connectToWorkspace(workspaceId, userName) {
 
 // ─── HELPER: Build payload string ───
 function buildPayloadStr() {
-  return JSON.stringify({_rev: S._rev, depts: S.depts, sops: S.sops, workspaceName: S.workspaceName, employees: S.employees||[], tasks: S.tasks||[], att: S.att||{}, recurring: S.recurring||[], leadgen: S.leadgen||{}});
+  return JSON.stringify({
+    _rev: S._rev, depts: S.depts, sops: S.sops, workspaceName: S.workspaceName,
+    employees: S.employees||[], tasks: S.tasks||[], att: S.att||{},
+    recurring: S.recurring||[], leadgen: S.leadgen||{},
+    docs: S.docs||[], prompts: S.prompts||[],
+    promptCategories: S.promptCategories||[],
+    _changelog: (S._changelog||[]).slice(-200)
+  });
 }
 
 // ─── HELPER: Save to localStorage ───
@@ -1579,6 +1728,65 @@ function saveLocal(localKey) {
   if (currentWorkspaceId) {
     localStorage.setItem('systemlab_ws_' + currentWorkspaceId, str);
   }
+}
+
+// ─── HELPER: Daily backup snapshot ───
+function saveDailyBackup() {
+  try {
+    const today = getLocalISODate();
+    const backupKey = 'systemlab_backup_' + today;
+    if (!localStorage.getItem(backupKey)) {
+      localStorage.setItem(backupKey, buildPayloadStr());
+      // Clean up backups older than 7 days
+      for (let i = 8; i < 30; i++) {
+        const d = new Date(); d.setDate(d.getDate() - i);
+        localStorage.removeItem('systemlab_backup_' + getLocalISODate(d));
+      }
+      console.log('Daily backup saved:', today);
+    }
+  } catch(e) {}
+}
+
+// ─── HELPER: Add changelog entry ───
+function addChangelog(action, summary) {
+  if (!S._changelog) S._changelog = [];
+  S._changelog.push({ ts: Date.now(), user: currentUser || 'System', action, summary });
+  if (S._changelog.length > 200) S._changelog = S._changelog.slice(-200);
+}
+
+// ─── HELPER: Export workspace data as JSON ───
+function exportWorkspaceData() {
+  const str = buildPayloadStr();
+  const blob = new Blob([str], { type: 'application/json' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = 'systemlab_backup_' + getLocalISODate() + '.json';
+  a.click();
+  URL.revokeObjectURL(url);
+  showToast('📦 Workspace data exported');
+}
+
+// ─── HELPER: Import workspace data from JSON ───
+function importWorkspaceData() {
+  const input = document.createElement('input');
+  input.type = 'file'; input.accept = '.json';
+  input.onchange = async (e) => {
+    const file = e.target.files[0];
+    if (!file) return;
+    try {
+      const text = await file.text();
+      const data = JSON.parse(text);
+      if (!data.depts || !data.sops) { showToast('❌ Invalid backup file'); return; }
+      // Merge into current state
+      Object.assign(S, data);
+      S._rev = Date.now();
+      persist();
+      renderSidebar(); renderDashboard(); updateGreeting();
+      showToast('✅ Workspace restored from backup');
+    } catch(e) { showToast('❌ Failed to parse backup file'); }
+  };
+  input.click();
 }
 
 function getLocalISODate(d = new Date()) {
@@ -1709,6 +1917,8 @@ function showView(id, navEl) {
   }
   if (id==='all') { S.deptFilter=null; renderListView(S.sops,'All SOPs','var(--mute)'); }
   if (id==='leadgen') { if (typeof lgRender === 'function') lgRender(); }
+  if (id==='docs') { if (typeof docRender === 'function') docRender(); }
+  if (id==='prompts') { if (typeof promptRender === 'function') promptRender(); }
 }
 
 function showDept(id, navEl) {
@@ -3212,6 +3422,404 @@ function saveEmployee() {
   persist();
   closeAddEmpModal();
   renderTeam();
+}
+
+/* ════════════════════════════════
+   DOCUMENT VAULT MODULE
+════════════════════════════════ */
+let docCurrentFolder = null; // null = root
+
+function docDetectIcon(url) {
+  if (!url) return '🔗';
+  const u = url.toLowerCase();
+  if (u.includes('docs.google.com/document')) return '📄';
+  if (u.includes('docs.google.com/spreadsheets') || u.includes('sheets.google.com')) return '📊';
+  if (u.includes('docs.google.com/presentation') || u.includes('slides.google.com')) return '📽️';
+  if (u.includes('drive.google.com')) return '💾';
+  if (u.includes('docs.google.com/forms')) return '📋';
+  if (u.includes('notion.so') || u.includes('notion.site')) return '📓';
+  if (u.includes('figma.com')) return '🎨';
+  if (u.includes('canva.com')) return '🖼️';
+  if (u.includes('github.com')) return '🐙';
+  if (u.includes('youtube.com') || u.includes('youtu.be')) return '🎬';
+  if (u.includes('loom.com')) return '🎥';
+  return '🔗';
+}
+
+function docGetBreadcrumb() {
+  const path = [];
+  let id = docCurrentFolder;
+  while (id) {
+    const f = (S.docs || []).find(d => d.id === id);
+    if (!f) break;
+    path.unshift(f);
+    id = f.parentId;
+  }
+  return path;
+}
+
+function docRender() {
+  if (!S.docs) S.docs = [];
+  const search = (document.getElementById('docs-search')?.value || '').toLowerCase();
+  
+  // Breadcrumb
+  const bc = document.getElementById('docs-breadcrumb');
+  const path = docGetBreadcrumb();
+  bc.innerHTML = `<span onclick="docCurrentFolder=null;docRender()">🏠 Root</span>` +
+    path.map(f => `<span class="bc-sep">›</span><span onclick="docCurrentFolder='${f.id}';docRender()">${f.name}</span>`).join('');
+  if (path.length > 0) {
+    bc.lastChild.classList.add('bc-current');
+  }
+
+  // Filter items
+  let items = S.docs.filter(d => {
+    if (search) {
+      return (d.name || '').toLowerCase().includes(search) ||
+             (d.description || '').toLowerCase().includes(search) ||
+             (d.tags || []).some(t => t.toLowerCase().includes(search));
+    }
+    return d.parentId === docCurrentFolder;
+  });
+
+  // Sort: folders first, then by name
+  items.sort((a, b) => {
+    if (a.type === 'folder' && b.type !== 'folder') return -1;
+    if (a.type !== 'folder' && b.type === 'folder') return 1;
+    return (a.name || '').localeCompare(b.name || '');
+  });
+
+  const grid = document.getElementById('docs-grid');
+  if (items.length === 0) {
+    grid.innerHTML = `<div class="doc-empty"><div class="doc-empty-icon">${search ? '🔍' : '📂'}</div>${search ? 'No documents match your search' : 'This folder is empty. Add links or create folders to organize your resources.'}</div>`;
+    return;
+  }
+
+  grid.innerHTML = items.map(d => {
+    if (d.type === 'folder') {
+      const count = S.docs.filter(x => x.parentId === d.id).length;
+      return `<div class="doc-card doc-card-folder" ondblclick="docCurrentFolder='${d.id}';docRender()" onclick="docCurrentFolder='${d.id}';docRender()">
+        <div class="doc-card-actions">
+          <button onclick="event.stopPropagation();docEdit('${d.id}')" title="Rename">✏️</button>
+          <button onclick="event.stopPropagation();docDelete('${d.id}')" title="Delete">🗑️</button>
+        </div>
+        <div class="doc-card-icon">📁</div>
+        <div class="doc-card-name">${d.name}</div>
+        <div class="doc-card-desc">${count} item${count !== 1 ? 's' : ''}</div>
+      </div>`;
+    } else {
+      const icon = docDetectIcon(d.url);
+      return `<div class="doc-card" onclick="docOpenLink('${d.id}')">
+        <div class="doc-card-actions">
+          <button onclick="event.stopPropagation();docCopyUrl('${d.id}')" title="Copy URL">📋</button>
+          <button onclick="event.stopPropagation();docEdit('${d.id}')" title="Edit">✏️</button>
+          <button onclick="event.stopPropagation();docDelete('${d.id}')" title="Delete">🗑️</button>
+        </div>
+        <div class="doc-card-icon">${icon}</div>
+        <div class="doc-card-name">${d.name}</div>
+        ${d.description ? `<div class="doc-card-desc">${d.description}</div>` : ''}
+        <div class="doc-card-meta">
+          ${(d.tags || []).map(t => `<span class="doc-tag">${t}</span>`).join('')}
+        </div>
+      </div>`;
+    }
+  }).join('');
+}
+
+function docAddFolder() {
+  const name = prompt('Folder name:');
+  if (!name || !name.trim()) return;
+  S.docs.push({
+    id: 'doc_' + Math.random().toString(36).substr(2, 9),
+    name: name.trim(),
+    type: 'folder',
+    parentId: docCurrentFolder,
+    createdAt: Date.now(),
+    createdBy: currentUser
+  });
+  addChangelog('doc_add', 'Created folder "' + name.trim() + '"');
+  persist();
+  docRender();
+}
+
+function docAddLink() {
+  const url = prompt('Paste the URL (Google Drive, Docs, Sheets, etc.):');
+  if (!url || !url.trim()) return;
+  const name = prompt('Name for this link:', url.split('/').pop()?.split('?')[0] || 'Untitled');
+  if (!name) return;
+  const desc = prompt('Description (optional):') || '';
+  const tagsStr = prompt('Tags (comma-separated, optional):') || '';
+  const tags = tagsStr.split(',').map(t => t.trim()).filter(Boolean);
+  
+  S.docs.push({
+    id: 'doc_' + Math.random().toString(36).substr(2, 9),
+    name: name.trim(),
+    type: 'link',
+    parentId: docCurrentFolder,
+    url: url.trim(),
+    icon: docDetectIcon(url),
+    description: desc.trim(),
+    tags,
+    createdAt: Date.now(),
+    createdBy: currentUser
+  });
+  addChangelog('doc_add', 'Added link "' + name.trim() + '"');
+  persist();
+  docRender();
+  showToast('🔗 Link added');
+}
+
+function docOpenLink(id) {
+  const d = S.docs.find(x => x.id === id);
+  if (d && d.url) window.open(d.url, '_blank');
+}
+
+function docCopyUrl(id) {
+  const d = S.docs.find(x => x.id === id);
+  if (d && d.url) {
+    navigator.clipboard.writeText(d.url).then(() => showToast('📋 URL copied'));
+  }
+}
+
+function docEdit(id) {
+  const d = S.docs.find(x => x.id === id);
+  if (!d) return;
+  const name = prompt('Name:', d.name);
+  if (!name || !name.trim()) return;
+  d.name = name.trim();
+  if (d.type === 'link') {
+    const desc = prompt('Description:', d.description || '');
+    d.description = (desc || '').trim();
+    const url = prompt('URL:', d.url);
+    if (url && url.trim()) d.url = url.trim();
+    const tagsStr = prompt('Tags (comma-separated):', (d.tags || []).join(', '));
+    d.tags = (tagsStr || '').split(',').map(t => t.trim()).filter(Boolean);
+  }
+  addChangelog('doc_edit', 'Updated "' + name.trim() + '"');
+  persist();
+  docRender();
+}
+
+function docDelete(id) {
+  const d = S.docs.find(x => x.id === id);
+  if (!d) return;
+  // If folder, check for children
+  if (d.type === 'folder') {
+    const children = S.docs.filter(x => x.parentId === id);
+    if (children.length > 0) {
+      if (!confirm(`This folder contains ${children.length} item(s). Delete everything?`)) return;
+      // Recursively delete all children
+      function deleteChildren(parentId) {
+        S.docs.filter(x => x.parentId === parentId).forEach(c => {
+          if (c.type === 'folder') deleteChildren(c.id);
+        });
+        S.docs = S.docs.filter(x => x.parentId !== parentId);
+      }
+      deleteChildren(id);
+    }
+  }
+  if (!confirm('Delete "' + d.name + '"?')) return;
+  S.docs = S.docs.filter(x => x.id !== id);
+  addChangelog('doc_delete', 'Deleted "' + d.name + '"');
+  persist();
+  docRender();
+}
+
+
+/* ════════════════════════════════
+   PROMPT LIBRARY MODULE
+════════════════════════════════ */
+let promptFilterCat = null; // null = all
+
+function promptRender() {
+  if (!S.prompts) S.prompts = [];
+  if (!S.promptCategories) S.promptCategories = [];
+  
+  const search = (document.getElementById('prompts-search')?.value || '').toLowerCase();
+  
+  // Category pills
+  const catsEl = document.getElementById('prompts-cats');
+  catsEl.innerHTML = `<span class="prompt-cat-pill ${!promptFilterCat ? 'active' : ''}" onclick="promptFilterCat=null;promptRender()">All</span>` +
+    `<span class="prompt-cat-pill ${promptFilterCat === '_fav' ? 'active' : ''}" onclick="promptFilterCat='_fav';promptRender()">⭐ Favorites</span>` +
+    S.promptCategories.map(c => 
+      `<span class="prompt-cat-pill ${promptFilterCat === c.id ? 'active' : ''}" onclick="promptFilterCat='${c.id}';promptRender()" style="${promptFilterCat === c.id ? 'background:'+c.color+';border-color:'+c.color : ''}">${c.icon} ${c.name}</span>`
+    ).join('');
+
+  // Filter
+  let items = S.prompts.filter(p => {
+    if (promptFilterCat === '_fav' && !p.isFavorite) return false;
+    if (promptFilterCat && promptFilterCat !== '_fav' && p.category !== promptFilterCat) return false;
+    if (search) {
+      return (p.title || '').toLowerCase().includes(search) ||
+             (p.prompt || '').toLowerCase().includes(search) ||
+             (p.tags || []).some(t => t.toLowerCase().includes(search));
+    }
+    return true;
+  });
+
+  // Sort: favorites first, then by updatedAt
+  items.sort((a, b) => {
+    if (a.isFavorite && !b.isFavorite) return -1;
+    if (!a.isFavorite && b.isFavorite) return 1;
+    return (b.updatedAt || b.createdAt || 0) - (a.updatedAt || a.createdAt || 0);
+  });
+
+  const grid = document.getElementById('prompts-grid');
+  if (items.length === 0) {
+    grid.innerHTML = `<div class="prompt-empty">${search ? '🔍 No prompts match your search' : '✨ No prompts yet. Click "New Prompt" to add your first one!'}</div>`;
+    return;
+  }
+
+  grid.innerHTML = items.map(p => {
+    const cat = S.promptCategories.find(c => c.id === p.category);
+    const catBadge = cat ? `<span class="prompt-card-cat" style="background:${cat.color}22;color:${cat.color}">${cat.icon} ${cat.name}</span>` : '';
+    return `<div class="prompt-card" id="pc-${p.id}">
+      <button class="prompt-card-fav ${p.isFavorite ? 'active' : ''}" onclick="promptToggleFav('${p.id}')">${p.isFavorite ? '⭐' : '☆'}</button>
+      <div class="prompt-card-head">
+        <div class="prompt-card-title">${p.title}</div>
+        ${catBadge}
+      </div>
+      <div class="prompt-card-body" id="pb-${p.id}" onclick="this.classList.toggle('expanded')">${escHtml(p.prompt)}</div>
+      <div class="prompt-card-footer">
+        ${(p.tags || []).map(t => `<span class="doc-tag">${t}</span>`).join('')}
+        ${p.usageCount ? `<span style="font-size:10px;color:var(--mute)">Used ${p.usageCount}×</span>` : ''}
+        <div class="prompt-card-actions">
+          <button onclick="promptCopy('${p.id}')">📋 Copy</button>
+          <button onclick="promptEdit('${p.id}')">✏️ Edit</button>
+          <button onclick="promptDelete('${p.id}')">🗑️</button>
+        </div>
+      </div>
+    </div>`;
+  }).join('');
+}
+
+function escHtml(str) {
+  const div = document.createElement('div'); div.textContent = str || ''; return div.innerHTML;
+}
+
+function promptAdd() {
+  const title = prompt('Prompt title:');
+  if (!title || !title.trim()) return;
+  
+  // Build category picker
+  let catOptions = 'Select category:\n' + S.promptCategories.map((c, i) => `${i+1}. ${c.icon} ${c.name}`).join('\n');
+  const catIdx = prompt(catOptions);
+  const cat = catIdx ? S.promptCategories[parseInt(catIdx) - 1] : null;
+  
+  const body = prompt('Enter the prompt text:');
+  if (!body) return;
+  
+  const tagsStr = prompt('Tags (comma-separated, optional):') || '';
+  const tags = tagsStr.split(',').map(t => t.trim()).filter(Boolean);
+
+  S.prompts.push({
+    id: 'pr_' + Math.random().toString(36).substr(2, 9),
+    title: title.trim(),
+    category: cat?.id || null,
+    prompt: body.trim(),
+    tags,
+    isFavorite: false,
+    usageCount: 0,
+    createdAt: Date.now(),
+    createdBy: currentUser,
+    updatedAt: Date.now()
+  });
+  addChangelog('prompt_add', 'Added prompt "' + title.trim() + '"');
+  persist();
+  promptRender();
+  showToast('✨ Prompt saved');
+}
+
+function promptCopy(id) {
+  const p = S.prompts.find(x => x.id === id);
+  if (!p) return;
+  navigator.clipboard.writeText(p.prompt).then(() => {
+    p.usageCount = (p.usageCount || 0) + 1;
+    persist();
+    promptRender();
+    showToast('📋 Prompt copied to clipboard');
+  });
+}
+
+function promptToggleFav(id) {
+  const p = S.prompts.find(x => x.id === id);
+  if (!p) return;
+  p.isFavorite = !p.isFavorite;
+  persist();
+  promptRender();
+}
+
+function promptEdit(id) {
+  const p = S.prompts.find(x => x.id === id);
+  if (!p) return;
+  const title = prompt('Title:', p.title);
+  if (!title) return;
+  p.title = title.trim();
+  
+  let catOptions = '0. None\n' + S.promptCategories.map((c, i) => `${i+1}. ${c.icon} ${c.name}`).join('\n');
+  const currentIdx = p.category ? S.promptCategories.findIndex(c => c.id === p.category) + 1 : 0;
+  const catIdx = prompt('Category:\n' + catOptions, currentIdx);
+  if (catIdx !== null) {
+    const idx = parseInt(catIdx);
+    p.category = idx > 0 ? S.promptCategories[idx - 1]?.id || null : null;
+  }
+  
+  const body = prompt('Prompt text:', p.prompt);
+  if (body !== null) p.prompt = body.trim();
+  
+  const tagsStr = prompt('Tags (comma-separated):', (p.tags || []).join(', '));
+  if (tagsStr !== null) p.tags = tagsStr.split(',').map(t => t.trim()).filter(Boolean);
+  
+  p.updatedAt = Date.now();
+  addChangelog('prompt_edit', 'Updated prompt "' + title.trim() + '"');
+  persist();
+  promptRender();
+}
+
+function promptDelete(id) {
+  const p = S.prompts.find(x => x.id === id);
+  if (!p || !confirm('Delete prompt "' + p.title + '"?')) return;
+  S.prompts = S.prompts.filter(x => x.id !== id);
+  addChangelog('prompt_delete', 'Deleted prompt "' + p.title + '"');
+  persist();
+  promptRender();
+}
+
+function promptManageCategories() {
+  let msg = 'Current categories:\n' + S.promptCategories.map((c, i) => `${i+1}. ${c.icon} ${c.name}`).join('\n');
+  msg += '\n\nActions:\n• Type "add" to add a new category\n• Type a number to edit that category\n• Type "delete N" to delete category N';
+  const action = prompt(msg);
+  if (!action) return;
+  
+  if (action.toLowerCase() === 'add') {
+    const name = prompt('Category name:');
+    if (!name) return;
+    const icon = prompt('Emoji icon:', '📌');
+    const colors = ['#f59e0b','#22c55e','#60a5fa','#a78bfa','#f472b6','#ef4444','#06b6d4','#84cc16'];
+    const color = colors[S.promptCategories.length % colors.length];
+    S.promptCategories.push({ id: 'pc_' + Math.random().toString(36).substr(2, 5), name: name.trim(), color, icon: icon || '📌' });
+    persist();
+    promptRender();
+    showToast('✅ Category added');
+  } else if (action.toLowerCase().startsWith('delete')) {
+    const idx = parseInt(action.split(' ')[1]) - 1;
+    if (idx >= 0 && idx < S.promptCategories.length) {
+      S.promptCategories.splice(idx, 1);
+      persist();
+      promptRender();
+      showToast('🗑️ Category deleted');
+    }
+  } else {
+    const idx = parseInt(action) - 1;
+    if (idx >= 0 && idx < S.promptCategories.length) {
+      const c = S.promptCategories[idx];
+      const name = prompt('Name:', c.name);
+      if (name) c.name = name.trim();
+      const icon = prompt('Emoji icon:', c.icon);
+      if (icon) c.icon = icon;
+      persist();
+      promptRender();
+    }
+  }
 }
 
 /* ════════════════════════════════
