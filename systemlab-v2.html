@@ -491,51 +491,52 @@ select option{background:var(--canvas-card)}
 }
 
 /* ═══════ DOCUMENT VAULT ═══════ */
-.docs-breadcrumb{display:flex;align-items:center;gap:4px;padding:0 0 12px;font-size:12px;color:var(--mute);flex-wrap:wrap}
-.docs-breadcrumb span{cursor:pointer;padding:2px 6px;border-radius:var(--r-sm);transition:all .15s}
+.docs-breadcrumb{display:flex;align-items:center;gap:2px;padding:0 0 16px;font-size:12px;color:var(--mute);flex-wrap:wrap}
+.docs-breadcrumb span{cursor:pointer;padding:3px 8px;border-radius:var(--r-sm);transition:all .15s}
 .docs-breadcrumb span:hover{background:var(--canvas-card);color:var(--ink)}
-.docs-breadcrumb .bc-sep{opacity:.4;cursor:default;padding:0}
+.docs-breadcrumb .bc-sep{opacity:.3;cursor:default;padding:0 2px;font-size:10px}
 .docs-breadcrumb .bc-sep:hover{background:none;color:var(--mute)}
-.docs-breadcrumb .bc-current{color:var(--ink);font-weight:500}
-.docs-search-bar{margin-bottom:16px}
-.docs-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(220px,1fr));gap:12px}
-.doc-card{background:var(--canvas-card);border:1px solid var(--hairline);border-radius:var(--r-md);padding:16px;cursor:pointer;transition:all .15s;position:relative}
-.doc-card:hover{border-color:var(--hairline-mid);transform:translateY(-1px);box-shadow:0 4px 16px rgba(0,0,0,.2)}
+.docs-breadcrumb .bc-current{color:var(--ink);font-weight:600;background:var(--canvas-card)}
+.docs-search-bar{margin-bottom:20px}
+.docs-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:14px;padding-bottom:20px}
+.doc-card{background:var(--canvas-card);border:1px solid var(--hairline);border-radius:12px;padding:18px 16px 14px;cursor:pointer;transition:all .2s;position:relative;display:flex;flex-direction:column;min-height:120px}
+.doc-card:hover{border-color:var(--brand);transform:translateY(-2px);box-shadow:0 8px 24px rgba(0,0,0,.25)}
 .doc-card-folder{border-left:3px solid var(--brand)}
-.doc-card-icon{font-size:28px;margin-bottom:8px}
-.doc-card-name{font-size:13px;font-weight:500;color:var(--ink);margin-bottom:4px;word-break:break-word}
-.doc-card-desc{font-size:11px;color:var(--mute);line-height:1.4;margin-bottom:8px;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
-.doc-card-meta{display:flex;align-items:center;gap:6px;flex-wrap:wrap}
-.doc-tag{font-size:9px;font-weight:600;text-transform:uppercase;letter-spacing:.04em;padding:2px 7px;border-radius:999px;background:rgba(255,122,23,.12);color:var(--brand)}
-.doc-card-actions{position:absolute;top:8px;right:8px;display:flex;gap:4px;opacity:0;transition:opacity .15s}
+.doc-card-icon{font-size:32px;margin-bottom:10px;line-height:1}
+.doc-card-name{font-size:13px;font-weight:600;color:var(--ink);margin-bottom:4px;word-break:break-word;line-height:1.3}
+.doc-card-desc{font-size:11px;color:var(--mute);line-height:1.4;margin-bottom:auto;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
+.doc-card-meta{display:flex;align-items:center;gap:5px;flex-wrap:wrap;margin-top:10px;padding-top:10px;border-top:1px solid var(--hairline)}
+.doc-tag{font-size:9px;font-weight:600;text-transform:uppercase;letter-spacing:.04em;padding:3px 8px;border-radius:999px;background:rgba(255,122,23,.1);color:var(--brand)}
+.doc-card-actions{position:absolute;top:10px;right:10px;display:flex;gap:3px;opacity:0;transition:opacity .15s}
 .doc-card:hover .doc-card-actions{opacity:1}
-.doc-card-actions button{background:var(--canvas-mid);border:none;color:var(--mute);width:24px;height:24px;border-radius:var(--r-sm);cursor:pointer;font-size:11px;display:flex;align-items:center;justify-content:center}
+.doc-card-actions button{background:var(--canvas-mid);border:none;color:var(--mute);width:26px;height:26px;border-radius:6px;cursor:pointer;font-size:12px;display:flex;align-items:center;justify-content:center;transition:all .15s}
 .doc-card-actions button:hover{color:var(--ink);background:var(--hairline-mid)}
-.doc-empty{grid-column:1/-1;text-align:center;padding:48px 0;color:var(--mute);font-size:13px}
-.doc-empty-icon{font-size:40px;margin-bottom:12px;opacity:.5}
+.doc-empty{grid-column:1/-1;text-align:center;padding:60px 20px;color:var(--mute);font-size:13px}
+.doc-empty-icon{font-size:48px;margin-bottom:16px;opacity:.4}
 
 /* ═══════ PROMPT LIBRARY ═══════ */
-.prompts-toolbar{display:flex;align-items:center;gap:12px;margin-bottom:16px;flex-wrap:wrap}
-.prompts-cats{display:flex;gap:6px;flex-wrap:wrap}
-.prompt-cat-pill{font-size:11px;padding:4px 12px;border-radius:999px;border:1px solid var(--hairline);background:transparent;color:var(--mute);cursor:pointer;transition:all .15s;white-space:nowrap}
-.prompt-cat-pill:hover{border-color:var(--hairline-mid);color:var(--ink)}
-.prompt-cat-pill.active{background:var(--brand);border-color:var(--brand);color:#fff}
-.prompts-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(300px,1fr));gap:12px}
-.prompt-card{background:var(--canvas-card);border:1px solid var(--hairline);border-radius:var(--r-md);padding:16px;transition:all .15s;position:relative}
-.prompt-card:hover{border-color:var(--hairline-mid);box-shadow:0 4px 16px rgba(0,0,0,.2)}
-.prompt-card-head{display:flex;align-items:flex-start;justify-content:space-between;margin-bottom:8px}
-.prompt-card-title{font-size:14px;font-weight:500;color:var(--ink);flex:1;margin-right:8px}
-.prompt-card-cat{font-size:10px;font-weight:600;padding:2px 8px;border-radius:999px;white-space:nowrap}
-.prompt-card-body{font-size:12px;color:var(--mute);line-height:1.5;margin-bottom:12px;white-space:pre-wrap;display:-webkit-box;-webkit-line-clamp:3;-webkit-box-orient:vertical;overflow:hidden;font-family:var(--mono);background:var(--canvas-soft);padding:10px;border-radius:var(--r-sm)}
-.prompt-card-body.expanded{-webkit-line-clamp:unset;max-height:400px;overflow-y:auto}
-.prompt-card-footer{display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+.prompts-toolbar{display:flex;align-items:center;gap:12px;margin-bottom:20px;flex-wrap:wrap}
+.prompts-cats{display:flex;gap:6px;flex-wrap:wrap;flex:1}
+.prompt-cat-pill{font-size:11px;padding:5px 14px;border-radius:999px;border:1px solid var(--hairline);background:transparent;color:var(--mute);cursor:pointer;transition:all .15s;white-space:nowrap;font-weight:500}
+.prompt-cat-pill:hover{border-color:var(--hairline-mid);color:var(--ink);background:var(--canvas-card)}
+.prompt-cat-pill.active{background:var(--brand);border-color:var(--brand);color:#fff;font-weight:600}
+.prompts-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(340px,1fr));gap:14px;padding-bottom:20px}
+.prompt-card{background:var(--canvas-card);border:1px solid var(--hairline);border-radius:12px;padding:18px;transition:all .2s;position:relative;display:flex;flex-direction:column}
+.prompt-card:hover{border-color:var(--brand);box-shadow:0 8px 24px rgba(0,0,0,.25)}
+.prompt-card-head{display:flex;align-items:flex-start;justify-content:space-between;margin-bottom:10px;gap:8px}
+.prompt-card-title{font-size:14px;font-weight:600;color:var(--ink);flex:1;line-height:1.3;letter-spacing:-0.01em}
+.prompt-card-cat{font-size:10px;font-weight:600;padding:3px 10px;border-radius:999px;white-space:nowrap;flex-shrink:0}
+.prompt-card-body{font-size:12px;color:var(--mute);line-height:1.6;margin-bottom:14px;white-space:pre-wrap;display:-webkit-box;-webkit-line-clamp:3;-webkit-box-orient:vertical;overflow:hidden;font-family:var(--mono);background:var(--canvas-soft);padding:12px 14px;border-radius:8px;border:1px solid var(--hairline);cursor:pointer;transition:all .15s}
+.prompt-card-body:hover{border-color:var(--hairline-mid)}
+.prompt-card-body.expanded{-webkit-line-clamp:unset;max-height:300px;overflow-y:auto}
+.prompt-card-footer{display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin-top:auto;padding-top:12px;border-top:1px solid var(--hairline)}
 .prompt-card-footer .doc-tag{cursor:default}
 .prompt-card-actions{display:flex;gap:4px;margin-left:auto}
-.prompt-card-actions button{background:var(--canvas-mid);border:none;color:var(--mute);padding:4px 10px;border-radius:var(--r-sm);cursor:pointer;font-size:11px;display:flex;align-items:center;gap:4px;transition:all .15s}
+.prompt-card-actions button{background:var(--canvas-mid);border:none;color:var(--mute);padding:5px 12px;border-radius:6px;cursor:pointer;font-size:11px;display:flex;align-items:center;gap:4px;transition:all .15s;font-weight:500}
 .prompt-card-actions button:hover{color:var(--ink);background:var(--hairline-mid)}
-.prompt-card-fav{position:absolute;top:12px;right:12px;background:none;border:none;cursor:pointer;font-size:16px;opacity:.4;transition:opacity .15s}
-.prompt-card-fav:hover,.prompt-card-fav.active{opacity:1}
-.prompt-empty{grid-column:1/-1;text-align:center;padding:48px 0;color:var(--mute);font-size:13px}
+.prompt-card-fav{position:absolute;top:14px;right:14px;background:none;border:none;cursor:pointer;font-size:18px;opacity:.3;transition:all .15s;z-index:1}
+.prompt-card-fav:hover,.prompt-card-fav.active{opacity:1;transform:scale(1.15)}
+.prompt-empty{grid-column:1/-1;text-align:center;padding:60px 20px;color:var(--mute);font-size:13px}
 </style>
 </head>
 <body>
@@ -1266,6 +1267,90 @@ select option{background:var(--canvas-card)}
 
 <!-- TOAST -->
 <div id="toast"></div>
+
+<!-- DOC LINK MODAL -->
+<div class="modal-overlay" id="doc-link-modal">
+  <div class="modal" style="width:480px;max-width:95vw">
+    <div class="modal-head">
+      <div class="modal-title" id="doc-modal-title">Add Link</div>
+      <button class="btn btn-xs btn-ghost" onclick="this.closest('.modal-overlay').classList.remove('open')">✕</button>
+    </div>
+    <div class="modal-body">
+      <div class="field-group"><div class="field-label">URL</div><input type="url" id="dm-url" placeholder="https://drive.google.com/..." oninput="docPreviewIcon()"></div>
+      <div style="display:flex;align-items:center;gap:10px;margin:-6px 0 14px"><span id="dm-icon-preview" style="font-size:24px">🔗</span><span style="font-size:11px;color:var(--mute)" id="dm-icon-label">Paste a URL to auto-detect type</span></div>
+      <div class="field-group"><div class="field-label">Name</div><input type="text" id="dm-name" placeholder="e.g. Brand Guidelines v3"></div>
+      <div class="field-group"><div class="field-label">Description (optional)</div><input type="text" id="dm-desc" placeholder="Short description..."></div>
+      <div class="field-group"><div class="field-label">Tags (comma-separated)</div><input type="text" id="dm-tags" placeholder="e.g. branding, design, logo"></div>
+    </div>
+    <div class="modal-foot">
+      <button class="btn btn-sm" onclick="this.closest('.modal-overlay').classList.remove('open')">Cancel</button>
+      <button class="btn btn-sm btn-primary" id="dm-save-btn" onclick="docSaveLink()">Add Link</button>
+    </div>
+  </div>
+</div>
+
+<!-- DOC FOLDER MODAL -->
+<div class="modal-overlay" id="doc-folder-modal">
+  <div class="modal" style="width:360px;max-width:95vw">
+    <div class="modal-head">
+      <div class="modal-title">New Folder</div>
+      <button class="btn btn-xs btn-ghost" onclick="this.closest('.modal-overlay').classList.remove('open')">✕</button>
+    </div>
+    <div class="modal-body">
+      <div class="field-group"><div class="field-label">Folder Name</div><input type="text" id="df-name" placeholder="e.g. Brand Assets"></div>
+    </div>
+    <div class="modal-foot">
+      <button class="btn btn-sm" onclick="this.closest('.modal-overlay').classList.remove('open')">Cancel</button>
+      <button class="btn btn-sm btn-primary" onclick="docSaveFolder()">Create Folder</button>
+    </div>
+  </div>
+</div>
+
+<!-- PROMPT MODAL -->
+<div class="modal-overlay" id="prompt-modal">
+  <div class="modal" style="width:560px;max-width:95vw">
+    <div class="modal-head">
+      <div class="modal-title" id="pm-title">New Prompt</div>
+      <button class="btn btn-xs btn-ghost" onclick="this.closest('.modal-overlay').classList.remove('open')">✕</button>
+    </div>
+    <div class="modal-body">
+      <div class="field-group"><div class="field-label">Title</div><input type="text" id="pm-name" placeholder="e.g. Facebook Ad Copy — Lead Gen"></div>
+      <div class="field-group"><div class="field-label">Category</div>
+        <select id="pm-cat"><option value="">(No Category)</option></select>
+      </div>
+      <div class="field-group"><div class="field-label">Prompt Text</div><textarea id="pm-body" rows="8" placeholder="Enter the full prompt text here..." style="font-family:var(--mono);font-size:12px;line-height:1.5;resize:vertical"></textarea></div>
+      <div class="field-group"><div class="field-label">Tags (comma-separated)</div><input type="text" id="pm-tags" placeholder="e.g. facebook, ads, leadgen"></div>
+    </div>
+    <div class="modal-foot">
+      <button class="btn btn-sm" onclick="this.closest('.modal-overlay').classList.remove('open')">Cancel</button>
+      <button class="btn btn-sm btn-primary" id="pm-save-btn" onclick="promptSaveModal()">Save Prompt</button>
+    </div>
+  </div>
+</div>
+
+<!-- CATEGORY MANAGER MODAL -->
+<div class="modal-overlay" id="cat-modal">
+  <div class="modal" style="width:420px;max-width:95vw">
+    <div class="modal-head">
+      <div class="modal-title">Manage Categories</div>
+      <button class="btn btn-xs btn-ghost" onclick="this.closest('.modal-overlay').classList.remove('open')">✕</button>
+    </div>
+    <div class="modal-body">
+      <div id="cat-list" style="display:flex;flex-direction:column;gap:8px;margin-bottom:16px"></div>
+      <div style="border-top:1px solid var(--hairline);padding-top:14px">
+        <div class="field-label" style="margin-bottom:8px">Add New Category</div>
+        <div style="display:flex;gap:8px;align-items:center">
+          <input type="text" id="cat-new-icon" placeholder="📌" style="width:44px;text-align:center;font-size:18px">
+          <input type="text" id="cat-new-name" placeholder="Category name..." style="flex:1">
+          <button class="btn btn-sm btn-primary" onclick="catAdd()">Add</button>
+        </div>
+      </div>
+    </div>
+    <div class="modal-foot">
+      <button class="btn btn-sm btn-primary" onclick="this.closest('.modal-overlay').classList.remove('open')">Done</button>
+    </div>
+  </div>
+</div>
 
 <script>
 /* ════════════════════════════════
@@ -3427,7 +3512,15 @@ function saveEmployee() {
 /* ════════════════════════════════
    DOCUMENT VAULT MODULE
 ════════════════════════════════ */
-let docCurrentFolder = null; // null = root
+let docCurrentFolder = null;
+let docEditingId = null; // null = new, string = editing
+
+const DOC_ICON_LABELS = {
+  '📄': 'Google Doc', '📊': 'Google Sheet', '📽️': 'Google Slides',
+  '💾': 'Google Drive', '📋': 'Google Form', '📓': 'Notion',
+  '🎨': 'Figma', '🖼️': 'Canva', '🐙': 'GitHub',
+  '🎬': 'YouTube', '🎥': 'Loom', '🔗': 'Web Link'
+};
 
 function docDetectIcon(url) {
   if (!url) return '🔗';
@@ -3446,6 +3539,13 @@ function docDetectIcon(url) {
   return '🔗';
 }
 
+function docPreviewIcon() {
+  const url = document.getElementById('dm-url').value;
+  const icon = docDetectIcon(url);
+  document.getElementById('dm-icon-preview').textContent = icon;
+  document.getElementById('dm-icon-label').textContent = DOC_ICON_LABELS[icon] || 'Web Link';
+}
+
 function docGetBreadcrumb() {
   const path = [];
   let id = docCurrentFolder;
@@ -3462,16 +3562,12 @@ function docRender() {
   if (!S.docs) S.docs = [];
   const search = (document.getElementById('docs-search')?.value || '').toLowerCase();
   
-  // Breadcrumb
   const bc = document.getElementById('docs-breadcrumb');
   const path = docGetBreadcrumb();
   bc.innerHTML = `<span onclick="docCurrentFolder=null;docRender()">🏠 Root</span>` +
     path.map(f => `<span class="bc-sep">›</span><span onclick="docCurrentFolder='${f.id}';docRender()">${f.name}</span>`).join('');
-  if (path.length > 0) {
-    bc.lastChild.classList.add('bc-current');
-  }
+  if (path.length > 0) bc.lastChild.classList.add('bc-current');
 
-  // Filter items
   let items = S.docs.filter(d => {
     if (search) {
       return (d.name || '').toLowerCase().includes(search) ||
@@ -3481,7 +3577,6 @@ function docRender() {
     return d.parentId === docCurrentFolder;
   });
 
-  // Sort: folders first, then by name
   items.sort((a, b) => {
     if (a.type === 'folder' && b.type !== 'folder') return -1;
     if (a.type !== 'folder' && b.type === 'folder') return 1;
@@ -3490,24 +3585,25 @@ function docRender() {
 
   const grid = document.getElementById('docs-grid');
   if (items.length === 0) {
-    grid.innerHTML = `<div class="doc-empty"><div class="doc-empty-icon">${search ? '🔍' : '📂'}</div>${search ? 'No documents match your search' : 'This folder is empty. Add links or create folders to organize your resources.'}</div>`;
+    grid.innerHTML = `<div class="doc-empty"><div class="doc-empty-icon">${search ? '🔍' : '📂'}</div><div style="font-weight:500;margin-bottom:6px">${search ? 'No documents found' : 'This folder is empty'}</div><div style="font-size:11px">${search ? 'Try a different search term' : 'Click "Add Link" or "New Folder" to get started'}</div></div>`;
     return;
   }
 
   grid.innerHTML = items.map(d => {
     if (d.type === 'folder') {
       const count = S.docs.filter(x => x.parentId === d.id).length;
-      return `<div class="doc-card doc-card-folder" ondblclick="docCurrentFolder='${d.id}';docRender()" onclick="docCurrentFolder='${d.id}';docRender()">
+      return `<div class="doc-card doc-card-folder" onclick="docCurrentFolder='${d.id}';docRender()">
         <div class="doc-card-actions">
           <button onclick="event.stopPropagation();docEdit('${d.id}')" title="Rename">✏️</button>
           <button onclick="event.stopPropagation();docDelete('${d.id}')" title="Delete">🗑️</button>
         </div>
         <div class="doc-card-icon">📁</div>
         <div class="doc-card-name">${d.name}</div>
-        <div class="doc-card-desc">${count} item${count !== 1 ? 's' : ''}</div>
+        <div class="doc-card-desc" style="margin-bottom:0">${count} item${count !== 1 ? 's' : ''}</div>
       </div>`;
     } else {
       const icon = docDetectIcon(d.url);
+      const hasTags = d.tags && d.tags.length > 0;
       return `<div class="doc-card" onclick="docOpenLink('${d.id}')">
         <div class="doc-card-actions">
           <button onclick="event.stopPropagation();docCopyUrl('${d.id}')" title="Copy URL">📋</button>
@@ -3517,55 +3613,76 @@ function docRender() {
         <div class="doc-card-icon">${icon}</div>
         <div class="doc-card-name">${d.name}</div>
         ${d.description ? `<div class="doc-card-desc">${d.description}</div>` : ''}
-        <div class="doc-card-meta">
-          ${(d.tags || []).map(t => `<span class="doc-tag">${t}</span>`).join('')}
-        </div>
+        ${hasTags ? `<div class="doc-card-meta">${d.tags.map(t => `<span class="doc-tag">${t}</span>`).join('')}</div>` : ''}
       </div>`;
     }
   }).join('');
 }
 
+// ─── Modal-based add/edit ───
 function docAddFolder() {
-  const name = prompt('Folder name:');
-  if (!name || !name.trim()) return;
-  S.docs.push({
-    id: 'doc_' + Math.random().toString(36).substr(2, 9),
-    name: name.trim(),
-    type: 'folder',
-    parentId: docCurrentFolder,
-    createdAt: Date.now(),
-    createdBy: currentUser
-  });
-  addChangelog('doc_add', 'Created folder "' + name.trim() + '"');
-  persist();
-  docRender();
+  document.getElementById('df-name').value = '';
+  docEditingId = null;
+  document.getElementById('doc-folder-modal').classList.add('open');
+  setTimeout(() => document.getElementById('df-name').focus(), 100);
+}
+
+function docSaveFolder() {
+  const name = document.getElementById('df-name').value.trim();
+  if (!name) return;
+  if (docEditingId) {
+    const d = S.docs.find(x => x.id === docEditingId);
+    if (d) d.name = name;
+    addChangelog('doc_edit', 'Renamed folder to "' + name + '"');
+  } else {
+    S.docs.push({
+      id: 'doc_' + Math.random().toString(36).substr(2, 9),
+      name, type: 'folder', parentId: docCurrentFolder,
+      createdAt: Date.now(), createdBy: currentUser
+    });
+    addChangelog('doc_add', 'Created folder "' + name + '"');
+  }
+  document.getElementById('doc-folder-modal').classList.remove('open');
+  persist(); docRender();
 }
 
 function docAddLink() {
-  const url = prompt('Paste the URL (Google Drive, Docs, Sheets, etc.):');
-  if (!url || !url.trim()) return;
-  const name = prompt('Name for this link:', url.split('/').pop()?.split('?')[0] || 'Untitled');
-  if (!name) return;
-  const desc = prompt('Description (optional):') || '';
-  const tagsStr = prompt('Tags (comma-separated, optional):') || '';
-  const tags = tagsStr.split(',').map(t => t.trim()).filter(Boolean);
+  docEditingId = null;
+  document.getElementById('doc-modal-title').textContent = 'Add Link';
+  document.getElementById('dm-save-btn').textContent = 'Add Link';
+  document.getElementById('dm-url').value = '';
+  document.getElementById('dm-name').value = '';
+  document.getElementById('dm-desc').value = '';
+  document.getElementById('dm-tags').value = '';
+  document.getElementById('dm-icon-preview').textContent = '🔗';
+  document.getElementById('dm-icon-label').textContent = 'Paste a URL to auto-detect type';
+  document.getElementById('doc-link-modal').classList.add('open');
+  setTimeout(() => document.getElementById('dm-url').focus(), 100);
+}
+
+function docSaveLink() {
+  const url = document.getElementById('dm-url').value.trim();
+  const name = document.getElementById('dm-name').value.trim();
+  if (!url || !name) { showToast('⚠️ URL and Name are required'); return; }
+  const desc = document.getElementById('dm-desc').value.trim();
+  const tags = document.getElementById('dm-tags').value.split(',').map(t => t.trim()).filter(Boolean);
   
-  S.docs.push({
-    id: 'doc_' + Math.random().toString(36).substr(2, 9),
-    name: name.trim(),
-    type: 'link',
-    parentId: docCurrentFolder,
-    url: url.trim(),
-    icon: docDetectIcon(url),
-    description: desc.trim(),
-    tags,
-    createdAt: Date.now(),
-    createdBy: currentUser
-  });
-  addChangelog('doc_add', 'Added link "' + name.trim() + '"');
-  persist();
-  docRender();
-  showToast('🔗 Link added');
+  if (docEditingId) {
+    const d = S.docs.find(x => x.id === docEditingId);
+    if (d) { d.url = url; d.name = name; d.description = desc; d.tags = tags; d.icon = docDetectIcon(url); }
+    addChangelog('doc_edit', 'Updated "' + name + '"');
+  } else {
+    S.docs.push({
+      id: 'doc_' + Math.random().toString(36).substr(2, 9),
+      name, type: 'link', parentId: docCurrentFolder, url,
+      icon: docDetectIcon(url), description: desc, tags,
+      createdAt: Date.now(), createdBy: currentUser
+    });
+    addChangelog('doc_add', 'Added link "' + name + '"');
+  }
+  document.getElementById('doc-link-modal').classList.remove('open');
+  persist(); docRender();
+  showToast(docEditingId ? '✅ Link updated' : '🔗 Link added');
 }
 
 function docOpenLink(id) {
@@ -3575,60 +3692,53 @@ function docOpenLink(id) {
 
 function docCopyUrl(id) {
   const d = S.docs.find(x => x.id === id);
-  if (d && d.url) {
-    navigator.clipboard.writeText(d.url).then(() => showToast('📋 URL copied'));
-  }
+  if (d && d.url) navigator.clipboard.writeText(d.url).then(() => showToast('📋 URL copied'));
 }
 
 function docEdit(id) {
   const d = S.docs.find(x => x.id === id);
   if (!d) return;
-  const name = prompt('Name:', d.name);
-  if (!name || !name.trim()) return;
-  d.name = name.trim();
-  if (d.type === 'link') {
-    const desc = prompt('Description:', d.description || '');
-    d.description = (desc || '').trim();
-    const url = prompt('URL:', d.url);
-    if (url && url.trim()) d.url = url.trim();
-    const tagsStr = prompt('Tags (comma-separated):', (d.tags || []).join(', '));
-    d.tags = (tagsStr || '').split(',').map(t => t.trim()).filter(Boolean);
+  docEditingId = id;
+  if (d.type === 'folder') {
+    document.getElementById('df-name').value = d.name;
+    document.getElementById('doc-folder-modal').classList.add('open');
+    setTimeout(() => document.getElementById('df-name').focus(), 100);
+  } else {
+    document.getElementById('doc-modal-title').textContent = 'Edit Link';
+    document.getElementById('dm-save-btn').textContent = 'Save Changes';
+    document.getElementById('dm-url').value = d.url || '';
+    document.getElementById('dm-name').value = d.name || '';
+    document.getElementById('dm-desc').value = d.description || '';
+    document.getElementById('dm-tags').value = (d.tags || []).join(', ');
+    docPreviewIcon();
+    document.getElementById('doc-link-modal').classList.add('open');
   }
-  addChangelog('doc_edit', 'Updated "' + name.trim() + '"');
-  persist();
-  docRender();
 }
 
 function docDelete(id) {
   const d = S.docs.find(x => x.id === id);
   if (!d) return;
-  // If folder, check for children
   if (d.type === 'folder') {
     const children = S.docs.filter(x => x.parentId === id);
-    if (children.length > 0) {
-      if (!confirm(`This folder contains ${children.length} item(s). Delete everything?`)) return;
-      // Recursively delete all children
-      function deleteChildren(parentId) {
-        S.docs.filter(x => x.parentId === parentId).forEach(c => {
-          if (c.type === 'folder') deleteChildren(c.id);
-        });
-        S.docs = S.docs.filter(x => x.parentId !== parentId);
-      }
-      deleteChildren(id);
+    if (children.length > 0 && !confirm('This folder contains ' + children.length + ' item(s). Delete everything?')) return;
+    function rmChildren(pid) {
+      S.docs.filter(x => x.parentId === pid).forEach(c => { if (c.type === 'folder') rmChildren(c.id); });
+      S.docs = S.docs.filter(x => x.parentId !== pid);
     }
+    rmChildren(id);
   }
   if (!confirm('Delete "' + d.name + '"?')) return;
   S.docs = S.docs.filter(x => x.id !== id);
   addChangelog('doc_delete', 'Deleted "' + d.name + '"');
-  persist();
-  docRender();
+  persist(); docRender();
 }
 
 
 /* ════════════════════════════════
    PROMPT LIBRARY MODULE
 ════════════════════════════════ */
-let promptFilterCat = null; // null = all
+let promptFilterCat = null;
+let promptEditingId = null;
 
 function promptRender() {
   if (!S.prompts) S.prompts = [];
@@ -3636,7 +3746,6 @@ function promptRender() {
   
   const search = (document.getElementById('prompts-search')?.value || '').toLowerCase();
   
-  // Category pills
   const catsEl = document.getElementById('prompts-cats');
   catsEl.innerHTML = `<span class="prompt-cat-pill ${!promptFilterCat ? 'active' : ''}" onclick="promptFilterCat=null;promptRender()">All</span>` +
     `<span class="prompt-cat-pill ${promptFilterCat === '_fav' ? 'active' : ''}" onclick="promptFilterCat='_fav';promptRender()">⭐ Favorites</span>` +
@@ -3644,7 +3753,6 @@ function promptRender() {
       `<span class="prompt-cat-pill ${promptFilterCat === c.id ? 'active' : ''}" onclick="promptFilterCat='${c.id}';promptRender()" style="${promptFilterCat === c.id ? 'background:'+c.color+';border-color:'+c.color : ''}">${c.icon} ${c.name}</span>`
     ).join('');
 
-  // Filter
   let items = S.prompts.filter(p => {
     if (promptFilterCat === '_fav' && !p.isFavorite) return false;
     if (promptFilterCat && promptFilterCat !== '_fav' && p.category !== promptFilterCat) return false;
@@ -3656,7 +3764,6 @@ function promptRender() {
     return true;
   });
 
-  // Sort: favorites first, then by updatedAt
   items.sort((a, b) => {
     if (a.isFavorite && !b.isFavorite) return -1;
     if (!a.isFavorite && b.isFavorite) return 1;
@@ -3665,20 +3772,20 @@ function promptRender() {
 
   const grid = document.getElementById('prompts-grid');
   if (items.length === 0) {
-    grid.innerHTML = `<div class="prompt-empty">${search ? '🔍 No prompts match your search' : '✨ No prompts yet. Click "New Prompt" to add your first one!'}</div>`;
+    grid.innerHTML = `<div class="prompt-empty"><div style="font-size:40px;margin-bottom:12px;opacity:.4">${search ? '🔍' : '💡'}</div><div style="font-weight:500;margin-bottom:6px">${search ? 'No prompts found' : 'Your prompt library is empty'}</div><div style="font-size:11px">${search ? 'Try a different search term' : 'Click "New Prompt" to save your first prompt'}</div></div>`;
     return;
   }
 
   grid.innerHTML = items.map(p => {
     const cat = S.promptCategories.find(c => c.id === p.category);
-    const catBadge = cat ? `<span class="prompt-card-cat" style="background:${cat.color}22;color:${cat.color}">${cat.icon} ${cat.name}</span>` : '';
-    return `<div class="prompt-card" id="pc-${p.id}">
+    const catBadge = cat ? `<span class="prompt-card-cat" style="background:${cat.color}15;color:${cat.color};border:1px solid ${cat.color}30">${cat.icon} ${cat.name}</span>` : '';
+    return `<div class="prompt-card">
       <button class="prompt-card-fav ${p.isFavorite ? 'active' : ''}" onclick="promptToggleFav('${p.id}')">${p.isFavorite ? '⭐' : '☆'}</button>
       <div class="prompt-card-head">
-        <div class="prompt-card-title">${p.title}</div>
+        <div class="prompt-card-title">${escHtml(p.title)}</div>
         ${catBadge}
       </div>
-      <div class="prompt-card-body" id="pb-${p.id}" onclick="this.classList.toggle('expanded')">${escHtml(p.prompt)}</div>
+      <div class="prompt-card-body" onclick="this.classList.toggle('expanded')">${escHtml(p.prompt)}</div>
       <div class="prompt-card-footer">
         ${(p.tags || []).map(t => `<span class="doc-tag">${t}</span>`).join('')}
         ${p.usageCount ? `<span style="font-size:10px;color:var(--mute)">Used ${p.usageCount}×</span>` : ''}
@@ -3696,37 +3803,64 @@ function escHtml(str) {
   const div = document.createElement('div'); div.textContent = str || ''; return div.innerHTML;
 }
 
-function promptAdd() {
-  const title = prompt('Prompt title:');
-  if (!title || !title.trim()) return;
-  
-  // Build category picker
-  let catOptions = 'Select category:\n' + S.promptCategories.map((c, i) => `${i+1}. ${c.icon} ${c.name}`).join('\n');
-  const catIdx = prompt(catOptions);
-  const cat = catIdx ? S.promptCategories[parseInt(catIdx) - 1] : null;
-  
-  const body = prompt('Enter the prompt text:');
-  if (!body) return;
-  
-  const tagsStr = prompt('Tags (comma-separated, optional):') || '';
-  const tags = tagsStr.split(',').map(t => t.trim()).filter(Boolean);
+// ─── Populate category select in prompt modal ───
+function promptPopulateCatSelect(selectedId) {
+  const sel = document.getElementById('pm-cat');
+  sel.innerHTML = '<option value="">(No Category)</option>' +
+    S.promptCategories.map(c => `<option value="${c.id}" ${c.id === selectedId ? 'selected' : ''}>${c.icon} ${c.name}</option>`).join('');
+}
 
-  S.prompts.push({
-    id: 'pr_' + Math.random().toString(36).substr(2, 9),
-    title: title.trim(),
-    category: cat?.id || null,
-    prompt: body.trim(),
-    tags,
-    isFavorite: false,
-    usageCount: 0,
-    createdAt: Date.now(),
-    createdBy: currentUser,
-    updatedAt: Date.now()
-  });
-  addChangelog('prompt_add', 'Added prompt "' + title.trim() + '"');
-  persist();
-  promptRender();
-  showToast('✨ Prompt saved');
+function promptAdd() {
+  promptEditingId = null;
+  document.getElementById('pm-title').textContent = 'New Prompt';
+  document.getElementById('pm-save-btn').textContent = 'Save Prompt';
+  document.getElementById('pm-name').value = '';
+  document.getElementById('pm-body').value = '';
+  document.getElementById('pm-tags').value = '';
+  promptPopulateCatSelect(null);
+  document.getElementById('prompt-modal').classList.add('open');
+  setTimeout(() => document.getElementById('pm-name').focus(), 100);
+}
+
+function promptEdit(id) {
+  const p = S.prompts.find(x => x.id === id);
+  if (!p) return;
+  promptEditingId = id;
+  document.getElementById('pm-title').textContent = 'Edit Prompt';
+  document.getElementById('pm-save-btn').textContent = 'Save Changes';
+  document.getElementById('pm-name').value = p.title || '';
+  document.getElementById('pm-body').value = p.prompt || '';
+  document.getElementById('pm-tags').value = (p.tags || []).join(', ');
+  promptPopulateCatSelect(p.category);
+  document.getElementById('prompt-modal').classList.add('open');
+}
+
+function promptSaveModal() {
+  const title = document.getElementById('pm-name').value.trim();
+  const body = document.getElementById('pm-body').value.trim();
+  if (!title || !body) { showToast('⚠️ Title and prompt text are required'); return; }
+  const catId = document.getElementById('pm-cat').value || null;
+  const tags = document.getElementById('pm-tags').value.split(',').map(t => t.trim()).filter(Boolean);
+
+  if (promptEditingId) {
+    const p = S.prompts.find(x => x.id === promptEditingId);
+    if (p) {
+      p.title = title; p.prompt = body; p.category = catId;
+      p.tags = tags; p.updatedAt = Date.now();
+    }
+    addChangelog('prompt_edit', 'Updated prompt "' + title + '"');
+  } else {
+    S.prompts.push({
+      id: 'pr_' + Math.random().toString(36).substr(2, 9),
+      title, category: catId, prompt: body, tags,
+      isFavorite: false, usageCount: 0,
+      createdAt: Date.now(), createdBy: currentUser, updatedAt: Date.now()
+    });
+    addChangelog('prompt_add', 'Added prompt "' + title + '"');
+  }
+  document.getElementById('prompt-modal').classList.remove('open');
+  persist(); promptRender();
+  showToast(promptEditingId ? '✅ Prompt updated' : '✨ Prompt saved');
 }
 
 function promptCopy(id) {
@@ -3734,8 +3868,7 @@ function promptCopy(id) {
   if (!p) return;
   navigator.clipboard.writeText(p.prompt).then(() => {
     p.usageCount = (p.usageCount || 0) + 1;
-    persist();
-    promptRender();
+    persist(); promptRender();
     showToast('📋 Prompt copied to clipboard');
   });
 }
@@ -3744,35 +3877,7 @@ function promptToggleFav(id) {
   const p = S.prompts.find(x => x.id === id);
   if (!p) return;
   p.isFavorite = !p.isFavorite;
-  persist();
-  promptRender();
-}
-
-function promptEdit(id) {
-  const p = S.prompts.find(x => x.id === id);
-  if (!p) return;
-  const title = prompt('Title:', p.title);
-  if (!title) return;
-  p.title = title.trim();
-  
-  let catOptions = '0. None\n' + S.promptCategories.map((c, i) => `${i+1}. ${c.icon} ${c.name}`).join('\n');
-  const currentIdx = p.category ? S.promptCategories.findIndex(c => c.id === p.category) + 1 : 0;
-  const catIdx = prompt('Category:\n' + catOptions, currentIdx);
-  if (catIdx !== null) {
-    const idx = parseInt(catIdx);
-    p.category = idx > 0 ? S.promptCategories[idx - 1]?.id || null : null;
-  }
-  
-  const body = prompt('Prompt text:', p.prompt);
-  if (body !== null) p.prompt = body.trim();
-  
-  const tagsStr = prompt('Tags (comma-separated):', (p.tags || []).join(', '));
-  if (tagsStr !== null) p.tags = tagsStr.split(',').map(t => t.trim()).filter(Boolean);
-  
-  p.updatedAt = Date.now();
-  addChangelog('prompt_edit', 'Updated prompt "' + title.trim() + '"');
-  persist();
-  promptRender();
+  persist(); promptRender();
 }
 
 function promptDelete(id) {
@@ -3780,47 +3885,55 @@ function promptDelete(id) {
   if (!p || !confirm('Delete prompt "' + p.title + '"?')) return;
   S.prompts = S.prompts.filter(x => x.id !== id);
   addChangelog('prompt_delete', 'Deleted prompt "' + p.title + '"');
-  persist();
-  promptRender();
+  persist(); promptRender();
 }
 
+// ─── Category Management Modal ───
 function promptManageCategories() {
-  let msg = 'Current categories:\n' + S.promptCategories.map((c, i) => `${i+1}. ${c.icon} ${c.name}`).join('\n');
-  msg += '\n\nActions:\n• Type "add" to add a new category\n• Type a number to edit that category\n• Type "delete N" to delete category N';
-  const action = prompt(msg);
-  if (!action) return;
-  
-  if (action.toLowerCase() === 'add') {
-    const name = prompt('Category name:');
-    if (!name) return;
-    const icon = prompt('Emoji icon:', '📌');
-    const colors = ['#f59e0b','#22c55e','#60a5fa','#a78bfa','#f472b6','#ef4444','#06b6d4','#84cc16'];
-    const color = colors[S.promptCategories.length % colors.length];
-    S.promptCategories.push({ id: 'pc_' + Math.random().toString(36).substr(2, 5), name: name.trim(), color, icon: icon || '📌' });
-    persist();
-    promptRender();
-    showToast('✅ Category added');
-  } else if (action.toLowerCase().startsWith('delete')) {
-    const idx = parseInt(action.split(' ')[1]) - 1;
-    if (idx >= 0 && idx < S.promptCategories.length) {
-      S.promptCategories.splice(idx, 1);
-      persist();
-      promptRender();
-      showToast('🗑️ Category deleted');
-    }
-  } else {
-    const idx = parseInt(action) - 1;
-    if (idx >= 0 && idx < S.promptCategories.length) {
-      const c = S.promptCategories[idx];
-      const name = prompt('Name:', c.name);
-      if (name) c.name = name.trim();
-      const icon = prompt('Emoji icon:', c.icon);
-      if (icon) c.icon = icon;
-      persist();
-      promptRender();
-    }
+  catRenderList();
+  document.getElementById('cat-new-icon').value = '';
+  document.getElementById('cat-new-name').value = '';
+  document.getElementById('cat-modal').classList.add('open');
+}
+
+function catRenderList() {
+  const list = document.getElementById('cat-list');
+  if (!S.promptCategories.length) {
+    list.innerHTML = '<div style="font-size:12px;color:var(--mute);padding:8px 0">No categories yet</div>';
+    return;
+  }
+  list.innerHTML = S.promptCategories.map((c, i) => `
+    <div style="display:flex;align-items:center;gap:8px;padding:8px 10px;border:1px solid var(--hairline);border-radius:8px;background:var(--canvas-soft)">
+      <span style="font-size:18px">${c.icon}</span>
+      <span style="flex:1;font-size:13px;font-weight:500;color:var(--ink)">${c.name}</span>
+      <span style="width:12px;height:12px;border-radius:50%;background:${c.color}"></span>
+      <button class="btn btn-xs btn-ghost" onclick="catDelete(${i})" style="color:var(--mute);font-size:11px">✕</button>
+    </div>
+  `).join('');
+}
+
+function catAdd() {
+  const name = document.getElementById('cat-new-name').value.trim();
+  if (!name) return;
+  const icon = document.getElementById('cat-new-icon').value.trim() || '📌';
+  const colors = ['#f59e0b','#22c55e','#60a5fa','#a78bfa','#f472b6','#ef4444','#06b6d4','#84cc16'];
+  S.promptCategories.push({
+    id: 'pc_' + Math.random().toString(36).substr(2, 5),
+    name, color: colors[S.promptCategories.length % colors.length], icon
+  });
+  document.getElementById('cat-new-icon').value = '';
+  document.getElementById('cat-new-name').value = '';
+  persist(); catRenderList();
+  showToast('✅ Category added');
+}
+
+function catDelete(idx) {
+  if (idx >= 0 && idx < S.promptCategories.length) {
+    S.promptCategories.splice(idx, 1);
+    persist(); catRenderList();
   }
 }
+
 
 /* ════════════════════════════════
    LEAD GENERATION MODULE
