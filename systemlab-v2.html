@@ -165,7 +165,7 @@ select option{background:var(--canvas-card)}
 .view.active{display:flex}
 
 /* ── DASHBOARD ── */
-.dash-head{padding:24px 28px 18px;border-bottom:1px solid var(--hairline);flex-shrink:0}
+.dash-head{padding:20px 28px 16px;border-bottom:1px solid var(--hairline);flex-shrink:0;display:flex;justify-content:space-between;align-items:flex-start;gap:16px}
 .dash-h1{font-size:24px;font-weight:400;letter-spacing:-0.05em;color:var(--ink);line-height:1;margin-bottom:3px}
 .dash-sub{font-size:12px;color:var(--mute)}
 .stats-row{display:grid;grid-template-columns:repeat(4,1fr);border-bottom:1px solid var(--hairline);flex-shrink:0}
@@ -500,7 +500,7 @@ select option{background:var(--canvas-card)}
 .docs-quick-chip .dqc-name{overflow:hidden;text-overflow:ellipsis;white-space:nowrap;flex:1}
 .docs-quick-chip .dqc-unpin{opacity:0;background:none;border:none;color:var(--mute);cursor:pointer;font-size:11px;padding:0 0 0 4px;flex-shrink:0;transition:opacity .1s}
 .docs-quick-chip:hover .dqc-unpin{opacity:1}
-.docs-filter-bar{display:flex;align-items:center;gap:12px;margin-bottom:16px;flex-wrap:wrap}
+.docs-filter-bar{display:flex;align-items:center;gap:10px;margin-bottom:14px;flex-wrap:wrap}
 .docs-type-chips{display:flex;gap:6px;flex-wrap:wrap;flex:1}
 .docs-type-chip{font-size:11px;padding:5px 14px;border-radius:999px;border:1px solid var(--hairline);background:transparent;color:var(--mute);cursor:pointer;transition:all .15s;white-space:nowrap;font-weight:500}
 .docs-type-chip:hover{border-color:var(--hairline-mid);color:var(--ink);background:var(--canvas-card)}
@@ -545,12 +545,12 @@ select option{background:var(--canvas-card)}
 .prompt-recent-label{font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.08em;color:var(--mute2);flex-shrink:0}
 .prompt-recent-chip{display:inline-flex;align-items:center;gap:5px;padding:5px 12px;background:var(--canvas-soft);border:1px solid var(--hairline);border-radius:var(--r-pill);cursor:pointer;font-size:11px;color:var(--mute);transition:all .15s;font-weight:500;max-width:180px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 .prompt-recent-chip:hover{border-color:var(--brand);color:var(--ink)}
-.prompt-tabs-bar{display:flex;gap:0;border-bottom:2px solid var(--hairline);margin-bottom:14px;overflow-x:auto;scrollbar-width:none}
+.prompt-tabs-bar{display:flex;gap:0;border-bottom:2px solid var(--hairline);margin-bottom:0;overflow-x:auto;scrollbar-width:none;background:var(--canvas)}
 .prompt-tabs-bar::-webkit-scrollbar{display:none}
 .prompt-tab{padding:10px 18px;font-size:12px;font-weight:500;color:var(--mute);cursor:pointer;border-bottom:2px solid transparent;margin-bottom:-2px;transition:all .15s;white-space:nowrap;display:flex;align-items:center;gap:5px}
 .prompt-tab:hover{color:var(--ink)}
 .prompt-tab.active{color:var(--brand);border-bottom-color:var(--brand);font-weight:700}
-.prompts-toolbar{display:flex;align-items:center;gap:12px;margin-bottom:16px;flex-wrap:wrap}
+.prompts-toolbar{display:flex;align-items:center;gap:12px;margin-bottom:14px;flex-wrap:wrap}
 .prompts-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(340px,1fr));gap:14px;padding-bottom:20px}
 .prompt-card{background:var(--canvas-card);border:1px solid var(--hairline);border-radius:12px;padding:18px;transition:all .2s;position:relative;display:flex;flex-direction:column}
 .prompt-card:hover{border-color:var(--brand);box-shadow:0 8px 24px rgba(0,0,0,.25)}
@@ -681,7 +681,7 @@ select option{background:var(--canvas-card)}
 
     <!-- DASHBOARD -->
     <div id="v-dashboard" class="view active">
-      <div class="dash-head">
+      <div class="dash-head" style="display:block">
         <div class="dash-h1" id="greeting">Loading...</div>
         <div class="dash-sub">Your team's operating system — every process, SOP, and system in one place.</div>
         <div class="hint-chip" id="onboard-hint" style="display:none">
@@ -928,27 +928,29 @@ select option{background:var(--canvas-card)}
           <div class="dash-h1">📁 Document Vault</div>
           <div class="dash-sub">Every link your team needs — found in 2 clicks.</div>
         </div>
-        <div style="display:flex;gap:8px">
+        <div style="display:flex;gap:8px;flex-shrink:0">
           <button class="btn btn-sm" onclick="docAddFolder()">📂 Folder</button>
           <button class="btn btn-sm btn-primary" onclick="docAddLink()">🔗 Add Link</button>
         </div>
       </div>
-      <!-- Quick Access Strip -->
-      <div id="docs-quick-area" style="display:none" class="docs-quick-area">
-        <div class="docs-quick-label">⚡ Quick Access</div>
-        <div class="docs-quick-strip" id="docs-quick-chips"></div>
-      </div>
-      <!-- Filter Bar -->
-      <div class="docs-filter-bar">
-        <input type="text" id="docs-search" placeholder="Search by name, client, tag…" oninput="docRender()" class="input" style="max-width:240px">
-        <div class="docs-type-chips" id="docs-type-filters"></div>
-        <div class="docs-view-toggle">
-          <button id="docs-grid-btn" class="active" onclick="docSetView('grid')">▦</button>
-          <button id="docs-list-btn" onclick="docSetView('list')">☰</button>
+      <div style="flex:1;overflow-y:auto;padding:20px 28px 32px">
+        <!-- Quick Access Strip -->
+        <div id="docs-quick-area" style="display:none" class="docs-quick-area">
+          <div class="docs-quick-label">⚡ Quick Access</div>
+          <div class="docs-quick-strip" id="docs-quick-chips"></div>
         </div>
+        <!-- Filter Bar -->
+        <div class="docs-filter-bar">
+          <input type="text" id="docs-search" placeholder="Search by name, client, tag…" oninput="docRender()" class="input" style="max-width:240px">
+          <div class="docs-type-chips" id="docs-type-filters"></div>
+          <div class="docs-view-toggle">
+            <button id="docs-grid-btn" class="active" onclick="docSetView('grid')">▦</button>
+            <button id="docs-list-btn" onclick="docSetView('list')">☰</button>
+          </div>
+        </div>
+        <div class="docs-breadcrumb" id="docs-breadcrumb"></div>
+        <div class="docs-grid" id="docs-grid"></div>
       </div>
-      <div class="docs-breadcrumb" id="docs-breadcrumb"></div>
-      <div class="docs-grid" id="docs-grid"></div>
     </div>
 
     <!-- PROMPT VAULT VIEW -->
@@ -958,26 +960,28 @@ select option{background:var(--canvas-card)}
           <div class="dash-h1">✨ Prompt Vault</div>
           <div class="dash-sub">Your AI arsenal. Use {{variables}} — fill once, copy perfect.</div>
         </div>
-        <div style="display:flex;gap:8px">
+        <div style="display:flex;gap:8px;flex-shrink:0">
           <button class="btn btn-sm" onclick="promptManageCategories()">⚙️ Categories</button>
           <button class="btn btn-sm btn-primary" onclick="promptAdd()">+ New Prompt</button>
         </div>
       </div>
-      <!-- Recently Used -->
-      <div id="prompt-recent-area" style="display:none" class="prompt-recent-area">
-        <div class="prompt-recent-row">
-          <span class="prompt-recent-label">Recently used</span>
-          <div id="prompt-recent-chips" style="display:flex;gap:6px;flex-wrap:wrap"></div>
+      <!-- Category Tabs — flush full-width border -->
+      <div class="prompt-tabs-bar" id="prompt-tabs-bar" style="padding:0 28px;flex-shrink:0"></div>
+      <div style="flex:1;overflow-y:auto;padding:16px 28px 32px">
+        <!-- Recently Used -->
+        <div id="prompt-recent-area" style="display:none" class="prompt-recent-area">
+          <div class="prompt-recent-row">
+            <span class="prompt-recent-label">Recently used</span>
+            <div id="prompt-recent-chips" style="display:flex;gap:6px;flex-wrap:wrap"></div>
+          </div>
         </div>
+        <!-- Search + count -->
+        <div class="prompts-toolbar">
+          <input type="text" id="prompts-search" placeholder="Search prompts…" oninput="promptRender()" class="input" style="max-width:260px">
+          <span id="prompts-count" style="font-size:11px;color:var(--mute)"></span>
+        </div>
+        <div class="prompts-grid" id="prompts-grid"></div>
       </div>
-      <!-- Category Tabs -->
-      <div class="prompt-tabs-bar" id="prompt-tabs-bar"></div>
-      <!-- Search + count -->
-      <div class="prompts-toolbar">
-        <input type="text" id="prompts-search" placeholder="Search prompts…" oninput="promptRender()" class="input" style="max-width:260px">
-        <span id="prompts-count" style="font-size:11px;color:var(--mute)"></span>
-      </div>
-      <div class="prompts-grid" id="prompts-grid"></div>
     </div>
 
 
