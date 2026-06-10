@@ -2819,21 +2819,23 @@ function loomRender(raw) {
 }
 
 function htmlBlockRender(raw) {
-  // Renders Claude-generated HTML in an isolated iframe so styles/fonts match exactly
-  // Uses srcdoc (no base64 needed) with auto-height on load
+  // Renders Claude-generated HTML isolated in an iframe — SystemLab CSS cannot interfere
   const escaped = raw.trim()
     .replace(/&/g, '&amp;')
     .replace(/"/g, '&quot;');
+  // Auto-height: poll briefly after load to catch images/fonts settling
+  const onload = "(function(f){function h(){try{var s=Math.max(f.contentDocument.documentElement.scrollHeight,f.contentDocument.body.scrollHeight);if(s>60)f.style.height=(s+12)+'px'}catch(e){}};h();setTimeout(h,300);setTimeout(h,800)})(this)";
   return `<div class="html-block-wrap">
     <iframe
       class="html-block-iframe"
       srcdoc="${escaped}"
       scrolling="no"
       frameborder="0"
-      onload="(function(f){try{var h=f.contentDocument.documentElement.scrollHeight||f.contentDocument.body.scrollHeight;f.style.height=(h+8)+'px'}catch(e){}})(this)"
-      style="width:100%;border:none;border-radius:8px;display:block;min-height:60px;transition:height .2s"
+      sandbox="allow-same-origin allow-scripts"
+      onload="${onload}"
+      style="width:100%;border:none;border-radius:8px;display:block;min-height:100px;transition:height .3s"
     ></iframe>
-    <div class="html-block-label">HTML · rendered inline</div>
+    <div class="html-block-label">HTML block</div>
   </div>`;
 }
 
