@@ -1737,8 +1737,8 @@ async function connectToWorkspace(workspaceId, userName) {
     if (!val || !val.data) return;
     try {
       const remoteS = JSON.parse(val.data);
-      // Only apply if remote is strictly newer
-      if (S._rev && remoteS._rev && remoteS._rev <= S._rev) return;
+      // Only apply if remote is strictly newer (< not <= so equal-_rev cross-tab updates still render)
+      if (S._rev && remoteS._rev && remoteS._rev < S._rev) return;
       
       isSyncing = true;
       try {
@@ -1767,7 +1767,7 @@ async function connectToWorkspace(workspaceId, userName) {
             openEmployee(curEmp);
           }
         }
-        if (typeof lgRender === 'function' && document.getElementById('v-leadgen')?.classList.contains('active')) lgRender();
+        if (typeof lgRender === 'function') lgRender(); // always sync leadgen state, showView gates actual display
         if (typeof docRender === 'function' && document.getElementById('v-docs')?.classList.contains('active')) docRender();
         if (typeof promptRender === 'function' && document.getElementById('v-prompts')?.classList.contains('active')) promptRender();
         showToast('🔄 Workspace updated from another session');
@@ -2796,6 +2796,10 @@ function refreshToday() {
 }
 document.addEventListener('visibilitychange', () => {
   if (document.visibilityState === 'visible') refreshToday();
+  // Flush any uncommitted onchange inputs (e.g. leadgen fields) to Firebase when tab is hidden
+  if (document.visibilityState === 'hidden') {
+    try { persist(); } catch(e) {}
+  }
 });
 setInterval(refreshToday, 60000);
 let TT_REPORT_MODE = false;
