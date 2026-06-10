@@ -261,6 +261,9 @@ select option{background:var(--canvas-card)}
 .md-out .checklist-item span:first-child{flex-shrink:0;margin-top:1px}
 
 /* LOOM / MERMAID BLOCKS */
+.html-block-wrap{position:relative;margin:8px 0}
+.html-block-iframe{width:100%;border:none;border-radius:8px;display:block;min-height:60px}
+.html-block-label{font-size:10px;color:var(--mute);text-align:right;margin-top:3px;letter-spacing:.04em;text-transform:uppercase}
 .loom-block{background:var(--canvas-soft);border:1px solid var(--hairline);border-radius:var(--r-sm);margin:10px 0;aspect-ratio:16/9;display:flex;align-items:center;justify-content:center;flex-direction:column;gap:8px;cursor:pointer;transition:border-color 0.13s}
 .loom-block:hover{border-color:rgba(255,255,255,0.15)}
 .loom-play{width:44px;height:44px;border-radius:50%;border:1px solid rgba(255,255,255,0.18);display:flex;align-items:center;justify-content:center;transition:background 0.13s}
@@ -1905,104 +1908,233 @@ async function connectToWorkspace(workspaceId, userName) {
 // Safe to call repeatedly — checks by id before inserting.
 function injectSystemSOPs() {
   const SOP_TEAM_DAILY_ID = 'sop_pixelizt_team_daily';
-  if (S.sops.find(s => s.id === SOP_TEAM_DAILY_ID)) return; // already present
+  if (S.sops.find(s => s.id === SOP_TEAM_DAILY_ID)) return;
 
-  const body = `<style>.sopw{padding:.5rem 0}.sopstep{display:flex;align-items:stretch}.sopsl{display:flex;flex-direction:column;align-items:center;width:44px;flex-shrink:0}.sopsd{width:30px;height:30px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:600;flex-shrink:0}.sopsline{width:2px;flex:1;min-height:16px;background:var(--hairline);margin-top:2px}.sopsc{padding:4px 0 18px 12px;flex:1}.sopst{font-size:10px;font-weight:600;color:var(--mute);text-transform:uppercase;letter-spacing:.07em;margin-bottom:2px}.sopsl2{font-size:14px;font-weight:600;color:var(--body);margin-bottom:5px}.sopsd2{font-size:12px;color:var(--mute);line-height:1.7;margin-bottom:8px}.sophb{border-radius:6px;padding:10px 14px;font-size:12px;line-height:1.65;margin-bottom:8px;border-left:3px solid}.sophblue{background:#E6F1FB;color:#0C447C;border-color:#185FA5}.sophred{background:#FCEBEB;color:#791F1F;border-color:#A32D2D}.sophteal{background:#E1F5EE;color:#085041;border-color:#0F6E56}.sophamber{background:#FAEEDA;color:#633806;border-color:#854F0B}.sophpurple{background:#EEEDFE;color:#3C3489;border-color:#534AB7}.soptag{display:inline-block;font-size:10px;font-weight:500;padding:2px 9px;border-radius:20px;margin-top:3px;margin-right:4px}.soptb{background:#E6F1FB;color:#0C447C}.soptt{background:#E1F5EE;color:#085041}.sopta{background:#FAEEDA;color:#633806}.soptr{background:#FCEBEB;color:#791F1F}.soptp{background:#EEEDFE;color:#3C3489}.soptg{background:#EAF3DE;color:#27500A}.sopdb{background:#E6F1FB;color:#185FA5}.sopdt{background:#E1F5EE;color:#0F6E56}.sopda{background:#FAEEDA;color:#854F0B}.sopdr{background:#FCEBEB;color:#A32D2D}.sopdp{background:#EEEDFE;color:#534AB7}.sopdg{background:#EAF3DE;color:#3B6D11}.sopdiv{width:100%;height:1px;background:var(--hairline);margin:1.5rem 0}.soprb{background:var(--canvas-soft);border-radius:10px;border:1px solid var(--hairline);padding:.9rem 1.1rem;margin-top:1.5rem}.soprr{display:flex;gap:8px;align-items:flex-start;margin-bottom:7px;font-size:12px;color:var(--mute);line-height:1.5}.soprr:last-child{margin-bottom:0}.sopchk{color:#0F6E56;font-weight:700;flex-shrink:0}.sopapt{width:100%;border-collapse:collapse;font-size:12px}.sopapt th{font-size:10px;font-weight:600;text-transform:uppercase;letter-spacing:.06em;color:var(--mute);padding:6px 8px;text-align:left;border-bottom:1px solid var(--hairline)}.sopapt td{padding:7px 8px;border-bottom:1px solid var(--hairline);color:var(--mute);line-height:1.5}.sopapt td.a{color:var(--body);font-weight:500}.sopapt td:first-child{width:22px;color:var(--mute2);font-size:11px}.sopapt tr:last-child td{border-bottom:none}.sopcls{font-size:13px;font-weight:500;color:var(--body);text-align:center;margin-top:1.5rem;padding:.9rem;border-radius:8px;border:1px solid var(--hairline);background:var(--canvas-soft)}</style>
-<div class="sopw">
-<div style="margin-bottom:1.5rem"><div style="font-size:17px;font-weight:600;color:var(--body);margin-bottom:3px">Team Daily SOP</div><div style="font-size:12px;color:var(--mute)">Simple. Clear. Follow this every single day.</div></div>
-<div class="sopstep"><div class="sopsl"><div class="sopsd sopdb">1</div><div class="sopsline"></div></div><div class="sopsc">
-<div class="sopst">10:00 AM</div>
-<div class="sopsl2">Log in to Systemlab</div>
-<div class="sopsd2">Open Systemlab and log in. Your login time is your attendance. Salary is calculated from this. Do not be late. No credentials? Ask Arshitha.</div>
-<div class="sophb sophblue">Login time = attendance start. Logout time = attendance closed. Salary is auto generated from both.</div>
-<div><span class="soptag soptb">login = attendance</span><span class="soptag soptb">salary auto generated</span></div>
-</div></div>
-<div class="sopstep"><div class="sopsl"><div class="sopsd sopdg">2</div><div class="sopsline"></div></div><div class="sopsc">
-<div class="sopst">After login, before the meeting</div>
-<div class="sopsl2">Add your 8 tasks for the day in Systemlab</div>
-<div class="sopsd2">Before the meeting starts, add tasks in Systemlab for the full 8 hours. You should already know what needs to be done. If anything is not clear, note it down. You will raise it in the meeting.</div>
-<div><span class="soptag soptg">8 tasks before meeting</span><span class="soptag sopta">unclear? note it down</span></div>
-</div></div>
-<div class="sopstep"><div class="sopsl"><div class="sopsd sopdp">3</div><div class="sopsline"></div></div><div class="sopsc">
-<div class="sopst">Morning meeting</div>
-<div class="sopsl2">Join from Google Calendar. Lock all 8 tasks.</div>
-<div class="sopsd2">Find the meeting link in Google Calendar on your work email. Join on time. Three things happen in this meeting: (1) Yesterday is reviewed — what was done, what was not done, and why. (2) Today is planned — tasks are added, changed, or removed. (3) Unclear tasks are discussed right now. Ask immediately. Do not leave with any unclear task.</div>
-<div class="sophb sophpurple">All 8 hours of tasks must be finalised in Systemlab by the end of this meeting. No gaps. No unclear tasks after the meeting.</div>
-<div><span class="soptag soptp">calendar.google.com</span><span class="soptag soptg">8 tasks locked by end</span></div>
-</div></div>
-<div class="sopstep"><div class="sopsl"><div class="sopsd sopdt">4</div><div class="sopsline"></div></div><div class="sopsc">
-<div class="sopst">During the day — after every task</div>
-<div class="sopsl2">Mark task done in Systemlab immediately</div>
-<div class="sopsd2">The moment a task is done, open Systemlab and mark it complete. Do not wait. Do not batch update at end of day. If you set 1 hour for a task and it is done, mark it right then.</div>
-<div><span class="soptag soptt">update right after every task</span></div>
-</div></div>
-<div class="sopstep"><div class="sopsl"><div class="sopsd sopdr">5</div><div class="sopsline"></div></div><div class="sopsc">
-<div class="sopst">If a task takes longer than planned</div>
-<div class="sopsl2">Add a blocker note right away</div>
-<div class="sopsd2">The moment you know a task is going over time, add a blocker note in Systemlab. Do not wait till end of day.</div>
-<div class="sophb sophred">Write in the blocker note: (1) How much time it has taken so far (2) Why it is taking more time (3) What you are doing to fix it</div>
-<div><span class="soptag soptr">add blocker immediately</span><span class="soptag soptr">time + reason + fix</span></div>
-</div></div>
-<div class="sopstep"><div class="sopsl"><div class="sopsd sopda">6</div><div class="sopsline"></div></div><div class="sopsc">
-<div class="sopst">If you need help or have no clarity</div>
-<div class="sopsl2">Message on Slack right now. Stay responsive.</div>
-<div class="sopsd2">If anything is unclear or you are stuck, message on Slack immediately. Do not wait.</div>
-<div class="sophb sophamber">Slack rules: (1) Install Slack on your desktop and your phone (2) Keep notifications turned on at all times (3) Reply as soon as you see a message (4) Being unresponsive on Slack is not acceptable</div>
-<div><span class="soptag sopta">Slack on desktop and mobile</span><span class="soptag sopta">notifications always on</span></div>
-</div></div>
-<div class="sopstep"><div class="sopsl"><div class="sopsd sopdp">7</div><div class="sopsline"></div></div><div class="sopsc">
-<div class="sopst">For team communication</div>
-<div class="sopsl2">Use Loom. Do not wait for people.</div>
-<div class="sopsd2">If you need to explain something to a team member and they are busy, record a Loom and send it. A Loom is a short screen recording where you explain what you need. They watch it when free. No need to schedule a call for small things.</div>
-<div class="sophb sophteal">How to use Loom: Go to loom.com → click Record → share your screen → explain the task → copy the link → paste it in the Slack group. If it needs an instant answer and everyone is free, jump on Google Meet and sort it fast.</div>
-<div><span class="soptag soptp">loom.com</span><span class="soptag soptb">Google Meet if urgent</span></div>
-</div></div>
-<div class="sopstep"><div class="sopsl"><div class="sopsd sopda">8</div><div class="sopsline"></div></div><div class="sopsc">
-<div class="sopst">Waiting for approval</div>
-<div class="sopsl2">Keep working. Follow up separately.</div>
-<div class="sopsd2">If a task needs approval from the founder or manager, do not stop. Move to the next task. Follow up for the approval at the right time. You are not blocked — you are waiting on one thing. Keep everything else moving.</div>
-<div><span class="soptag sopta">keep working</span><span class="soptag sopta">follow up separately</span></div>
-</div></div>
-<div class="sopstep"><div class="sopsl"><div class="sopsd sopdt">9</div><div class="sopsline"></div></div><div class="sopsc">
-<div class="sopst">End of day — before logout</div>
-<div class="sopsl2">Send a voice note in the Day Plan channel on Slack</div>
-<div class="sopsd2">Before you log out, send a voice note in the Day Plan channel on the Pixelizt Slack workspace. Speak clearly about everything you did today.</div>
-<div class="sophb sophteal">Your voice note must cover: (1) Every task you completed today (2) Time taken for each task (3) If anything is pending, say exactly why it is pending. All tasks should be done within the planned time. If anything is pending, you must explain why.</div>
-<div><span class="soptag soptt">voice note on Slack</span><span class="soptag soptt">Day Plan channel</span><span class="soptag soptr">pending tasks need a reason</span></div>
-</div></div>
-<div class="sopstep"><div class="sopsl"><div class="sopsd sopdb">10</div></div><div class="sopsc">
-<div class="sopst">Final step</div>
-<div class="sopsl2">Log out of Systemlab</div>
-<div class="sopsd2">After sending the voice note, log out of Systemlab. Your logout time is recorded. This closes your attendance for the day. Do not skip this step.</div>
-<div><span class="soptag soptb">logout = attendance closed</span></div>
-</div></div>
-<div class="soprb">
-<div style="font-size:12px;font-weight:600;color:var(--body);margin-bottom:9px">The rules. No exceptions.</div>
-<div class="soprr"><span class="sopchk">✓</span><span>Log in at 10 AM. Salary is auto calculated from your login and logout time.</span></div>
-<div class="soprr"><span class="sopchk">✓</span><span>Add 8 tasks in Systemlab before the meeting. Finalise all tasks during the meeting. No unclear tasks after the meeting.</span></div>
-<div class="soprr"><span class="sopchk">✓</span><span>Mark every task done in Systemlab the moment it is completed. Not at end of day.</span></div>
-<div class="soprr"><span class="sopchk">✓</span><span>Task taking longer? Add a blocker note immediately with time taken, reason, and fix.</span></div>
-<div class="soprr"><span class="sopchk">✓</span><span>Slack on desktop and phone. Notifications always on. Reply as soon as you see a message.</span></div>
-<div class="soprr"><span class="sopchk">✓</span><span>Use Loom for async communication. Use Google Meet only when everyone needs to talk at the same time.</span></div>
-<div class="soprr"><span class="sopchk">✓</span><span>Send a voice note in the Day Plan channel on Slack before logging out. Cover all tasks done, time taken, and reason for anything pending.</span></div>
+  // Stored as ```html block — iframe renderer shows exact same output as Claude chat
+  const body = `\`\`\`html
+<style>body{margin:0;padding:14px 18px;font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Helvetica,Arial,sans-serif;font-size:14px}</style>
+<h2 class="sr-only">Team daily SOP — full flow from login to logout including Slack, Loom, and end of day voice note</h2>
+<style>
+.w{padding:1.5rem 0}
+.step{display:flex;align-items:stretch}
+.sl{display:flex;flex-direction:column;align-items:center;width:48px;flex-shrink:0}
+.sd{width:32px;height:32px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:500;flex-shrink:0}
+.sline{width:2px;flex:1;min-height:20px;background:#d9d9d9;margin-top:2px}
+.sc{padding:4px 0 20px 10px;flex:1}
+.st{font-size:11px;font-weight:500;color:#8a8a8a;text-transform:uppercase;letter-spacing:.06em;margin-bottom:2px}
+.sl2{font-size:15px;font-weight:500;color:#0d0d0d;margin-bottom:5px}
+.sd2{font-size:13px;color:#5c5c5c;line-height:1.7;margin-bottom:8px}
+.hb{border-radius:6px;padding:10px 14px;font-size:13px;line-height:1.6;margin-bottom:8px;border-left:3px solid}
+.hblue{background:#E6F1FB;color:#0C447C;border-color:#185FA5}
+.hred{background:#FCEBEB;color:#791F1F;border-color:#A32D2D}
+.hteal{background:#E1F5EE;color:#085041;border-color:#0F6E56}
+.hamber{background:#FAEEDA;color:#633806;border-color:#854F0B}
+.hpurple{background:#EEEDFE;color:#3C3489;border-color:#534AB7}
+.tag{display:inline-block;font-size:11px;font-weight:500;padding:2px 10px;border-radius:20px;margin-top:4px;margin-right:4px}
+.tb{background:#E6F1FB;color:#0C447C}
+.tt{background:#E1F5EE;color:#085041}
+.ta{background:#FAEEDA;color:#633806}
+.tr{background:#FCEBEB;color:#791F1F}
+.tp{background:#EEEDFE;color:#3C3489}
+.tg{background:#EAF3DE;color:#27500A}
+.dblue{background:#E6F1FB;color:#185FA5}
+.dteal{background:#E1F5EE;color:#0F6E56}
+.damber{background:#FAEEDA;color:#854F0B}
+.dred{background:#FCEBEB;color:#A32D2D}
+.dpurple{background:#EEEDFE;color:#534AB7}
+.dgreen{background:#EAF3DE;color:#3B6D11}
+.dcoral{background:#FAECE7;color:#993C1D}
+.div{width:100%;height:.5px;background:#ebebeb;margin:1.5rem 0}
+.rb{background:#f5f5f0;border-radius:12px;border:.5px solid #ebebeb;padding:1rem 1.25rem;margin-top:1.5rem}
+.rr{display:flex;gap:8px;align-items:flex-start;margin-bottom:8px;font-size:13px;color:#5c5c5c;line-height:1.5}
+.rr:last-child{margin-bottom:0}
+.chk{color:#0F6E56;font-weight:700;flex-shrink:0}
+.apt{width:100%;border-collapse:collapse;font-size:13px}
+.apt th{font-size:11px;font-weight:500;text-transform:uppercase;letter-spacing:.06em;color:#8a8a8a;padding:6px 10px;text-align:left;border-bottom:.5px solid #d9d9d9}
+.apt td{padding:9px 10px;border-bottom:.5px solid #ebebeb;color:#5c5c5c;line-height:1.5}
+.apt td.a{color:#0d0d0d;font-weight:500}
+.apt td:first-child{width:28px;color:#8a8a8a;font-size:12px}
+.apt tr:last-child td{border-bottom:none}
+.cls{font-size:13px;font-weight:500;color:#0d0d0d;text-align:center;margin-top:1.5rem;padding:1rem;border-radius:8px;border:.5px solid #d9d9d9;background:#f5f5f0}
+
+</style>
+
+<div class="w">
+<div style="margin-bottom:1.5rem">
+  <div style="font-size:18px;font-weight:500;color:#0d0d0d;margin-bottom:4px">Team daily SOP</div>
+  <div style="font-size:13px;color:#5c5c5c">Simple. Clear. Follow this every single day.</div>
 </div>
-<div class="sopdiv"></div>
-<div style="font-size:14px;font-weight:600;color:var(--body);margin-bottom:5px">A-player vs normal player</div>
-<div style="font-size:12px;color:var(--mute);margin-bottom:12px">This is the standard you are held to. Every single day.</div>
-<table class="sopapt"><thead><tr><th>#</th><th>A-player</th><th>Normal player</th></tr></thead><tbody>
-<tr><td>1</td><td class="a">Updates Systemlab daily without reminders</td><td>Needs reminders to update</td></tr>
-<tr><td>2</td><td class="a">Takes full ownership</td><td>Waits for instructions</td></tr>
-<tr><td>3</td><td class="a">Understands the business and creates the right tasks on their own</td><td>Only does tasks given to them</td></tr>
-<tr><td>4</td><td class="a">No one has done it? I will figure it out and be the first.</td><td>No one has done it so I probably cannot either.</td></tr>
-<tr><td>5</td><td class="a">Meets deadlines consistently</td><td>Misses deadlines and does last minute work</td></tr>
-<tr><td>6</td><td class="a">Tells the team early if there is a delay</td><td>Silent until someone asks</td></tr>
-<tr><td>7</td><td class="a">Learns new things and keeps improving</td><td>Relies only on what they already know</td></tr>
-<tr><td>8</td><td class="a">Brings ideas to make work better</td><td>Only executes and does not think ahead</td></tr>
-<tr><td>9</td><td class="a">High quality work every single day</td><td>Quality depends on mood</td></tr>
-<tr><td>10</td><td class="a">Makes the founder's life easier</td><td>Creates problems and needs follow ups</td></tr>
-</tbody></table>
-<div class="sopcls">Which one are you? The answer shows up in your Systemlab every day.</div>
-</div>`;
+
+<div class="step">
+  <div class="sl"><div class="sd dblue">1</div><div class="sline"></div></div>
+  <div class="sc">
+    <div class="st">10:00 AM</div>
+    <div class="sl2">Log in to Systemlab</div>
+    <div class="sd2">Open Systemlab and log in. Your login time is your attendance. Salary is calculated from this. Do not be late. No credentials? Ask Arshitha.</div>
+    <div class="hb hblue">Login time = attendance start. Logout time = attendance closed. Salary is auto generated from both.</div>
+    <span class="tag tb">login = attendance</span><span class="tag tb">salary auto generated</span>
+  </div>
+</div>
+
+<div class="step">
+  <div class="sl"><div class="sd dgreen">2</div><div class="sline"></div></div>
+  <div class="sc">
+    <div class="st">After login, before the meeting</div>
+    <div class="sl2">Add your 8 tasks for the day in Systemlab</div>
+    <div class="sd2">Before the meeting starts, add tasks in Systemlab for the full 8 hours. You should already know what needs to be done. If anything is not clear, note it down. You will raise it in the meeting.</div>
+    <span class="tag tg">8 tasks before meeting</span><span class="tag ta">unclear? note it down</span>
+  </div>
+</div>
+
+<div class="step">
+  <div class="sl"><div class="sd dpurple">3</div><div class="sline"></div></div>
+  <div class="sc">
+    <div class="st">Morning meeting</div>
+    <div class="sl2">Join from Google Calendar. Lock all 8 tasks.</div>
+    <div class="sd2">Find the meeting link in Google Calendar on your work email. Join on time. Three things happen in this meeting:</div>
+    <div class="sd2">
+      1. Yesterday is reviewed. What was done, what was not done, and why.<br/>
+      2. Today is planned. Tasks are added, changed, or removed during the meeting.<br/>
+      3. Unclear tasks are discussed right now. Ask immediately. Do not leave the meeting with any unclear task.
+    </div>
+    <div class="hb hpurple">All 8 hours of tasks must be finalised in Systemlab by the end of this meeting. No gaps. No unclear tasks after the meeting.</div>
+    <span class="tag tp">calendar.google.com</span><span class="tag tg">8 tasks locked by end</span>
+  </div>
+</div>
+
+<div class="step">
+  <div class="sl"><div class="sd dteal">4</div><div class="sline"></div></div>
+  <div class="sc">
+    <div class="st">During the day, after every task</div>
+    <div class="sl2">Mark task done in Systemlab immediately</div>
+    <div class="sd2">The moment a task is done, open Systemlab and mark it complete. Do not wait. Do not batch update at the end of the day. If you set 1 hour for a task and it is done, mark it right then.</div>
+    <span class="tag tt">update right after every task</span>
+  </div>
+</div>
+
+<div class="step">
+  <div class="sl"><div class="sd dred">5</div><div class="sline"></div></div>
+  <div class="sc">
+    <div class="st">If a task takes longer than planned</div>
+    <div class="sl2">Add a blocker note right away</div>
+    <div class="sd2">The moment you know a task is going over time, add a blocker note in Systemlab. Do not wait till end of day.</div>
+    <div class="hb hred">
+      Write in the blocker note:<br/>
+      1. How much time it has taken so far<br/>
+      2. Why it is taking more time<br/>
+      3. What you are doing to fix it
+    </div>
+    <span class="tag tr">add blocker immediately</span><span class="tag tr">time + reason + fix</span>
+  </div>
+</div>
+
+<div class="step">
+  <div class="sl"><div class="sd damber">6</div><div class="sline"></div></div>
+  <div class="sc">
+    <div class="st">If you need help or have no clarity</div>
+    <div class="sl2">Message on Slack right now. Stay responsive.</div>
+    <div class="sd2">If anything is unclear or you are stuck, message on Slack immediately. Do not wait.</div>
+    <div class="hb hamber">
+      Slack rules:<br/>
+      1. Install Slack on your desktop and your phone<br/>
+      2. Keep notifications turned on at all times<br/>
+      3. Reply as soon as you see a message<br/>
+      4. Being unresponsive on Slack is not acceptable
+    </div>
+    <span class="tag ta">Slack on desktop and mobile</span><span class="tag ta">notifications always on</span>
+  </div>
+</div>
+
+<div class="step">
+  <div class="sl"><div class="sd dpurple">7</div><div class="sline"></div></div>
+  <div class="sc">
+    <div class="st">For team communication</div>
+    <div class="sl2">Use Loom. Do not wait for people.</div>
+    <div class="sd2">If you need to explain something to a team member and they are busy, record a Loom and send it. A Loom is a short screen recording where you explain what you need. They watch it when free. No need to schedule a call for small things.</div>
+    <div class="hb hteal">
+      How to use Loom: Go to loom.com, click Record, share your screen, explain the task, copy the link, paste it in the Slack group.<br/><br/>
+      If it needs an instant answer and everyone is free, jump on Google Meet and sort it fast.
+    </div>
+    <span class="tag tp">loom.com</span><span class="tag tb">Google Meet if urgent</span>
+  </div>
+</div>
+
+<div class="step">
+  <div class="sl"><div class="sd damber">8</div><div class="sline"></div></div>
+  <div class="sc">
+    <div class="st">Waiting for approval</div>
+    <div class="sl2">Keep working. Follow up separately.</div>
+    <div class="sd2">If a task needs approval from the founder or manager, do not stop. Move to the next task. Follow up for the approval at the right time. You are not blocked. You are waiting on one thing. Keep everything else moving.</div>
+    <span class="tag ta">keep working</span><span class="tag ta">follow up separately</span>
+  </div>
+</div>
+
+<div class="step">
+  <div class="sl"><div class="sd dteal">9</div><div class="sline"></div></div>
+  <div class="sc">
+    <div class="st">End of day — before logout</div>
+    <div class="sl2">Send a voice note in the Day Plan channel on Slack</div>
+    <div class="sd2">Before you log out, send a voice note in the Day Plan channel on the Pixelizt Slack workspace. Speak clearly about everything you did today.</div>
+    <div class="hb hteal">
+      Your voice note must cover:<br/>
+      1. Every task you completed today<br/>
+      2. Time taken for each task<br/>
+      3. If anything is pending, say exactly why it is pending<br/><br/>
+      All tasks should be done within the planned time. If anything is pending, you must explain why.
+    </div>
+    <span class="tag tt">voice note on Slack</span><span class="tag tt">Day Plan channel</span><span class="tag tr">pending tasks need a reason</span>
+  </div>
+</div>
+
+<div class="step">
+  <div class="sl"><div class="sd dblue">10</div></div>
+  <div class="sc">
+    <div class="st">Final step</div>
+    <div class="sl2">Log out of Systemlab</div>
+    <div class="sd2">After sending the voice note, log out of Systemlab. Your logout time is recorded. This closes your attendance for the day. Do not skip this step.</div>
+    <span class="tag tb">logout = attendance closed</span>
+  </div>
+</div>
+
+<div class="rb">
+  <div style="font-size:13px;font-weight:500;color:#0d0d0d;margin-bottom:10px">The rules. No exceptions.</div>
+  <div class="rr"><span class="chk">✓</span><span>Log in at 10 AM. Salary is auto calculated from your login and logout time.</span></div>
+  <div class="rr"><span class="chk">✓</span><span>Add 8 tasks in Systemlab before the meeting. Finalise all tasks during the meeting. No unclear tasks after the meeting.</span></div>
+  <div class="rr"><span class="chk">✓</span><span>Mark every task done in Systemlab the moment it is completed. Not at end of day.</span></div>
+  <div class="rr"><span class="chk">✓</span><span>Task taking longer? Add a blocker note immediately with time taken, reason, and fix.</span></div>
+  <div class="rr"><span class="chk">✓</span><span>Slack on desktop and phone. Notifications always on. Reply as soon as you see a message.</span></div>
+  <div class="rr"><span class="chk">✓</span><span>Use Loom for async communication. Use Google Meet only when everyone needs to talk at the same time.</span></div>
+  <div class="rr"><span class="chk">✓</span><span>Send a voice note in the Day Plan channel on Slack before logging out. Cover all tasks done, time taken, and reason for anything pending.</span></div>
+</div>
+
+<div class="div"></div>
+
+<div style="font-size:15px;font-weight:500;color:#0d0d0d;margin-bottom:6px">A-player vs normal player</div>
+<div style="font-size:13px;color:#5c5c5c;margin-bottom:14px">This is the standard you are held to. Every single day.</div>
+
+<table class="apt">
+  <thead>
+    <tr>
+      <th>#</th><th>A-player</th><th>Normal player</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr><td>1</td><td class="a">Updates Systemlab daily without reminders</td><td>Needs reminders to update</td></tr>
+    <tr><td>2</td><td class="a">Takes full ownership</td><td>Waits for instructions</td></tr>
+    <tr><td>3</td><td class="a">Understands the business and creates the right tasks on their own</td><td>Only does tasks given to them</td></tr>
+    <tr><td>4</td><td class="a">"No one has done it? I will figure it out and be the first."</td><td>"No one has done it so I probably cannot either."</td></tr>
+    <tr><td>5</td><td class="a">Meets deadlines consistently</td><td>Misses deadlines and does last minute work</td></tr>
+    <tr><td>6</td><td class="a">Tells the team early if there is a delay</td><td>Silent until someone asks</td></tr>
+    <tr><td>7</td><td class="a">Learns new things and keeps improving</td><td>Relies only on what they already know</td></tr>
+    <tr><td>8</td><td class="a">Brings ideas to make work better</td><td>Only executes and does not think ahead</td></tr>
+    <tr><td>9</td><td class="a">High quality work every single day</td><td>Quality depends on mood</td></tr>
+    <tr><td>10</td><td class="a">Makes the founder's life easier</td><td>Creates problems and needs follow ups</td></tr>
+  </tbody>
+</table>
+
+<div class="cls">Which one are you? The answer shows up in your Systemlab every day.</div>
+</div>
+\`\`\``;
 
   const now = new Date().toISOString();
   S.sops.unshift({
@@ -2635,6 +2767,7 @@ function mdRender(md) {
         inCode=false;
         if (codeType==='mermaid') html+=`<div data-line="${tableStartLine}" class="sync-block">${mermaidRender(codeBuf)}</div>`;
         else if (codeType==='loom') html+=`<div data-line="${tableStartLine}" class="sync-block">${loomRender(codeBuf.trim())}</div>`;
+        else if (codeType==='html') html+=`<div data-line="${tableStartLine}" class="sync-block html-embed-block">${htmlBlockRender(codeBuf)}</div>`;
         else html+=`<pre data-line="${tableStartLine}" class="sync-block"><code>${esc(codeBuf.trimEnd())}</code></pre>`;
         codeBuf=''; codeType=''; continue;
       }
@@ -2682,6 +2815,25 @@ function loomRender(raw) {
     <div class="loom-play"><svg width="14" height="14" viewBox="0 0 24 24" fill="rgba(255,255,255,0.8)"><polygon points="5,3 19,12 5,21"/></svg></div>
     ${cap?`<div style="font-size:11px;color:var(--body);font-weight:500">${esc(cap)}</div>`:''}
     <div class="loom-url-label">${esc(url)}</div>
+  </div>`;
+}
+
+function htmlBlockRender(raw) {
+  // Renders Claude-generated HTML in an isolated iframe so styles/fonts match exactly
+  // Uses srcdoc (no base64 needed) with auto-height on load
+  const escaped = raw.trim()
+    .replace(/&/g, '&amp;')
+    .replace(/"/g, '&quot;');
+  return `<div class="html-block-wrap">
+    <iframe
+      class="html-block-iframe"
+      srcdoc="${escaped}"
+      scrolling="no"
+      frameborder="0"
+      onload="(function(f){try{var h=f.contentDocument.documentElement.scrollHeight||f.contentDocument.body.scrollHeight;f.style.height=(h+8)+'px'}catch(e){}})(this)"
+      style="width:100%;border:none;border-radius:8px;display:block;min-height:60px;transition:height .2s"
+    ></iframe>
+    <div class="html-block-label">HTML · rendered inline</div>
   </div>`;
 }
 
