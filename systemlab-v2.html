@@ -1665,6 +1665,7 @@ let _fbConnRef = null;   // Reference to .info/connected
 
 let cloudEnabled = false;
 let isSyncing = false;
+let _recurringSpawnedDate = null; // tracks which date recurring tasks last spawned
 
 // ─── CONNECTION STATUS INDICATOR ───
 function updateConnectionBadge(connected) {
@@ -1763,9 +1764,9 @@ async function connectToWorkspace(workspaceId, userName) {
         S.sops = remoteS.sops || [];
         S.workspaceName = remoteS.workspaceName || S.workspaceName;
         S.employees = remoteS.employees || [];
-        S.tasks = remoteS.tasks || [];
+        S.tasks = safeMerge(remoteS.tasks, S.tasks, []);
         S.att = safeMerge(remoteS.att, S.att, {});
-        S.recurring = remoteS.recurring || [];
+        S.recurring = safeMerge(remoteS.recurring, S.recurring, []);
         S.leadgen = safeMerge(remoteS.leadgen, S.leadgen, {});
         S.docs = safeMerge(remoteS.docs, S.docs, []);
         S.prompts = safeMerge(remoteS.prompts, S.prompts, []);
@@ -1878,6 +1879,13 @@ async function connectToWorkspace(workspaceId, userName) {
         }
       } finally {
         isSyncing = false;
+      }
+      // Spawn recurring tasks for today if not yet done this session
+      // (runs after isSyncing=false so persist() is not blocked)
+      const _syncDate = TT_TODAY || getLocalISODate();
+      if (_recurringSpawnedDate !== _syncDate) {
+        _recurringSpawnedDate = _syncDate;
+        setTimeout(() => spawnRecurringForDate(_syncDate), 0);
       }
     } catch(e) { console.error('Sync parse error', e); }
   };
@@ -2085,6 +2093,8 @@ function renderSidebar() {
    VIEWS
 ════════════════════════════════ */
 function showView(id, navEl) {
+  // Flush any uncommitted field values (e.g. lead gen inputs) before navigating away
+  if (!isSyncing) { try { persist(); } catch(e) {} }
   document.querySelectorAll('.view').forEach(v=>v.classList.remove('active'));
   document.getElementById('v-'+id).classList.add('active');
   document.querySelectorAll('.nav-item').forEach(n=>n.classList.remove('active'));
@@ -2926,6 +2936,7 @@ function changeTTDate(offset) {
   TT_TODAY = getLocalISODate(dateObj);
   const realToday = getLocalISODate();
   isCustomDate = (TT_TODAY !== realToday);
+  _recurringSpawnedDate = TT_TODAY; // mark as spawned so onValueCallback won't double-spawn
   spawnRecurringForDate(TT_TODAY);
   persist();
   if (document.getElementById('v-team').classList.contains('active')) {
@@ -4258,14 +4269,20 @@ function lgGetData(channel) {
   return S.leadgen[channel][mk];
 }
 
+let _lgSaveTimer = null;
 function lgSetVal(channel, day, col, val) {
   const data = lgGetData(channel);
   if (!data.days[day]) data.days[day] = {};
   data.days[day][col] = parseFloat(val) || 0;
-  persist();
+  // Update stats immediately for instant feedback
   lgRenderStats();
-  document.getElementById('lg-save-status').textContent = '✓ Saved';
-  setTimeout(() => { document.getElementById('lg-save-status').textContent = ''; }, 1500);
+  // Debounced save — don't hammer Firebase on every keystroke
+  clearTimeout(_lgSaveTimer);
+  _lgSaveTimer = setTimeout(() => {
+    persist();
+    document.getElementById('lg-save-status').textContent = '✓ Saved';
+    setTimeout(() => { document.getElementById('lg-save-status').textContent = ''; }, 1500);
+  }, 600);
 }
 
 function lgSetTarget(channel, col, val) {
@@ -4542,7 +4559,7 @@ function lgRenderChannel(ch) {
     cfg.cols.forEach(col => {
       const val = row[col] || 0;
       totals[col] += val;
-      rows += `<td><input class="lg-inp${col==='revenue'||col==='adSpent'?' lg-inp-wide':''}" type="number" min="0" value="${val || ''}" onchange="lgSetVal('${ch}',${d},'${col}',this.value)" placeholder="0"></td>`;
+      rows += `<td><input class="lg-inp${col==='revenue'||col==='adSpent'?' lg-inp-wide':''}" type="number" min="0" value="${val || ''}" oninput="lgSetVal('${ch}',${d},'${col}',this.value)" placeholder="0"></td>`;
     });
     // Action column for lead details
     if (cfg.hasLeadDetails) {
