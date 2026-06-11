@@ -179,6 +179,16 @@ select option{background:var(--canvas-card)}
 .dash-body{flex:1;overflow-y:auto;padding:22px 28px;display:grid;grid-template-columns:1fr 290px;gap:24px;align-content:start}
 .panel-hd{font-family:var(--mono);font-size:9px;letter-spacing:0.1em;text-transform:uppercase;color:var(--mute);margin-bottom:10px;display:flex;align-items:center;justify-content:space-between}
 .sop-table{display:flex;flex-direction:column;gap:1px}
+.emp-dash-card{display:flex;align-items:center;gap:12px;padding:10px 12px;background:var(--canvas-card);border:1px solid var(--hairline);border-radius:var(--r-sm);margin-bottom:6px}
+.emp-dash-card:last-child{margin-bottom:0}
+.emp-dash-av{width:34px;height:34px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:600;color:#fff;flex-shrink:0;letter-spacing:0.02em}
+.emp-dash-info{flex:1;min-width:0}
+.emp-dash-name{font-size:13px;font-weight:500;letter-spacing:-0.02em;color:var(--ink);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.emp-dash-meta{display:flex;align-items:center;gap:5px;margin-top:2px}
+.emp-dash-dot{width:6px;height:6px;border-radius:50%;flex-shrink:0}
+.emp-dash-tasks{text-align:right;flex-shrink:0}
+.emp-dash-tn{font-size:15px;font-weight:500;letter-spacing:-0.04em;color:var(--ink);line-height:1}
+.emp-dash-tl{font-family:var(--mono);font-size:9px;color:var(--mute);margin-top:2px}
 .sop-row{display:flex;align-items:center;gap:10px;padding:8px 10px;border-radius:var(--r-sm);cursor:pointer;transition:background 0.1s;border:1px solid transparent}
 .sop-row:hover{background:var(--canvas-card);border-color:var(--hairline)}
 .sop-row-icon{width:30px;height:30px;border-radius:6px;flex-shrink:0;display:flex;align-items:center;justify-content:center;background:var(--canvas-soft);font-size:14px}
@@ -702,17 +712,21 @@ select option{background:var(--canvas-card)}
       <div class="stats-row">
         <div class="stat-cell"><div class="stat-n" id="st-total">0</div><div class="eyebrow stat-lbl">Total SOPs</div></div>
         <div class="stat-cell"><div class="stat-n" id="st-active">0</div><div class="eyebrow stat-lbl">Active</div></div>
-        <div class="stat-cell"><div class="stat-n" id="st-depts">0</div><div class="eyebrow stat-lbl">Departments</div></div>
-        <div class="stat-cell"><div class="stat-n" id="st-drafts">0</div><div class="eyebrow stat-lbl">Drafts</div></div>
+        <div class="stat-cell"><div class="stat-n" id="st-team">0</div><div class="eyebrow stat-lbl">Team</div></div>
+        <div class="stat-cell"><div class="stat-n" id="st-present">0</div><div class="eyebrow stat-lbl">Present Today</div></div>
       </div>
       <div class="dash-body">
         <div>
-          <div class="panel-hd">Recent SOPs <button class="btn btn-xs btn-ghost" onclick="showView('all',null)">View all →</button></div>
-          <div id="dash-recent" class="sop-table"></div>
+          <div class="panel-hd">Today's Team</div>
+          <div id="dash-team"></div>
         </div>
         <div>
-          <div class="panel-hd">Departments</div>
-          <div id="dash-depts" class="dept-pills"></div>
+          <div class="panel-hd">Recent SOPs <button class="btn btn-xs btn-ghost" onclick="showView('all',null)">View all →</button></div>
+          <div id="dash-recent" class="sop-table"></div>
+          <div style="margin-top:18px">
+            <div class="panel-hd">Departments</div>
+            <div id="dash-depts" class="dept-pills"></div>
+          </div>
           <div style="margin-top:18px">
             <div class="panel-hd">Quick Actions</div>
             <div style="display:flex;flex-direction:column;gap:5px">
@@ -1564,13 +1578,6 @@ const DIFFS = {
   'v1.0':[{t:'add',n:1,tx:'# Customer Onboarding'},{t:'add',n:2,tx:''},{t:'add',n:3,tx:'Initial draft created from onboarding template.'}],
 };
 
-const ACTIVITY = [
-  {who:'Team Member',color:'#ff7a17',what:'updated <strong>Customer Onboarding</strong>',time:'2h ago'},
-  {who:'Sam Patel',color:'#22c55e',what:'created <strong>Sales Handoff Protocol</strong>',time:'5h ago'},
-  {who:'Alex Chen',color:'#f472b6',what:'reviewed <strong>Incident Response</strong>',time:'Yesterday'},
-  {who:'Maria L',color:'#a78bfa',what:'drafted <strong>Employee Offboarding</strong>',time:'3 days ago'},
-  {who:'Dev Team',color:'#34d399',what:'updated <strong>Website Release Process</strong>',time:'5 days ago'},
-];
 
 /* ════════════════════════════════
    AUTH & PERSISTENCE
@@ -1776,7 +1783,7 @@ async function connectToWorkspace(workspaceId, userName) {
         S.employees = remoteS.employees || [];
         S.tasks = safeMerge(remoteS.tasks, S.tasks, []);
         S.att = safeMerge(remoteS.att, S.att, {});
-        S.recurring = safeMerge(remoteS.recurring, S.recurring, []);
+        S.recurring = Array.isArray(remoteS.recurring) ? remoteS.recurring : [];
         S.leadgen = safeMerge(remoteS.leadgen, S.leadgen, {});
         S.docs = safeMerge(remoteS.docs, S.docs, []);
         S.prompts = safeMerge(remoteS.prompts, S.prompts, []);
@@ -1916,7 +1923,12 @@ async function connectToWorkspace(workspaceId, userName) {
 // Safe to call repeatedly — checks by id before inserting.
 function injectSystemSOPs() {
   const SOP_TEAM_DAILY_ID = 'sop_pixelizt_team_daily';
-  if (S.sops.find(s => s.id === SOP_TEAM_DAILY_ID)) return;
+  const existing = S.sops.find(s => s.id === SOP_TEAM_DAILY_ID);
+  if (existing) {
+    // Migrate old 'published' status (wrong value from earlier injection)
+    if (existing.status === 'published') { existing.status = 'active'; persist(); }
+    return;
+  }
 
   // Stored as ```html block — iframe renderer shows exact same output as Claude chat
   const body = `\`\`\`html
@@ -2149,7 +2161,7 @@ function injectSystemSOPs() {
     id: SOP_TEAM_DAILY_ID,
     title: 'Team Daily SOP',
     deptId: 'd1',
-    status: 'published',
+    status: 'active',
     emoji: '📋',
     body: body,
     author: 'Pixelizt',
@@ -2390,17 +2402,13 @@ function showDept(id, navEl) {
    DASHBOARD
 ════════════════════════════════ */
 function renderDashboard() {
+  const emps = S.employees || [];
   document.getElementById('st-total').textContent = S.sops.length;
   document.getElementById('st-active').textContent = S.sops.filter(s=>s.status==='active').length;
-  document.getElementById('st-depts').textContent = S.depts.length;
-  document.getElementById('st-drafts').textContent = S.sops.filter(s=>s.status==='draft').length;
+  document.getElementById('st-team').textContent = emps.length;
+  document.getElementById('st-present').textContent = emps.filter(e=>S.att&&S.att[e.id]&&S.att[e.id][TT_TODAY]?.status==='present').length;
 
-  document.getElementById('dash-recent').innerHTML = [...S.sops].slice(0,5).map(s=>sopRowHtml(s)).join('');
-  document.getElementById('dash-activity').innerHTML = ACTIVITY.map(a=>`
-    <div class="activity-item">
-      <div class="act-av" style="background:${a.color}">${a.who.split(' ').map(w=>w[0]).join('').slice(0,2)}</div>
-      <div style="flex:1"><div class="act-text"><strong>${a.who}</strong> ${a.what}</div><div class="act-time">${a.time}</div></div>
-    </div>`).join('');
+  document.getElementById('dash-recent').innerHTML = [...S.sops].slice(0,4).map(s=>sopRowHtml(s)).join('');
 
   document.getElementById('dash-depts').innerHTML = S.depts.map(d=>{
     const c = S.sops.filter(s=>s.deptId===d.id).length;
@@ -2411,6 +2419,36 @@ function renderDashboard() {
       <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="var(--mute)" stroke-width="2" stroke-linecap="round"><polyline points="9 18 15 12 9 6"/></svg>
     </div>`;
   }).join('');
+
+  document.getElementById('dash-team').innerHTML = emps.length === 0
+    ? `<div style="color:var(--mute);font-size:13px;padding:12px 0">No team members yet — add employees in the Team tab.</div>`
+    : emps.map(e => {
+        const attToday = (S.att && S.att[e.id] && S.att[e.id][TT_TODAY]) || {};
+        const status = attToday.status || null;
+        const todayTasks = (S.tasks||[]).filter(t => t.empId===e.id && t.date===TT_TODAY);
+        const doneTasks = todayTasks.filter(t=>t.done).length;
+        const totalTasks = todayTasks.length;
+        const doneMins = todayTasks.filter(t=>t.done).reduce((a,t)=>a+(t.mins||0),0);
+        const initials = e.name.trim().split(/\s+/).map(w=>w[0]).join('').slice(0,2).toUpperCase();
+        const dotColor = status==='present' ? '#22c55e' : status==='absent' ? '#ef4444' : '#64748b';
+        const statusLabel = status==='present' ? 'Present' : status==='absent' ? 'Absent' : 'No record';
+        const timeStr = attToday.loginTime ? ` · In ${attToday.loginTime}${attToday.logoutTime?' · Out '+attToday.logoutTime:''}` : '';
+        const taskLabel = doneMins > 0 ? `${(doneMins/60).toFixed(1).replace(/\.0$/,'')}h done` : 'tasks';
+        return `<div class="emp-dash-card">
+          <div class="emp-dash-av" style="background:${e.color||'#6366f1'}">${initials}</div>
+          <div class="emp-dash-info">
+            <div class="emp-dash-name">${e.name}</div>
+            <div class="emp-dash-meta">
+              <span class="emp-dash-dot" style="background:${dotColor}"></span>
+              <span style="color:var(--mute);font-size:11px">${statusLabel}${timeStr}</span>
+            </div>
+          </div>
+          <div class="emp-dash-tasks">
+            <div class="emp-dash-tn">${doneTasks}/${totalTasks}</div>
+            <div class="emp-dash-tl">${taskLabel}</div>
+          </div>
+        </div>`;
+      }).join('');
 }
 
 /* ════════════════════════════════
@@ -3896,7 +3934,7 @@ function deleteEmployee() {
   
   S.employees = S.employees.filter(x => x.id !== curEmp);
   if (S.att && S.att[curEmp]) delete S.att[curEmp];
-  if (S.tasks && S.tasks[curEmp]) delete S.tasks[curEmp];
+  if (S.tasks) S.tasks = S.tasks.filter(t => t.empId !== curEmp);
   
   curEmp = null;
   persist();
