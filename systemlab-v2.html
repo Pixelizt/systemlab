@@ -425,6 +425,10 @@ select option{background:var(--canvas-card)}
   .md-out table th { background: #eee !important; color: #000 !important; border-color: #ddd !important; }
   .md-out table td { border-color: #ddd !important; }
   .md-out blockquote { border-left-color: #ccc !important; color: #555 !important; background: transparent !important; }
+  /* HTML block (iframe) print fixes */
+  .html-block-label { display: none !important; }
+  .html-block-wrap { page-break-inside: avoid; break-inside: avoid; margin: 0 !important; }
+  .html-block-iframe { border-radius: 0 !important; }
   .mermaid-wrap { background: #fff !important; border: 1px solid #ccc !important; padding: 20px !important; }
   .mermaid-wrap svg .node rect, 
   .mermaid-wrap svg .node circle, 
@@ -2824,7 +2828,9 @@ function loomRender(raw) {
 
 function htmlBlockRender(raw) {
   // Renders Claude-generated HTML isolated in an iframe — SystemLab CSS cannot interfere
-  const escaped = raw.trim()
+  // Inject print styles so colors and layout survive PDF export in every SOP
+  const printFix = `<style>@media print{*{-webkit-print-color-adjust:exact!important;print-color-adjust:exact!important;color-adjust:exact!important}.step,.hb,.rb,.cls,.rr{break-inside:avoid;page-break-inside:avoid}}</style>`;
+  const escaped = (printFix + raw.trim())
     .replace(/&/g, '&amp;')
     .replace(/"/g, '&quot;');
   // Auto-height: poll briefly after load to catch images/fonts settling
