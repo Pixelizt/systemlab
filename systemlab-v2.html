@@ -3228,11 +3228,16 @@ function refreshToday() {
 document.addEventListener('visibilitychange', () => {
   if (document.visibilityState === 'visible') refreshToday();
   if (document.visibilityState === 'hidden') {
+    // Flush any pending leadgen debounce timer immediately before persisting
+    if (typeof _lgSaveTimer !== 'undefined') clearTimeout(_lgSaveTimer);
     try { persist(); } catch(e) {}
   }
 });
-// Synchronous localStorage flush on window close — Firebase write may not complete in time
-window.addEventListener('beforeunload', () => { try { persist(); } catch(e) {} });
+// Synchronous localStorage flush on window close
+window.addEventListener('beforeunload', () => {
+  if (typeof _lgSaveTimer !== 'undefined') clearTimeout(_lgSaveTimer);
+  try { persist(); } catch(e) {}
+});
 setInterval(refreshToday, 60000);
 let TT_REPORT_MODE = false;
 const TT_COLORS = [
@@ -4648,10 +4653,13 @@ function lgSetTarget(channel, col, val) {
   const data = lgGetData(channel);
   if (!data.target) data.target = {};
   data.target[col] = parseFloat(val) || 0;
-  persist();
-  lgRender();
-  document.getElementById('lg-save-status').textContent = '✓ Saved';
-  setTimeout(() => { document.getElementById('lg-save-status').textContent = ''; }, 1500);
+  clearTimeout(_lgSaveTimer);
+  _lgSaveTimer = setTimeout(() => {
+    persist();
+    lgRender();
+    const el = document.getElementById('lg-save-status');
+    if (el) { el.textContent = '✓ Saved'; setTimeout(() => { el.textContent = ''; }, 1500); }
+  }, 600);
 }
 
 function lgChangeMonth(offset) {
@@ -4902,7 +4910,7 @@ function lgRenderChannel(ch) {
   // Build grid
   let budgetRow = '';
   if (cfg.hasBudget) {
-    budgetRow = `<tr style="background:rgba(234,179,8,0.05)"><td class="lg-date-cell" colspan="2" style="font-weight:600;color:var(--yellow)">Ad Budget</td><td><input class="lg-inp lg-inp-wide" type="number" value="${data.budget || ''}" onchange="lgSetBudget('${ch}',this.value)" placeholder="0"></td>${cfg.cols.slice(1).map(() => '<td></td>').join('')}<td></td></tr>`;
+    budgetRow = `<tr style="background:rgba(234,179,8,0.05)"><td class="lg-date-cell" colspan="2" style="font-weight:600;color:var(--yellow)">Ad Budget</td><td><input class="lg-inp lg-inp-wide" type="number" value="${data.budget || ''}" oninput="lgSetBudget('${ch}',this.value)" placeholder="0"></td>${cfg.cols.slice(1).map(() => '<td></td>').join('')}<td></td></tr>`;
   }
 
   let rows = '';
@@ -4951,7 +4959,7 @@ function lgRenderChannel(ch) {
     cfg.cols.forEach(col => {
       if (data.target[col] !== undefined) {
         const targetVal = data.target[col];
-        rows += `<td><input class="lg-inp" type="number" min="0" value="${targetVal}" onchange="lgSetTarget('${ch}','${col}',this.value)" placeholder="0"></td>`;
+        rows += `<td><input class="lg-inp" type="number" min="0" value="${targetVal}" oninput="lgSetTarget('${ch}','${col}',this.value)" placeholder="0"></td>`;
       } else {
         rows += '<td></td>';
       }
@@ -4970,8 +4978,13 @@ function lgRenderChannel(ch) {
 function lgSetBudget(ch, val) {
   const data = lgGetData(ch);
   data.budget = parseFloat(val) || 0;
-  persist();
   lgRenderStats();
+  clearTimeout(_lgSaveTimer);
+  _lgSaveTimer = setTimeout(() => {
+    persist();
+    const el = document.getElementById('lg-save-status');
+    if (el) { el.textContent = '✓ Saved'; setTimeout(() => { el.textContent = ''; }, 1500); }
+  }, 600);
 }
 
 // ── Lead Detail Management ──
