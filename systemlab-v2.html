@@ -2003,9 +2003,9 @@ function injectSystemSOPs() {
   <div class="sl"><div class="sd dgreen">2</div><div class="sline"></div></div>
   <div class="sc">
     <div class="st">After login, before the meeting</div>
-    <div class="sl2">Add your 8 tasks for the day in Systemlab</div>
-    <div class="sd2">Before the meeting starts, add tasks in Systemlab for the full 8 hours. You should already know what needs to be done. If anything is not clear, note it down. You will raise it in the meeting.</div>
-    <span class="tag tg">8 tasks before meeting</span><span class="tag ta">unclear? note it down</span>
+    <div class="sl2">Add your 8 hours of tasks in Systemlab</div>
+    <div class="sd2">Before the meeting starts, add tasks in Systemlab that cover the full 8 hours. You should already know what needs to be done. If anything is not clear, note it down. You will raise it in the meeting.</div>
+    <span class="tag tg">8hrs of tasks before meeting</span><span class="tag ta">unclear? note it down</span>
   </div>
 </div>
 
@@ -2013,7 +2013,7 @@ function injectSystemSOPs() {
   <div class="sl"><div class="sd dpurple">3</div><div class="sline"></div></div>
   <div class="sc">
     <div class="st">Morning meeting</div>
-    <div class="sl2">Join from Google Calendar. Lock all 8 tasks.</div>
+    <div class="sl2">Join from Google Calendar. Lock all 8 hours of tasks.</div>
     <div class="sd2">Find the meeting link in Google Calendar on your work email. Join on time. Three things happen in this meeting:</div>
     <div class="sd2">
       1. Yesterday is reviewed. What was done, what was not done, and why.<br/>
@@ -2021,7 +2021,7 @@ function injectSystemSOPs() {
       3. Unclear tasks are discussed right now. Ask immediately. Do not leave the meeting with any unclear task.
     </div>
     <div class="hb hpurple">All 8 hours of tasks must be finalised in Systemlab by the end of this meeting. No gaps. No unclear tasks after the meeting.</div>
-    <span class="tag tp">calendar.google.com</span><span class="tag tg">8 tasks locked by end</span>
+    <span class="tag tp">calendar.google.com</span><span class="tag tg">8hrs locked by end</span>
   </div>
 </div>
 
@@ -2122,7 +2122,7 @@ function injectSystemSOPs() {
 <div class="rb">
   <div style="font-size:13px;font-weight:500;color:#0d0d0d;margin-bottom:10px">The rules. No exceptions.</div>
   <div class="rr"><span class="chk">✓</span><span>Log in at 10 AM. Salary is auto calculated from your login and logout time.</span></div>
-  <div class="rr"><span class="chk">✓</span><span>Add 8 tasks in Systemlab before the meeting. Finalise all tasks during the meeting. No unclear tasks after the meeting.</span></div>
+  <div class="rr"><span class="chk">✓</span><span>Add 8 hours of tasks in Systemlab before the meeting. Finalise all tasks during the meeting. No unclear tasks after the meeting.</span></div>
   <div class="rr"><span class="chk">✓</span><span>Mark every task done in Systemlab the moment it is completed. Not at end of day.</span></div>
   <div class="rr"><span class="chk">✓</span><span>Task taking longer? Add a blocker note immediately with time taken, reason, and fix.</span></div>
   <div class="rr"><span class="chk">✓</span><span>Slack on desktop and phone. Notifications always on. Reply as soon as you see a message.</span></div>
@@ -2874,8 +2874,8 @@ function htmlBlockRender(raw) {
   const escaped = (printFix + raw.trim())
     .replace(/&/g, '&amp;')
     .replace(/"/g, '&quot;');
-  // Auto-height: poll briefly after load to catch images/fonts settling
-  const onload = "(function(f){function h(){try{var s=Math.max(f.contentDocument.documentElement.scrollHeight,f.contentDocument.body.scrollHeight);if(s>60)f.style.height=(s+12)+'px'}catch(e){}};h();setTimeout(h,300);setTimeout(h,800)})(this)";
+  // Auto-height: poll at increasing intervals to handle long/complex content
+  const onload = "(function(f){function h(){try{var s=Math.max(f.contentDocument.documentElement.scrollHeight,f.contentDocument.body.scrollHeight);if(s>60)f.style.height=(s+16)+'px'}catch(e){}};h();[200,500,1000,2000,3500].forEach(function(t){setTimeout(h,t)});})(this)";
   return `<div class="html-block-wrap">
     <iframe
       class="html-block-iframe"
@@ -3378,6 +3378,13 @@ function saveAttTime(eid, field, val24h) {
   openEmployee(eid);
 }
 
+function clearLogout(eid) {
+  if (!S.att[eid]?.[TT_TODAY]) return;
+  delete S.att[eid][TT_TODAY].logoutTime;
+  persist();
+  openEmployee(eid);
+}
+
 function renderTeam() {
   if (!S.employees) S.employees = [];
   if (!S.att) S.att = {};
@@ -3705,9 +3712,9 @@ document.getElementById('empDetailHead').innerHTML = `
   document.getElementById('empAttBar').innerHTML = `
     <div class="att-bar-left">
       ${status?`<span class="badge badge-${status}" style="font-size:10px;font-weight:600;text-transform:uppercase;padding:2px 8px;border-radius:999px;display:inline-flex;align-items:center;gap:4px; ${status==='present'?'color:var(--green);background:rgba(34,197,94,0.1);border:1px solid rgba(34,197,94,0.2)':'color:var(--red);background:rgba(239,68,68,0.1);border:1px solid rgba(239,68,68,0.2)'}"><span style="width:5px;height:5px;border-radius:50%;background:currentColor"></span>${status}</span>`:`<span style="font-size:11px;color:var(--mute);padding:2px 8px;border:1px solid var(--hairline);border-radius:999px">Not marked</span>`}
-      <div class="time-block"><span class="time-block-label">Login</span><input type="time" class="time-block-input" value="${to24h(loginT)}" title="Click to edit login time" onchange="saveAttTime('${e.id}','loginTime',this.value)"></div>
+      <div class="time-block"><span class="time-block-label">Login</span><span class="time-block-val">${loginT || '—'}</span></div>
       <div class="divider-v"></div>
-      <div class="time-block"><span class="time-block-label">Logout</span><input type="time" class="time-block-input" value="${to24h(logoutT)}" title="Click to edit logout time" onchange="saveAttTime('${e.id}','logoutTime',this.value)"></div>
+      <div class="time-block" style="display:flex;align-items:center;gap:5px"><span class="time-block-label">Logout</span>${logoutT ? `<span class="time-block-val">${logoutT}</span><button onclick="clearLogout('${e.id}')" title="Clear logout time — redo it" style="display:inline-flex;align-items:center;justify-content:center;width:16px;height:16px;border-radius:50%;border:1px solid var(--hairline);background:transparent;color:var(--mute);font-size:11px;cursor:pointer;padding:0;line-height:1;flex-shrink:0" onmouseover="this.style.background='var(--red)';this.style.color='#fff';this.style.borderColor='var(--red)'" onmouseout="this.style.background='transparent';this.style.color='var(--mute)';this.style.borderColor='var(--hairline)'">×</button>` : `<span class="time-block-val" style="color:var(--mute)">—</span>`}</div>
       ${loginT&&logoutT?`<div class="divider-v"></div><div class="time-block"><span class="time-block-label">Duration</span><span class="time-block-val" style="color:var(--sunset)">${calcDur(loginT,logoutT)}</span></div>`:''}
     </div>
     <div style="display:flex;gap:6px">${attBtns}</div>`;
