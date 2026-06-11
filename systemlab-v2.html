@@ -1778,9 +1778,9 @@ async function connectToWorkspace(workspaceId, userName) {
       if (cloudRev >= localRev) {
         S._rev = cloudRev || Date.now();
         S.depts = remoteS.depts || S.depts;
-        S.sops = remoteS.sops || [];
+        S.sops = safeMerge(remoteS.sops, S.sops, []);
         S.workspaceName = remoteS.workspaceName || S.workspaceName;
-        S.employees = remoteS.employees || [];
+        S.employees = remoteS.employees && remoteS.employees.length > 0 ? remoteS.employees : S.employees || [];
         S.tasks = safeMerge(remoteS.tasks, S.tasks, []);
         S.att = safeMerge(remoteS.att, S.att, {});
         S.recurring = Array.isArray(remoteS.recurring) ? remoteS.recurring : [];
@@ -2272,7 +2272,7 @@ function spawnRecurringForDate(targetDate) {
     const empTasks = S.tasks.filter(t => t.empId === emp.id && t.date === targetDate);
     
     empRecurring.forEach(r => {
-      if (empTasks.find(t => t.spawnedFrom === r.id)) return;
+      if (empTasks.find(t => t.spawnedFrom === r.id || t.name === r.name)) return;
       
       let shouldSpawn = false;
       if (r.type === 'daily') shouldSpawn = true;
@@ -3862,10 +3862,15 @@ function renderRecurringList() {
 window.renderRecurringList = renderRecurringList;
 
 function deleteRecurring(rid) {
+  const template = S.recurring.find(r => r.id === rid);
   S.recurring = S.recurring.filter(r => r.id !== rid);
-  // Remove ALL tasks spawned from this recurring template (both done and not done)
-  if (S.tasks) {
-    S.tasks = S.tasks.filter(t => t.spawnedFrom !== rid);
+  if (S.tasks && template) {
+    S.tasks = S.tasks.filter(t => {
+      if (t.spawnedFrom === rid) return false;
+      // Legacy tasks (no spawnedFrom): remove undone instances matching by name+empId
+      if (!t.spawnedFrom && t.empId === template.empId && t.name === template.name && !t.done) return false;
+      return true;
+    });
   }
   persist();
   renderRecurringList();
