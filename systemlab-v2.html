@@ -1922,10 +1922,14 @@ async function connectToWorkspace(workspaceId, userName) {
 // Safe to call repeatedly — checks by id before inserting.
 function injectSystemSOPs() {
   const SOP_TEAM_DAILY_ID = 'sop_pixelizt_team_daily';
+  const opsDept = (S.depts || []).find(d => d.name && d.name.toLowerCase().includes('operation'));
+  const opsDeptId = opsDept ? opsDept.id : 'd1';
   const existing = S.sops.find(s => s.id === SOP_TEAM_DAILY_ID);
   if (existing) {
-    // Migrate old 'published' status (wrong value from earlier injection)
-    if (existing.status === 'published') { existing.status = 'active'; persist(); }
+    let dirty = false;
+    if (existing.status === 'published') { existing.status = 'active'; dirty = true; }
+    if (existing.deptId === 'd1' && opsDept) { existing.deptId = opsDeptId; dirty = true; }
+    if (dirty) persist();
     return;
   }
 
@@ -2159,7 +2163,7 @@ function injectSystemSOPs() {
   S.sops.unshift({
     id: SOP_TEAM_DAILY_ID,
     title: 'Team Daily SOP',
-    deptId: 'd1',
+    deptId: opsDeptId,
     status: 'active',
     emoji: '📋',
     body: body,
