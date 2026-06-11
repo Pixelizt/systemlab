@@ -91,6 +91,9 @@ select option{background:var(--canvas-card)}
 #v-employee .time-block-label{font-size:9px;font-weight:600;letter-spacing:0.1em;text-transform:uppercase;color:var(--mute2)}
 #v-employee .time-block-val{font-size:13px;font-weight:600;color:var(--ink)}
 .time-block-val.empty{color:var(--mute2);font-weight:400}
+.time-block-input{font-size:13px;font-weight:600;color:var(--ink);background:transparent;border:none;border-bottom:1px solid var(--hairline);outline:none;width:88px;cursor:pointer;padding:0 0 1px 0;font-family:inherit;}
+.time-block-input:focus{border-bottom-color:var(--blue);}
+.time-block-input::-webkit-calendar-picker-indicator{opacity:0.4;cursor:pointer;}
 #v-employee .divider-v{width:1px;height:30px;background:var(--hairline);flex-shrink:0}
 #v-employee .hour-prog-row{display:flex;align-items:center;gap:8px;padding:7px 24px;border-bottom:1px solid var(--hairline);flex-shrink:0;font-size:11px;font-weight:500;color:var(--mute)}
 #v-employee .hp-bar{flex:1;height:4px;background:var(--hairline);border-radius:2px;overflow:hidden}
@@ -1848,9 +1851,10 @@ async function connectToWorkspace(workspaceId, userName) {
         S.sops = remoteS.sops || S.sops;
         if (remoteS.workspaceName) S.workspaceName = remoteS.workspaceName;
         S.employees = remoteS.employees || S.employees || [];
-        S.tasks = remoteS.tasks || S.tasks || [];
+        S.tasks = safeMerge(remoteS.tasks, S.tasks, []);
         S.att = safeMerge(remoteS.att, S.att, {});
-        S.recurring = remoteS.recurring || S.recurring || [];
+        // Firebase RTDB silently drops empty arrays — treat missing/null as intentionally cleared
+        S.recurring = Array.isArray(remoteS.recurring) ? remoteS.recurring : [];
         S.leadgen = safeMerge(remoteS.leadgen, S.leadgen, {});
         S.docs = safeMerge(remoteS.docs, S.docs, []);
         S.prompts = safeMerge(remoteS.prompts, S.prompts, []);
@@ -3179,11 +3183,12 @@ function refreshToday() {
 }
 document.addEventListener('visibilitychange', () => {
   if (document.visibilityState === 'visible') refreshToday();
-  // Flush any uncommitted onchange inputs (e.g. leadgen fields) to Firebase when tab is hidden
   if (document.visibilityState === 'hidden') {
     try { persist(); } catch(e) {}
   }
 });
+// Synchronous localStorage flush on window close — Firebase write may not complete in time
+window.addEventListener('beforeunload', () => { try { persist(); } catch(e) {} });
 setInterval(refreshToday, 60000);
 let TT_REPORT_MODE = false;
 const TT_COLORS = [
@@ -3294,6 +3299,32 @@ function nowTime() {
   h = h % 12;
   h = h ? h : 12;
   return `${h}:${m} ${ampm}`;
+}
+
+function to24h(t) {
+  if (!t) return '';
+  if (!t.includes('M')) return t; // already 24h
+  const [time, mod] = t.split(' ');
+  let [h, m] = time.split(':').map(Number);
+  if (mod === 'AM' && h === 12) h = 0;
+  if (mod === 'PM' && h !== 12) h += 12;
+  return `${String(h).padStart(2,'0')}:${String(m).padStart(2,'0')}`;
+}
+
+function from24h(t) {
+  if (!t) return '';
+  const [h, m] = t.split(':').map(Number);
+  const ampm = h >= 12 ? 'PM' : 'AM';
+  const h12 = h % 12 || 12;
+  return `${h12}:${String(m).padStart(2,'0')} ${ampm}`;
+}
+
+function saveAttTime(eid, field, val24h) {
+  if (!S.att[eid]) S.att[eid] = {};
+  if (!S.att[eid][TT_TODAY]) S.att[eid][TT_TODAY] = {};
+  S.att[eid][TT_TODAY][field] = val24h ? from24h(val24h) : '';
+  persist();
+  openEmployee(eid);
 }
 
 function renderTeam() {
@@ -3623,9 +3654,9 @@ document.getElementById('empDetailHead').innerHTML = `
   document.getElementById('empAttBar').innerHTML = `
     <div class="att-bar-left">
       ${status?`<span class="badge badge-${status}" style="font-size:10px;font-weight:600;text-transform:uppercase;padding:2px 8px;border-radius:999px;display:inline-flex;align-items:center;gap:4px; ${status==='present'?'color:var(--green);background:rgba(34,197,94,0.1);border:1px solid rgba(34,197,94,0.2)':'color:var(--red);background:rgba(239,68,68,0.1);border:1px solid rgba(239,68,68,0.2)'}"><span style="width:5px;height:5px;border-radius:50%;background:currentColor"></span>${status}</span>`:`<span style="font-size:11px;color:var(--mute);padding:2px 8px;border:1px solid var(--hairline);border-radius:999px">Not marked</span>`}
-      <div class="time-block"><span class="time-block-label">Login</span><span class="time-block-val ${loginT?'':'empty'}">${loginT||'—'}</span></div>
+      <div class="time-block"><span class="time-block-label">Login</span><input type="time" class="time-block-input" value="${to24h(loginT)}" title="Click to edit login time" onchange="saveAttTime('${e.id}','loginTime',this.value)"></div>
       <div class="divider-v"></div>
-      <div class="time-block"><span class="time-block-label">Logout</span><span class="time-block-val ${logoutT?'':'empty'}">${logoutT||'—'}</span></div>
+      <div class="time-block"><span class="time-block-label">Logout</span><input type="time" class="time-block-input" value="${to24h(logoutT)}" title="Click to edit logout time" onchange="saveAttTime('${e.id}','logoutTime',this.value)"></div>
       ${loginT&&logoutT?`<div class="divider-v"></div><div class="time-block"><span class="time-block-label">Duration</span><span class="time-block-val" style="color:var(--sunset)">${calcDur(loginT,logoutT)}</span></div>`:''}
     </div>
     <div style="display:flex;gap:6px">${attBtns}</div>`;
