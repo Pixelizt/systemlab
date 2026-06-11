@@ -436,9 +436,8 @@ select option{background:var(--canvas-card)}
   .md-out table td { border-color: #ddd !important; }
   .md-out blockquote { border-left-color: #ccc !important; color: #555 !important; background: transparent !important; }
   /* HTML block (iframe) print fixes */
-  .html-block-label { display: none !important; }
-  .html-block-wrap { page-break-inside: avoid; break-inside: avoid; margin: 0 !important; }
-  .html-block-iframe { border-radius: 0 !important; }
+  .html-block-wrap { margin: 0 !important; padding: 0 !important; overflow: visible !important; }
+  .html-block-iframe { border-radius: 0 !important; height: auto !important; min-height: unset !important; overflow: visible !important; }
   .mermaid-wrap { background: #fff !important; border: 1px solid #ccc !important; padding: 20px !important; }
   .mermaid-wrap svg .node rect, 
   .mermaid-wrap svg .node circle, 
@@ -2883,7 +2882,6 @@ function htmlBlockRender(raw) {
       onload="${onload}"
       style="width:100%;border:none;border-radius:8px;display:block;min-height:100px;transition:height .3s"
     ></iframe>
-    <div class="html-block-label">HTML block</div>
   </div>`;
 }
 
