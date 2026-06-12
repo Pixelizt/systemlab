@@ -4865,10 +4865,15 @@ function lgRenderPipeline() {
   });
 
   const gcalAutoOn = localStorage.getItem('sl_gcal_auto') === '1';
-  document.getElementById('lg-stats').style.flexDirection = 'row';
-  document.getElementById('lg-stats').innerHTML = `
-    <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap;flex:1">${filterHtml}</div>
-    <label style="display:inline-flex;align-items:center;gap:6px;font-size:11px;color:var(--mute);cursor:pointer;white-space:nowrap;flex-shrink:0" title="Automatically open Google Calendar when you set a follow-up date">
+  const statsEl = document.getElementById('lg-stats');
+  statsEl.style.display = 'flex';
+  statsEl.style.flexDirection = 'row';
+  statsEl.style.alignItems = 'center';
+  statsEl.style.padding = '8px 32px';
+  statsEl.style.gap = '8px';
+  statsEl.innerHTML = `
+    <div style="display:flex;gap:6px;align-items:center;flex-wrap:wrap;flex:1">${filterHtml}</div>
+    <label style="display:inline-flex;align-items:center;gap:6px;font-size:11px;color:var(--mute);cursor:pointer;white-space:nowrap;flex-shrink:0;padding:4px 8px;border:1px solid var(--hairline);border-radius:6px" title="Automatically open Google Calendar when you set a follow-up date">
       <input type="checkbox" ${gcalAutoOn ? 'checked' : ''} onchange="lgToggleAutoCalendar(this)" style="cursor:pointer">
       📅 Auto-add to Calendar
     </label>`;
@@ -4991,15 +4996,12 @@ function lgOpenGCalById(channel, leadId, monthKey) {
   const data = S.leadgen?.[channel]?.[monthKey];
   const lead = (data?.leads || []).find(l => l.id === leadId);
   if (!lead) return;
-  // Pull current values from the DOM in case the user just changed them
+  // Read current DOM values (user may have changed inputs without triggering onchange)
   const card = document.querySelector(`[data-lid="${leadId}"]`);
-  if (card) {
-    const dateEl = card.querySelector('.lg-fu-date');
-    const timeEl = card.querySelector('.lg-fu-time');
-    if (dateEl) lead.followupDate = dateEl.value;
-    if (timeEl) lead.followupTime = timeEl.value;
-  }
-  lgOpenGCal(lead);
+  const dateVal = card?.querySelector('.lg-fu-date')?.value || lead.followupDate;
+  const timeVal = card?.querySelector('.lg-fu-time')?.value || lead.followupTime || '10:00';
+  // Pass a snapshot — do not mutate the live lead object
+  lgOpenGCal({ ...lead, followupDate: dateVal, followupTime: timeVal });
 }
 window.lgOpenGCalById = lgOpenGCalById;
 
@@ -5032,6 +5034,9 @@ window.lgDeleteLeadGlobal = lgDeleteLeadGlobal;
 
 function lgRenderStats() {
   if (lgChannel === 'overview') return;
+  // Reset inline styles set by pipeline view back to CSS grid
+  const statsEl = document.getElementById('lg-stats');
+  if (statsEl) { statsEl.style.display = ''; statsEl.style.flexDirection = ''; statsEl.style.alignItems = ''; statsEl.style.padding = ''; statsEl.style.gap = ''; }
   const cfg = LG_CHANNELS[lgChannel];
   const t = lgCalcTotals(lgChannel);
   
