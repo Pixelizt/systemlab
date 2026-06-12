@@ -1810,6 +1810,7 @@ async function connectToWorkspace(workspaceId, userName) {
       cloudEnabled = true;
       
       if (cloudRev >= localRev) {
+        const remoteTaskIds = new Set((remoteS.tasks||[]).map(t=>t?.id).filter(Boolean));
         S._rev = cloudRev || Date.now();
         S.depts = remoteS.depts || S.depts;
         S.sops = safeMerge(remoteS.sops, S.sops, []);
@@ -1824,7 +1825,10 @@ async function connectToWorkspace(workspaceId, userName) {
         S.promptCategories = safeMerge(remoteS.promptCategories, S.promptCategories, S.promptCategories);
         S._changelog = remoteS._changelog || S._changelog || [];
         loadedFromCloud = true;
-        console.log('Cloud is newer, using cloud. Cloud _rev:', cloudRev, 'Local _rev:', localRev);
+        // If merge recovered local tasks that Firebase was missing, flag for writeback
+        const mergeRecoveredTasks = S.tasks.some(t => t?.id && !remoteTaskIds.has(t.id));
+        if (mergeRecoveredTasks) loadedFromCloud = false; // triggers the push block below
+        console.log('Cloud is newer, using cloud. Cloud _rev:', cloudRev, 'Local _rev:', localRev, 'Recovered local tasks:', mergeRecoveredTasks);
       } else {
         console.log('LOCAL is newer! Keeping local. Cloud _rev:', cloudRev, 'Local _rev:', localRev);
       }
@@ -1897,6 +1901,7 @@ async function connectToWorkspace(workspaceId, userName) {
         S.sops = remoteS.sops || S.sops;
         if (remoteS.workspaceName) S.workspaceName = remoteS.workspaceName;
         S.employees = remoteS.employees || S.employees || [];
+        const _rtIds = new Set((remoteS.tasks||[]).map(t=>t?.id).filter(Boolean));
         S.tasks = mergeTasks(remoteS.tasks, S.tasks);
         S.att = safeMerge(remoteS.att, S.att, {});
         // Firebase RTDB silently drops empty arrays — treat missing/null as intentionally cleared
@@ -1907,6 +1912,11 @@ async function connectToWorkspace(workspaceId, userName) {
         S.promptCategories = safeMerge(remoteS.promptCategories, S.promptCategories, S.promptCategories);
         S._changelog = remoteS._changelog || S._changelog || [];
         saveLocal(localKey);
+        // If merge recovered tasks that Firebase was missing, write them back so all users see them
+        const _rtRecovered = S.tasks.some(t => t?.id && !_rtIds.has(t.id));
+        if (_rtRecovered && navigator.onLine) {
+          setTimeout(() => { if (!isSyncing) try { persist(); } catch(e) {} }, 800);
+        }
         renderSidebar();
         renderDashboard();
         updateGreeting();
