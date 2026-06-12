@@ -1524,6 +1524,23 @@ function safeMerge(remote, local, fallback) {
   return remote || local || fallback;
 }
 
+// Task-specific merge: ID-based, timestamp-aware so concurrent edits from
+// different team members / tabs never wipe each other's work.
+function mergeTasks(remote, local) {
+  if (!Array.isArray(remote)) return Array.isArray(local) ? local : [];
+  if (!Array.isArray(local) || !local.length) return remote;
+  const map = new Map();
+  remote.forEach(t => { if (t && t.id) map.set(t.id, t); });
+  local.forEach(t => {
+    if (!t || !t.id) return;
+    if (!map.has(t.id)) { map.set(t.id, t); return; } // local-only task (added offline)
+    const rTs = map.get(t.id).updatedAt || map.get(t.id).order || 0;
+    const lTs = t.updatedAt || t.order || 0;
+    if (lTs >= rTs) map.set(t.id, t); // prefer local if same age or newer
+  });
+  return [...map.values()];
+}
+
 const STARTER = `# SOP Title
 
 ## Purpose
@@ -1604,6 +1621,7 @@ function saveEditTask() {
   if (!t) return;
   t.name = document.getElementById('editTaskName').value.trim();
   t.mins = parseInt(document.getElementById('editTaskDur').value);
+  t.updatedAt = Date.now();
   document.getElementById('edit-task-modal').classList.remove('open');
   persist();
   openEmployee(curEmp);
@@ -1681,10 +1699,12 @@ let _fbConnRef = null;   // Reference to .info/connected
 
 let cloudEnabled = false;
 let isSyncing = false;
+let _pendingWrite = false; // true when a write was deferred because device was offline
 let _recurringSpawnedDate = null; // tracks which date recurring tasks last spawned
 
 // ─── CONNECTION STATUS INDICATOR ───
 function updateConnectionBadge(connected) {
+  // Small topbar dot
   let badge = document.getElementById('conn-badge');
   if (!badge) {
     const topbar = document.querySelector('.topbar-right') || document.getElementById('topbar-email')?.parentElement;
@@ -1707,6 +1727,20 @@ function updateConnectionBadge(connected) {
       badge.style.border = '1px solid rgba(234,179,8,0.2)';
       badge.innerHTML = '<span style="width:5px;height:5px;border-radius:50%;background:currentColor"></span>Offline';
     }
+  }
+  // Full-width offline banner
+  let banner = document.getElementById('offline-banner');
+  if (!connected) {
+    if (!banner) {
+      banner = document.createElement('div');
+      banner.id = 'offline-banner';
+      banner.style.cssText = 'position:fixed;top:0;left:0;right:0;z-index:9999;background:#854d0e;color:#fef9c3;font-size:12px;font-weight:600;text-align:center;padding:6px 16px;letter-spacing:0.02em;display:flex;align-items:center;justify-content:center;gap:8px';
+      banner.innerHTML = '<span>📴</span><span>You are offline — all changes are saved locally and will sync automatically when reconnected</span>';
+      document.body.prepend(banner);
+    }
+    banner.style.display = 'flex';
+  } else {
+    if (banner) banner.style.display = 'none';
   }
 }
 
@@ -1780,7 +1814,7 @@ async function connectToWorkspace(workspaceId, userName) {
         S.sops = safeMerge(remoteS.sops, S.sops, []);
         S.workspaceName = remoteS.workspaceName || S.workspaceName;
         S.employees = remoteS.employees && remoteS.employees.length > 0 ? remoteS.employees : S.employees || [];
-        S.tasks = safeMerge(remoteS.tasks, S.tasks, []);
+        S.tasks = mergeTasks(remoteS.tasks, S.tasks);
         S.att = safeMerge(remoteS.att, S.att, {});
         S.recurring = Array.isArray(remoteS.recurring) ? remoteS.recurring : [];
         S.leadgen = safeMerge(remoteS.leadgen, S.leadgen, {});
@@ -1851,8 +1885,9 @@ async function connectToWorkspace(workspaceId, userName) {
     if (!val || !val.data) return;
     try {
       const remoteS = JSON.parse(val.data);
-      // Only apply if remote is strictly newer (< not <= so equal-_rev cross-tab updates still render)
-      if (S._rev && remoteS._rev && remoteS._rev < S._rev) return;
+      // Skip remote if it's strictly older — but never skip when we have a pending offline write
+      // (we need to merge their changes with ours before we push the combined state)
+      if (!_pendingWrite && S._rev && remoteS._rev && remoteS._rev < S._rev) return;
       
       isSyncing = true;
       try {
@@ -1861,7 +1896,7 @@ async function connectToWorkspace(workspaceId, userName) {
         S.sops = remoteS.sops || S.sops;
         if (remoteS.workspaceName) S.workspaceName = remoteS.workspaceName;
         S.employees = remoteS.employees || S.employees || [];
-        S.tasks = safeMerge(remoteS.tasks, S.tasks, []);
+        S.tasks = mergeTasks(remoteS.tasks, S.tasks);
         S.att = safeMerge(remoteS.att, S.att, {});
         // Firebase RTDB silently drops empty arrays — treat missing/null as intentionally cleared
         S.recurring = Array.isArray(remoteS.recurring) ? remoteS.recurring : [];
@@ -2289,6 +2324,7 @@ function spawnRecurringForDate(targetDate) {
       }
       
       if (shouldSpawn) {
+        const _spawnNow = Date.now();
         S.tasks.push({
           id: 'tt_' + Math.random().toString(36).substr(2, 9),
           empId: emp.id,
@@ -2297,7 +2333,8 @@ function spawnRecurringForDate(targetDate) {
           mins: parseInt(r.mins),
           done: false,
           spawnedFrom: r.id,
-          order: Date.now()
+          order: _spawnNow,
+          updatedAt: _spawnNow
         });
         spawned = true;
       }
@@ -2314,18 +2351,25 @@ function persist() {
   if (isSyncing) return;
   S._rev = Date.now();
   const str = buildPayloadStr();
-  
-  // Always save to localStorage immediately (crash-safe)
+
+  // Always save to localStorage immediately — survives offline + refresh
   localStorage.setItem('systemlab_v2', str);
   if (currentWorkspaceId) {
     localStorage.setItem('systemlab_ws_' + currentWorkspaceId, str);
   }
-  
-  // Write to Firebase via SDK (auto-queued if offline, auto-synced when back online)
+
   if (_fbRef) {
+    if (!navigator.onLine) {
+      // Queue write — will flush the moment the device reconnects
+      _pendingWrite = true;
+      return;
+    }
     _fbRef.set({ data: str })
-      .then(() => { cloudEnabled = true; })
-      .catch(e => console.warn('Firebase write error:', e.message));
+      .then(() => { cloudEnabled = true; _pendingWrite = false; })
+      .catch(e => {
+        console.warn('Firebase write error:', e.message);
+        _pendingWrite = true; // retry on reconnect
+      });
   }
 }
 
@@ -2438,7 +2482,6 @@ function renderDashboard() {
         const timeStr = attToday.loginTime ? ` · In ${attToday.loginTime}${attToday.logoutTime?' · Out '+attToday.logoutTime:''}` : '';
         const taskLabel = doneMins > 0 ? `${(doneMins/60).toFixed(1).replace(/\.0$/,'')}h done` : 'tasks';
         return `<div class="emp-dash-card">
-          <div class="emp-dash-av" style="background:${e.color||'#6366f1'}">${initials}</div>
           <div class="emp-dash-info">
             <div class="emp-dash-name">${e.name}</div>
             <div class="emp-dash-meta">
@@ -3240,6 +3283,20 @@ window.addEventListener('beforeunload', () => {
   if (typeof _lgSaveTimer !== 'undefined') clearTimeout(_lgSaveTimer);
   try { persist(); } catch(e) {}
 });
+
+// Online / offline resilience
+window.addEventListener('offline', () => {
+  updateConnectionBadge(false);
+  showToast('📴 Offline — changes are saved locally and will sync when reconnected');
+});
+window.addEventListener('online', () => {
+  updateConnectionBadge(true);
+  if (_pendingWrite) {
+    showToast('📶 Back online — syncing your changes...');
+    // Small delay so Firebase SDK re-establishes its own connection first
+    setTimeout(() => { try { persist(); } catch(e) {} }, 800);
+  }
+});
 setInterval(refreshToday, 60000);
 let TT_REPORT_MODE = false;
 const TT_COLORS = [
@@ -3580,15 +3637,17 @@ function addTask() {
   const name = input.value.trim();
   if (!name) return;
   
+  const _now = Date.now();
   S.tasks.push({
-    id: 't_' + Date.now().toString(36),
+    id: 't_' + _now.toString(36),
     empId: curEmp,
     date: TT_TODAY,
     name: name,
     mins: parseInt(dur.value, 10),
     done: false,
     doneAt: null,
-    order: Date.now()
+    order: _now,
+    updatedAt: _now
   });
   
   input.value = '';
@@ -3603,6 +3662,7 @@ function promptNote(tid) {
   const note = prompt('Why is this task blocked or incomplete?', t.note || '');
   if (note !== null) {
     t.note = note.trim();
+    t.updatedAt = Date.now();
     persist();
     openEmployee(curEmp);
   }
@@ -3613,6 +3673,7 @@ function toggleTask(tid) {
   if (!t) return;
   t.done = !t.done;
   t.doneAt = t.done ? nowTime() : null;
+  t.updatedAt = Date.now();
   persist();
   openEmployee(curEmp);
 }
