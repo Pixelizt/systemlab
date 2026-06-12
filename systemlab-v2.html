@@ -837,6 +837,7 @@ select option{background:var(--canvas-card)}
         <button class="ins-btn" onclick="openFlowModal()">⬡ Flowchart</button>
         <button class="ins-btn" onclick="insTable()">⊞ Table</button>
         <button class="ins-btn" onclick="insDivider()">— Divider</button>
+        <button class="ins-btn" onclick="insHtmlBlock()" title="Paste raw HTML — renders as a live preview block">&lt;/&gt; HTML Block</button>
       </div>
       <div class="ed-body" id="ed-body">
         <div class="ed-pane">
@@ -2811,6 +2812,22 @@ function insChecklist(){ insAt('- [ ] Task one\n- [ ] Task two\n- [ ] Task three
 function insCallout()  { insAt('> 💡 **Note:** Important callout here.'); }
 function insTable()    { insAt('| Column 1 | Column 2 | Column 3 |\n|----------|----------|----------|\n| Data     | Data     | Data     |'); }
 function insDivider()  { insAt('---'); }
+function insHtmlBlock() {
+  const ta = document.getElementById('ed-ta');
+  const s = ta.selectionStart, v = ta.value;
+  const selected = v.slice(ta.selectionStart, ta.selectionEnd).trim();
+  // If text is selected and looks like HTML, wrap it; otherwise insert a template
+  const inner = selected && (selected.startsWith('<') || selected.startsWith('<!')) ? selected : '<div>\n  <!-- paste your HTML here -->\n</div>';
+  const block = '```html\n' + inner + '\n```';
+  const nl = s > 0 && v[s-1] !== '\n' ? '\n' : '';
+  ta.value = v.slice(0,s) + nl + block + '\n' + v.slice(ta.selectionEnd);
+  // Place cursor inside the block if it was a template
+  if (!selected) {
+    const cursorPos = s + nl.length + 8; // after ```html\n<div>\n
+    ta.selectionStart = ta.selectionEnd = cursorPos;
+  }
+  ta.focus(); onMdInput();
+}
 
 /* ════════════════════════════════
    MARKDOWN RENDERER
