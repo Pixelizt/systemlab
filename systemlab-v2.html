@@ -1083,8 +1083,11 @@ select option{background:var(--canvas-card)}
         <textarea id="addLeadNotes" class="inp" placeholder="What they said, next steps..." style="width:100%;box-sizing:border-box;height:80px;resize:none"></textarea>
       </div>
       <div class="form-group" style="margin-bottom:16px">
-        <label style="font-size:11px;color:var(--mute);margin-bottom:4px;display:block">Next Followup Date</label>
-        <input type="date" id="addLeadFollowupDate" class="inp" style="width:100%;box-sizing:border-box">
+        <label style="font-size:11px;color:var(--mute);margin-bottom:4px;display:block">Next Followup Date &amp; Time</label>
+        <div style="display:flex;gap:8px">
+          <input type="date" id="addLeadFollowupDate" class="inp" style="flex:1;box-sizing:border-box">
+          <input type="time" id="addLeadFollowupTime" class="inp" value="10:00" style="width:110px;box-sizing:border-box">
+        </div>
       </div>
       <button class="btn btn-primary" style="width:100%;justify-content:center" onclick="lgSaveLeadDetail()">Save Lead</button>
     </div>
@@ -4861,8 +4864,14 @@ function lgRenderPipeline() {
     filterHtml += `<button class="btn btn-sm ${lgPipelineFilter === ch ? 'active' : ''}" onclick="lgSetPipelineFilter('${ch}')">${LG_CHANNELS[ch].icon} ${LG_CHANNELS[ch].label}</button>`;
   });
 
+  const gcalAutoOn = localStorage.getItem('sl_gcal_auto') === '1';
   document.getElementById('lg-stats').style.flexDirection = 'row';
-  document.getElementById('lg-stats').innerHTML = `<div style="display:flex; gap:8px; align-items:center; flex-wrap:wrap; width:100%">${filterHtml}</div>`;
+  document.getElementById('lg-stats').innerHTML = `
+    <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap;flex:1">${filterHtml}</div>
+    <label style="display:inline-flex;align-items:center;gap:6px;font-size:11px;color:var(--mute);cursor:pointer;white-space:nowrap;flex-shrink:0" title="Automatically open Google Calendar when you set a follow-up date">
+      <input type="checkbox" ${gcalAutoOn ? 'checked' : ''} onchange="lgToggleAutoCalendar(this)" style="cursor:pointer">
+      📅 Auto-add to Calendar
+    </label>`;
 
   let leads = [];
   Object.keys(LG_CHANNELS).forEach(ch => {
@@ -4906,7 +4915,7 @@ function lgRenderPipeline() {
     }
     
     html += `
-      <div class="lg-pipeline-card" style="display:grid; grid-template-columns: 2fr 3fr 1fr; gap:16px; align-items:start;">
+      <div class="lg-pipeline-card" data-lid="${l.id}" data-channel="${l.channel}" data-monthkey="${l.monthKey}" style="display:grid; grid-template-columns: 2fr 3fr 1fr; gap:16px; align-items:start;">
         <div>
           <div style="font-weight:600; color:var(--ink); font-size:14px; margin-bottom:4px;">${l.name}</div>
           <div style="font-size:11px; color:var(--mute); margin-bottom:8px;">${LG_CHANNELS[l.channel].icon} ${LG_CHANNELS[l.channel].label} • Added: ${dateDisplay}</div>
@@ -4918,10 +4927,14 @@ function lgRenderPipeline() {
         </div>
         <div style="display:flex; flex-direction:column; gap:8px;">
           <div style="font-size:10px; text-transform:uppercase; letter-spacing:0.05em; color:var(--mute); font-weight:600">Next Followup</div>
-          <input type="date" class="lg-inp" style="font-size:11px; padding:4px; border-color:var(--hairline)" value="${l.followupDate || ''}" onchange="lgUpdateLeadFollowup('${l.channel}', '${l.id}', '${l.monthKey}', this.value)">
-          <div style="display:flex; gap:4px; margin-top:8px;">
+          <div style="display:flex;gap:4px;align-items:center">
+            <input type="date" class="lg-inp lg-fu-date" style="font-size:11px;padding:4px;border-color:var(--hairline);flex:1" value="${l.followupDate || ''}" onchange="lgUpdateLeadFollowup('${l.channel}','${l.id}','${l.monthKey}',this.value,this.closest('[data-lid]').querySelector('.lg-fu-time').value)">
+            <input type="time" class="lg-inp lg-fu-time" style="font-size:11px;padding:4px;border-color:var(--hairline);width:82px" value="${l.followupTime || '10:00'}" onchange="lgUpdateLeadFollowup('${l.channel}','${l.id}','${l.monthKey}',this.closest('[data-lid]').querySelector('.lg-fu-date').value,this.value)">
+          </div>
+          <div style="display:flex;gap:4px;margin-top:6px">
             <button class="btn btn-xs" style="flex:1" onclick="lgUpdateLeadStatusGlobal('${l.channel}','${l.id}','${l.monthKey}','meeting')">✅ Booked</button>
-            <button class="btn btn-xs" style="color:var(--mute2); background:transparent; border:1px solid var(--hairline)" onclick="lgDeleteLeadGlobal('${l.channel}','${l.id}','${l.monthKey}')">✕</button>
+            <button class="btn btn-xs" title="Add to Google Calendar as 5-min meeting" onclick="lgOpenGCalById('${l.channel}','${l.id}','${l.monthKey}')" style="padding:2px 8px;font-size:13px;background:transparent;border:1px solid var(--hairline)">📅</button>
+            <button class="btn btn-xs" style="color:var(--mute2);background:transparent;border:1px solid var(--hairline)" onclick="lgDeleteLeadGlobal('${l.channel}','${l.id}','${l.monthKey}')">✕</button>
           </div>
         </div>
       </div>
@@ -4932,16 +4945,69 @@ function lgRenderPipeline() {
   document.getElementById('lg-grid-wrap').innerHTML = html;
 }
 
-function lgUpdateLeadFollowup(channel, leadId, monthKey, dateVal) {
+function lgUpdateLeadFollowup(channel, leadId, monthKey, dateVal, timeVal) {
   const data = S.leadgen[channel][monthKey];
   const lead = (data.leads || []).find(l => l.id === leadId);
-  if (lead) {
-    lead.followupDate = dateVal;
-    persist();
-    showToast('Followup date saved');
+  if (!lead) return;
+  lead.followupDate = dateVal;
+  if (timeVal !== undefined) lead.followupTime = timeVal;
+  persist();
+  showToast('Follow-up saved');
+  // Auto-open Google Calendar if the setting is on and date is set
+  if (dateVal && localStorage.getItem('sl_gcal_auto') === '1') {
+    lgOpenGCal(lead);
   }
 }
 window.lgUpdateLeadFollowup = lgUpdateLeadFollowup;
+
+// Build a Google Calendar pre-fill URL for a 5-minute follow-up event.
+// No OAuth — opens calendar.google.com with event pre-filled, user clicks Save once.
+function lgOpenGCal(lead) {
+  const date = lead.followupDate;
+  const time = lead.followupTime || '10:00';
+  if (!date) { showToast('Set a follow-up date first'); return; }
+  // Build start and end datetime strings (local time, no Z suffix)
+  const [y, mo, d] = date.split('-');
+  const [h, m] = time.split(':').map(Number);
+  const pad = n => String(n).padStart(2, '0');
+  const startStr = `${y}${mo}${d}T${pad(h)}${pad(m)}00`;
+  // End = start + 5 minutes
+  const endDate = new Date(y, mo - 1, d, h, m + 5);
+  const endStr = `${endDate.getFullYear()}${pad(endDate.getMonth()+1)}${pad(endDate.getDate())}T${pad(endDate.getHours())}${pad(endDate.getMinutes())}00`;
+  const title = encodeURIComponent(`Follow-up: ${lead.name}`);
+  const details = encodeURIComponent([
+    lead.notes ? `Notes: ${lead.notes}` : '',
+    lead.link ? `Profile: ${lead.link}` : '',
+    `Channel: ${lead.channel || ''}`,
+    `Added via LeadLab CRM`
+  ].filter(Boolean).join('\n'));
+  const url = `https://calendar.google.com/calendar/r/eventedit?text=${title}&dates=${startStr}/${endStr}&details=${details}&sf=true`;
+  window.open(url, '_blank', 'noopener');
+}
+window.lgOpenGCal = lgOpenGCal;
+
+// Look up lead from state and open Google Calendar
+function lgOpenGCalById(channel, leadId, monthKey) {
+  const data = S.leadgen?.[channel]?.[monthKey];
+  const lead = (data?.leads || []).find(l => l.id === leadId);
+  if (!lead) return;
+  // Pull current values from the DOM in case the user just changed them
+  const card = document.querySelector(`[data-lid="${leadId}"]`);
+  if (card) {
+    const dateEl = card.querySelector('.lg-fu-date');
+    const timeEl = card.querySelector('.lg-fu-time');
+    if (dateEl) lead.followupDate = dateEl.value;
+    if (timeEl) lead.followupTime = timeEl.value;
+  }
+  lgOpenGCal(lead);
+}
+window.lgOpenGCalById = lgOpenGCalById;
+
+function lgToggleAutoCalendar(el) {
+  localStorage.setItem('sl_gcal_auto', el.checked ? '1' : '0');
+  showToast(el.checked ? '📅 Auto-open Calendar ON' : 'Auto-open Calendar OFF');
+}
+window.lgToggleAutoCalendar = lgToggleAutoCalendar;
 
 function lgUpdateLeadStatusGlobal(channel, leadId, monthKey, newStatus) {
   const data = S.leadgen[channel][monthKey];
@@ -5092,6 +5158,8 @@ function lgOpenAddLead(ch, day, type) {
   document.getElementById('addLeadLink').value = '';
   document.getElementById('addLeadNotes').value = '';
   document.getElementById('addLeadFollowupDate').value = '';
+  const fuTime = document.getElementById('addLeadFollowupTime');
+  if (fuTime) fuTime.value = '10:00';
   document.getElementById('add-lead-title').textContent = `+ Add Lead — ${LG_CHANNELS[ch].label} — ${lgDateLabel(day)}`;
   document.getElementById('add-lead-modal').classList.add('open');
   document.getElementById('addLeadName').focus();
@@ -5105,21 +5173,28 @@ function lgSaveLeadDetail() {
   const link = document.getElementById('addLeadLink').value.trim();
   const notes = document.getElementById('addLeadNotes').value.trim();
   const followupDate = document.getElementById('addLeadFollowupDate').value;
-  if (!name) { showToast('Please enter a name','error'); return; }
+  const followupTime = document.getElementById('addLeadFollowupTime')?.value || '10:00';
+  if (!name) { showToast('Please enter a name', 'error'); return; }
 
   const data = lgGetData(lgChannel);
   if (!data.leads) data.leads = [];
-  data.leads.push({
+  const newLead = {
     id: 'lg_' + Date.now().toString(36),
-    day, type, name, link, notes, followupDate,
+    day, type, name, link, notes, followupDate, followupTime,
     createdAt: new Date().toISOString(),
     status: type
-  });
+  };
+  data.leads.push(newLead);
 
   persist();
   document.getElementById('add-lead-modal').classList.remove('open');
   lgRenderChannel(lgChannel);
   showToast('✅ Lead saved');
+
+  // Auto-open Google Calendar if enabled and a followup date was set
+  if (followupDate && localStorage.getItem('sl_gcal_auto') === '1') {
+    lgOpenGCal(newLead);
+  }
 }
 window.lgSaveLeadDetail = lgSaveLeadDetail;
 
