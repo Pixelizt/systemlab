@@ -1505,6 +1505,7 @@ let S = {
     { id: 'pc_5', name: 'Client Comms', color: '#f472b6', icon: '💬' },
   ],
   _changelog: [],        // Audit trail
+  deleted: {},           // Tombstones: id -> deletedAt. Stops deleted tasks/recurring resurrecting via sync.
   workspaceName: 'My Workspace',
   cur: null,          // current SOP id in editor
   deptFilter: null,   // dept id for list view
@@ -1543,6 +1544,41 @@ function mergeTasks(remote, local) {
     if (lTs >= rTs) map.set(t.id, t); // prefer local if same age or newer
   });
   return [...map.values()];
+}
+
+// ─── Deletion tombstones — synced so every client honours a delete and nothing resurrects ───
+function mergeDeletedMaps(a, b) {
+  const out = {};
+  [a, b].forEach(m => { if (m && typeof m === 'object') for (const k in m) { const ts = m[k] || 0; if (!out[k] || ts > out[k]) out[k] = ts; } });
+  return out;
+}
+function pruneDeleted(map) {
+  if (!map || typeof map !== 'object') return {};
+  const cutoff = Date.now() - 120 * 24 * 60 * 60 * 1000; // keep 120 days
+  const out = {};
+  for (const k in map) if ((map[k] || 0) >= cutoff) out[k] = map[k];
+  return out;
+}
+// Union two id-keyed arrays; local entries win on id collision
+function unionById(remote, local) {
+  const map = new Map();
+  (Array.isArray(remote) ? remote : []).forEach(x => { if (x && x.id) map.set(x.id, x); });
+  (Array.isArray(local) ? local : []).forEach(x => { if (x && x.id) map.set(x.id, x); });
+  return [...map.values()];
+}
+// Shallow per-employee merge of attendance maps (local per-date entries win)
+function mergeAttMaps(remote, local) {
+  const r = remote && typeof remote === 'object' ? remote : {};
+  const l = local && typeof local === 'object' ? local : {};
+  const out = {};
+  new Set([...Object.keys(r), ...Object.keys(l)]).forEach(e => { out[e] = Object.assign({}, r[e] || {}, l[e] || {}); });
+  return out;
+}
+// Drop any task/recurring whose id has been tombstoned
+function applyTombstones() {
+  const del = S.deleted || {};
+  if (Array.isArray(S.tasks)) S.tasks = S.tasks.filter(t => !(t && del[t.id]));
+  if (Array.isArray(S.recurring)) S.recurring = S.recurring.filter(r => !(r && del[r.id]));
 }
 
 const STARTER = `# SOP Title
@@ -1782,6 +1818,7 @@ async function connectToWorkspace(workspaceId, userName) {
       S.prompts = d.prompts || [];
       S.promptCategories = d.promptCategories || S.promptCategories;
       S._changelog = d._changelog || [];
+      S.deleted = d.deleted || {};
       renderSidebar();
       renderDashboard();
     } catch(e) {}
@@ -1827,6 +1864,8 @@ async function connectToWorkspace(workspaceId, userName) {
         S.prompts = safeMerge(remoteS.prompts, S.prompts, []);
         S.promptCategories = safeMerge(remoteS.promptCategories, S.promptCategories, S.promptCategories);
         S._changelog = remoteS._changelog || S._changelog || [];
+        S.deleted = mergeDeletedMaps(remoteS.deleted, S.deleted);
+        applyTombstones();
         loadedFromCloud = true;
         // If merge recovered local tasks that Firebase was missing, flag for writeback
         const mergeRecoveredTasks = S.tasks.some(t => t?.id && !remoteTaskIds.has(t.id));
@@ -1914,6 +1953,8 @@ async function connectToWorkspace(workspaceId, userName) {
         S.prompts = safeMerge(remoteS.prompts, S.prompts, []);
         S.promptCategories = safeMerge(remoteS.promptCategories, S.promptCategories, S.promptCategories);
         S._changelog = remoteS._changelog || S._changelog || [];
+        S.deleted = mergeDeletedMaps(remoteS.deleted, S.deleted);
+        applyTombstones();
         saveLocal(localKey);
         // If merge recovered tasks that Firebase was missing, write them back so all users see them
         const _rtRecovered = S.tasks.some(t => t?.id && !_rtIds.has(t.id));
@@ -2233,7 +2274,8 @@ function buildPayloadStr() {
     recurring: S.recurring||[], leadgen: S.leadgen||{},
     docs: S.docs||[], prompts: S.prompts||[],
     promptCategories: S.promptCategories||[],
-    _changelog: (S._changelog||[]).slice(-200)
+    _changelog: (S._changelog||[]).slice(-200),
+    deleted: pruneDeleted(S.deleted||{})
   });
 }
 
@@ -2364,6 +2406,7 @@ function spawnRecurringForDate(targetDate) {
 function persist() {
   if (isSyncing) return;
   S._rev = Date.now();
+  S.deleted = pruneDeleted(S.deleted || {});
   const str = buildPayloadStr();
 
   // Always save to localStorage immediately — survives offline + refresh
@@ -2378,12 +2421,30 @@ function persist() {
       _pendingWrite = true;
       return;
     }
-    _fbRef.set({ data: str })
-      .then(() => { cloudEnabled = true; _pendingWrite = false; })
-      .catch(e => {
-        console.warn('Firebase write error:', e.message);
-        _pendingWrite = true; // retry on reconnect
-      });
+    // Merge-on-write: combine our state with whatever is CURRENTLY in the cloud,
+    // so a save can never drop tasks another device added, and tombstones are honoured.
+    _fbRef.transaction(current => {
+      let out = JSON.parse(buildPayloadStr());
+      if (current && current.data) {
+        try {
+          const cloud = JSON.parse(current.data);
+          const del = mergeDeletedMaps(cloud.deleted, out.deleted);
+          out.deleted   = del;
+          out.tasks     = mergeTasks(cloud.tasks, out.tasks).filter(t => t && t.id && !del[t.id]);
+          out.recurring = unionById(cloud.recurring, out.recurring).filter(r => r && r.id && !del[r.id]);
+          out.att       = mergeAttMaps(cloud.att, out.att);
+          // Keep cloud-only library items so a stale device never clobbers them
+          out.sops      = unionById(cloud.sops, out.sops);
+          out.docs      = unionById(cloud.docs, out.docs);
+          out.prompts   = unionById(cloud.prompts, out.prompts);
+        } catch (e) { /* malformed cloud — fall back to our snapshot */ }
+      }
+      out._rev = Date.now();
+      return { data: JSON.stringify(out) };
+    }, (err, committed) => {
+      if (err) { console.warn('Firebase write (txn) error:', err.message); _pendingWrite = true; }
+      else if (committed) { cloudEnabled = true; _pendingWrite = false; }
+    }, false /* applyLocally: let the value listener fold the merged result back in */);
   }
 }
 
@@ -3710,6 +3771,8 @@ function toggleTask(tid) {
 
 function deleteTask(tid) {
   S.tasks = S.tasks.filter(x => x.id !== tid);
+  if (!S.deleted) S.deleted = {};
+  S.deleted[tid] = Date.now();
   persist();
   openEmployee(curEmp);
 }
@@ -3969,11 +4032,13 @@ window.renderRecurringList = renderRecurringList;
 function deleteRecurring(rid) {
   const template = S.recurring.find(r => r.id === rid);
   S.recurring = S.recurring.filter(r => r.id !== rid);
+  if (!S.deleted) S.deleted = {};
+  S.deleted[rid] = Date.now();
   if (S.tasks && template) {
     S.tasks = S.tasks.filter(t => {
-      if (t.spawnedFrom === rid) return false;
+      if (t.spawnedFrom === rid) { S.deleted[t.id] = Date.now(); return false; }
       // Legacy tasks (no spawnedFrom): remove undone instances matching by name+empId
-      if (!t.spawnedFrom && t.empId === template.empId && t.name === template.name && !t.done) return false;
+      if (!t.spawnedFrom && t.empId === template.empId && t.name === template.name && !t.done) { S.deleted[t.id] = Date.now(); return false; }
       return true;
     });
   }
@@ -4044,8 +4109,11 @@ function deleteEmployee() {
   
   S.employees = S.employees.filter(x => x.id !== curEmp);
   if (S.att && S.att[curEmp]) delete S.att[curEmp];
-  if (S.tasks) S.tasks = S.tasks.filter(t => t.empId !== curEmp);
-  
+  if (!S.deleted) S.deleted = {};
+  if (S.tasks) S.tasks = S.tasks.filter(t => { if (t.empId === curEmp) { S.deleted[t.id] = Date.now(); return false; } return true; });
+  (S.recurring || []).forEach(r => { if (r.empId === curEmp) S.deleted[r.id] = Date.now(); });
+  S.recurring = (S.recurring || []).filter(r => r.empId !== curEmp);
+
   curEmp = null;
   persist();
   renderTeam();
