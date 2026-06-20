@@ -2011,18 +2011,19 @@ async function connectToWorkspace(workspaceId, userName) {
 // Injects built-in SOPs that should always exist in every workspace.
 // Safe to call repeatedly — checks by id before inserting.
 function injectSystemSOPs() {
-  const SOP_TEAM_DAILY_ID = 'sop_pixelizt_team_daily';
+  let _sopDirty = false;
   const opsDept = (S.depts || []).find(d => d.name && d.name.toLowerCase().includes('operation'));
   const opsDeptId = opsDept ? opsDept.id : 'd1';
-  const existing = S.sops.find(s => s.id === SOP_TEAM_DAILY_ID);
-  if (existing) {
-    let dirty = false;
-    if (existing.status === 'published') { existing.status = 'active'; dirty = true; }
-    if (existing.deptId === 'd1' && opsDept) { existing.deptId = opsDeptId; dirty = true; }
-    if (dirty) persist();
-    return;
-  }
+  const salesDept = (S.depts || []).find(d => d.name && d.name.toLowerCase().includes('sales'));
+  const salesDeptId = salesDept ? salesDept.id : opsDeptId;
 
+  // ── Team Daily SOP ────────────────────────────────────────────────────
+  const SOP_TEAM_DAILY_ID = 'sop_pixelizt_team_daily';
+  const existingDaily = S.sops.find(s => s.id === SOP_TEAM_DAILY_ID);
+  if (existingDaily) {
+    if (existingDaily.status === 'published') { existingDaily.status = 'active'; _sopDirty = true; }
+    if (existingDaily.deptId === 'd1' && opsDept) { existingDaily.deptId = opsDeptId; _sopDirty = true; }
+  } else {
   // Stored as ```html block — iframe renderer shows exact same output as Claude chat
   const body = `\`\`\`html
 <style>body{margin:0;padding:14px 18px;font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Helvetica,Arial,sans-serif;font-size:14px}</style>
@@ -2261,9 +2262,224 @@ function injectSystemSOPs() {
     updated: now,
     versions: [{ id: 'v1', body: body, savedAt: now, label: 'v1' }]
   });
+    _sopDirty = true;
+    console.log('✅ Team Daily SOP injected');
+  }
 
-  persist();
-  console.log('✅ Team Daily SOP injected');
+  // ── Sales Process SOP ─────────────────────────────────────────────────
+  const SOP_SALES_ID = 'sop_pixelizt_sales_process';
+  const existingSales = S.sops.find(s => s.id === SOP_SALES_ID);
+  if (!existingSales) {
+    const _salesBody = ````html
+<style>
+body{margin:0;padding:14px 18px;font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Helvetica,Arial,sans-serif;font-size:14px}
+.w{padding:1.5rem 0}
+.step{display:flex;align-items:stretch}
+.sl{display:flex;flex-direction:column;align-items:center;width:48px;flex-shrink:0}
+.sd{width:32px;height:32px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:500;flex-shrink:0}
+.sline{width:2px;flex:1;min-height:20px;background:#d9d9d9;margin-top:2px}
+.sc{padding:4px 0 20px 10px;flex:1}
+.st{font-size:11px;font-weight:500;color:#8a8a8a;text-transform:uppercase;letter-spacing:.06em;margin-bottom:2px}
+.sl2{font-size:15px;font-weight:500;color:#0d0d0d;margin-bottom:5px}
+.sd2{font-size:13px;color:#5c5c5c;line-height:1.7;margin-bottom:8px}
+.hb{border-radius:6px;padding:10px 14px;font-size:13px;line-height:1.6;margin-bottom:8px;border-left:3px solid}
+.hgreen{background:#E1F5EE;color:#085041;border-color:#0F6E56}
+.hred{background:#FCEBEB;color:#791F1F;border-color:#A32D2D}
+.hamber{background:#FAEEDA;color:#633806;border-color:#854F0B}
+.hblue{background:#E6F1FB;color:#0C447C;border-color:#185FA5}
+.hpurple{background:#EEEDFE;color:#3C3489;border-color:#534AB7}
+.tag{display:inline-block;font-size:11px;font-weight:500;padding:2px 10px;border-radius:20px;margin-top:4px;margin-right:4px}
+.tg{background:#E1F5EE;color:#085041}
+.tr{background:#FCEBEB;color:#791F1F}
+.ta{background:#FAEEDA;color:#633806}
+.tb{background:#E6F1FB;color:#0C447C}
+.tp{background:#EEEDFE;color:#3C3489}
+.dgreen{background:#E1F5EE;color:#0F6E56}
+.dred{background:#FCEBEB;color:#A32D2D}
+.damber{background:#FAEEDA;color:#854F0B}
+.dblue{background:#E6F1FB;color:#185FA5}
+.dpurple{background:#EEEDFE;color:#534AB7}
+.dteal{background:#E1F5EE;color:#0F6E56}
+.rb{background:#f5f5f0;border-radius:12px;border:.5px solid #ebebeb;padding:1rem 1.25rem;margin-top:1.5rem}
+.rr{display:flex;gap:8px;align-items:flex-start;margin-bottom:8px;font-size:13px;color:#5c5c5c;line-height:1.5}
+.rr:last-child{margin-bottom:0}
+.chk{color:#0F6E56;font-weight:700;flex-shrink:0}
+.div{width:100%;height:.5px;background:#ebebeb;margin:1.5rem 0}
+</style>
+
+<div class="w">
+<div style="margin-bottom:1.5rem">
+  <div style="font-size:18px;font-weight:500;color:#0d0d0d;margin-bottom:4px">Sales Process SOP</div>
+  <div style="font-size:13px;color:#5c5c5c">From the moment a lead comes in to the moment it is closed. Follow every step.</div>
+</div>
+
+<div class="step">
+  <div class="sl"><div class="sd dgreen">1</div><div class="sline"></div></div>
+  <div class="sc">
+    <div class="st">Lead received — do this immediately</div>
+    <div class="sl2">WhatsApp them right now. Do not wait.</div>
+    <div class="sd2">The moment a lead comes in, open WhatsApp and send the message below. Speed matters. The faster you respond, the higher the chance of converting. Do not wait even 5 minutes.</div>
+    <div class="hb hblue">
+      <strong>WhatsApp message to send:</strong><br/><br/>
+      Hi [Name], this is [Your Name] from Pixelizt. I saw you were interested in our services. I would love to connect and understand what you are looking for. When would be a good time to speak?
+    </div>
+    <span class="tag tg">message within 1 minute</span><span class="tag tb">WhatsApp only</span>
+  </div>
+</div>
+
+<div class="step">
+  <div class="sl"><div class="sd dblue">2</div><div class="sline"></div></div>
+  <div class="sc">
+    <div class="st">Right after WhatsApp — update LeadLab</div>
+    <div class="sl2">Add the lead in LeadLab CRM. Fill every field.</div>
+    <div class="sd2">Open LeadLab and add the lead. Fill in: name, phone, source, and any notes from where the lead came. Then set the follow-up.</div>
+    <div class="hb hgreen">
+      In LeadLab:<br/>
+      1. Add lead with name, contact, source, and tag (hot / warm / cold)<br/>
+      2. Stage = Attempting contact<br/>
+      3. Notes = where the lead came from and what they are looking for<br/>
+      4. Set follow-up date = today, 1 hour from now
+    </div>
+    <div class="hb hamber">
+      In Google Calendar:<br/>
+      Create an event 1 hour from now titled "Follow up — [Lead Name]". Set a reminder 5 minutes before. This is your hard reminder to call them.
+    </div>
+    <span class="tag tg">LeadLab updated</span><span class="tag ta">Google Calendar event set</span>
+  </div>
+</div>
+
+<div class="step">
+  <div class="sl"><div class="sd damber">3</div><div class="sline"></div></div>
+  <div class="sc">
+    <div class="st">Until they respond</div>
+    <div class="sl2">Follow up every hour. Do not give up early.</div>
+    <div class="sd2">If they do not reply to the WhatsApp, call or message again at the follow-up time you set in the calendar. After each follow-up attempt, update the notes in LeadLab with what happened and set the next follow-up time.</div>
+    <div class="hb hamber">
+      Follow-up cadence:<br/>
+      Attempt 1 — 1 hour after first message<br/>
+      Attempt 2 — same day evening if no response<br/>
+      Attempt 3 — next morning<br/>
+      After 3 attempts with no response — mark as cold and move to weekly follow-up
+    </div>
+    <span class="tag ta">update notes after every attempt</span><span class="tag ta">set next follow-up every time</span>
+  </div>
+</div>
+
+<div class="step">
+  <div class="sl"><div class="sd dpurple">4</div><div class="sline"></div></div>
+  <div class="sc">
+    <div class="st">They agreed to a meeting</div>
+    <div class="sl2">Update LeadLab to Meeting Booked. Set the calendar invite.</div>
+    <div class="sd2">The moment they say yes to a meeting, do two things immediately:</div>
+    <div class="sd2">
+      1. In LeadLab — change stage to <strong>Meeting booked</strong>. Add the meeting date and time in notes.<br/>
+      2. In Google Calendar — create the meeting event and send them the invite or the Google Meet link over WhatsApp.
+    </div>
+    <span class="tag tp">stage → Meeting booked</span><span class="tag tb">calendar invite sent</span>
+  </div>
+</div>
+
+<div class="step">
+  <div class="sl"><div class="sd dblue">5</div><div class="sline"></div></div>
+  <div class="sc">
+    <div class="st">During the meeting</div>
+    <div class="sl2">Pitch clearly. Listen more than you talk.</div>
+    <div class="sd2">Understand exactly what they need before pitching. Ask questions first. Then present the solution that fits them. Do not use generic pitches.</div>
+    <div class="hb hblue">
+      In the meeting:<br/>
+      1. Ask what problem they are trying to solve<br/>
+      2. Ask what they have already tried<br/>
+      3. Pitch the solution that directly solves their problem<br/>
+      4. Give a clear price and timeline<br/>
+      5. Ask for a decision or a next step before the call ends
+    </div>
+    <span class="tag tb">ask first, pitch second</span><span class="tag tb">get a next step</span>
+  </div>
+</div>
+
+<div class="step">
+  <div class="sl"><div class="sd damber">6</div><div class="sline"></div></div>
+  <div class="sc">
+    <div class="st">After the meeting — they are interested</div>
+    <div class="sl2">Update LeadLab to Proposal. Wait for advance.</div>
+    <div class="sd2">If the meeting went well and they want to move forward, change the stage to Proposal in LeadLab. Send the proposal or quote within 30 minutes of the call ending. Do not delay.</div>
+    <div class="hb hamber">
+      In LeadLab:<br/>
+      1. Stage → Proposal<br/>
+      2. Add the deal value in the value field<br/>
+      3. Add notes: what was discussed, what they need, what was promised<br/>
+      4. Set follow-up for next day to check if they reviewed the proposal
+    </div>
+    <span class="tag ta">stage → Proposal</span><span class="tag ta">proposal sent within 30 min</span>
+  </div>
+</div>
+
+<div class="step">
+  <div class="sl"><div class="sd dgreen">7</div><div class="sline"></div></div>
+  <div class="sc">
+    <div class="st">Advance received</div>
+    <div class="sl2">Move to Converted. Job done.</div>
+    <div class="sd2">The moment the advance payment is received, update LeadLab immediately. This is the only point at which a deal is considered converted. Not when they say yes verbally — only when the money is in.</div>
+    <div class="hb hgreen">
+      In LeadLab:<br/>
+      1. Stage → Converted<br/>
+      2. Add the close date<br/>
+      3. Note the advance amount received<br/>
+      4. Inform the delivery team immediately
+    </div>
+    <span class="tag tg">stage → Converted</span><span class="tag tg">converted = advance received</span>
+  </div>
+</div>
+
+<div class="step">
+  <div class="sl"><div class="sd dred">8</div></div>
+  <div class="sc">
+    <div class="st">They said no</div>
+    <div class="sl2">Move to Lost. Write the reason clearly. No guessing.</div>
+    <div class="sd2">If they say they are not interested or stop responding after multiple follow-ups, move the stage to Lost. You must write the exact reason in the close reason field. This data helps the team improve.</div>
+    <div class="hb hred">
+      In LeadLab:<br/>
+      1. Stage → Lost<br/>
+      2. Close reason — write exactly what they said. Examples:<br/>
+      &nbsp;&nbsp;— "Budget too high — said they need something under ₹X"<br/>
+      &nbsp;&nbsp;— "Went with a competitor — named [competitor]"<br/>
+      &nbsp;&nbsp;— "Not the right time — said to follow up in 3 months"<br/>
+      &nbsp;&nbsp;— "No response after 5 follow-ups"<br/>
+      3. If they said follow up later — set a future follow-up date before closing
+    </div>
+    <span class="tag tr">stage → Lost</span><span class="tag tr">reason must be specific</span>
+  </div>
+</div>
+
+<div class="rb">
+  <div style="font-size:13px;font-weight:500;color:#0d0d0d;margin-bottom:10px">The non-negotiables.</div>
+  <div class="rr"><span class="chk">✓</span><span>WhatsApp within 1 minute of receiving a lead. Not 5 minutes. Not later. Now.</span></div>
+  <div class="rr"><span class="chk">✓</span><span>Every lead added in LeadLab the same moment you message them. No exceptions.</span></div>
+  <div class="rr"><span class="chk">✓</span><span>Follow-up time set in Google Calendar every single time. If it is not in the calendar, it will not happen.</span></div>
+  <div class="rr"><span class="chk">✓</span><span>Update LeadLab after every interaction. Notes must say what happened and what the next step is.</span></div>
+  <div class="rr"><span class="chk">✓</span><span>Proposal sent within 30 minutes of the meeting ending. Not tomorrow.</span></div>
+  <div class="rr"><span class="chk">✓</span><span>Converted = advance received. Not verbal yes. Not promise to pay. Money in hand.</span></div>
+  <div class="rr"><span class="chk">✓</span><span>Lost reason must be specific. "Not interested" is not a reason. Write what they actually said.</span></div>
+</div>
+</div>
+````;
+    const _salesNow = new Date().toISOString();
+    S.sops.push({
+      id: SOP_SALES_ID,
+      title: 'Sales Process SOP',
+      deptId: salesDeptId,
+      status: 'active',
+      emoji: '💼',
+      body: _salesBody,
+      author: 'Pixelizt',
+      updated: _salesNow,
+      versions: [{ id: 'v1', body: _salesBody, savedAt: _salesNow, label: 'v1' }]
+    });
+    _sopDirty = true;
+    console.log('✅ Sales Process SOP injected');
+  }
+
+  if (_sopDirty) persist();
 }
 
 // ─── HELPER: Build payload string ───
