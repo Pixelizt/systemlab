@@ -1749,7 +1749,7 @@ async function loginApp() {
   errEl.style.display='none';
   try {
     const snap = await Promise.race([
-      db.ref('workspaces/' + WS_ID + '/v3/users').once('value'),
+      db.ref('wsv3/' + WS_ID + '/users').once('value'),
       new Promise((_, rej) => setTimeout(() => rej(new Error('timeout')), 8000))
     ]);
     const users = snap.val() || {};
@@ -1906,7 +1906,7 @@ async function connectToWorkspace(workspaceId, userName) {
   }
 
   // ─── One-time cloud hydrate (per-entity v3 structure) ───
-  _fbRef = db.ref('workspaces/' + workspaceId + '/v3');
+  _fbRef = db.ref('wsv3/' + workspaceId);
   let cloudHadData = false;
   try {
     const snapshot = await Promise.race([
