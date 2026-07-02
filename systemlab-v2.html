@@ -4942,8 +4942,13 @@ function lgDayLabel(day) {
 function lgGetData(channel) {
   const mk = lgMonthKey();
   if (!S.leadgen[channel]) S.leadgen[channel] = {};
-  if (!S.leadgen[channel][mk]) S.leadgen[channel][mk] = { days: {}, budget: 0, leads: [] };
-  return S.leadgen[channel][mk];
+  const cur = S.leadgen[channel][mk] || {};
+  // Firebase RTDB drops empty objects/arrays, so re-hydrate missing shape every time
+  if (!cur.days || typeof cur.days !== 'object') cur.days = {};
+  if (!Array.isArray(cur.leads)) cur.leads = [];
+  if (typeof cur.budget !== 'number') cur.budget = 0;
+  S.leadgen[channel][mk] = cur;
+  return cur;
 }
 
 let _lgSaveTimer = null;
@@ -5006,8 +5011,9 @@ function lgCalcTotals(channel) {
   const totals = {};
   cfg.cols.forEach(c => totals[c] = 0);
   const days = lgDaysInMonth();
+  const dmap = data.days || {};
   for (let d = 1; d <= days; d++) {
-    const row = data.days[d] || {};
+    const row = dmap[d] || {};
     cfg.cols.forEach(c => { totals[c] += (row[c] || 0); });
   }
   return totals;
