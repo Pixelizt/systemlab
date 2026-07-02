@@ -596,6 +596,20 @@ select option{background:var(--canvas-card)}
 .pvar-label{font-size:12px;font-weight:600;color:var(--ink);margin-bottom:5px;text-transform:capitalize}
 .pvar-preview-box{background:var(--canvas-soft);border:1px solid var(--hairline);border-radius:8px;padding:12px 14px;font-size:12px;font-family:var(--mono);color:var(--body);line-height:1.6;white-space:pre-wrap;max-height:200px;overflow-y:auto}
 .pvar-hl{background:rgba(167,139,250,.2);color:#a78bfa;border-radius:4px;padding:1px 4px;font-weight:600}
+
+/* ─── 8-HOUR CELEBRATION ─── */
+#fete-overlay{position:fixed;inset:0;z-index:99998;display:none;align-items:center;justify-content:center;background:rgba(10,12,18,.55);backdrop-filter:blur(3px);opacity:0;transition:opacity .35s}
+#fete-overlay.show{display:flex;opacity:1}
+#fete-canvas{position:fixed;inset:0;z-index:99999;pointer-events:none}
+.fete-card{position:relative;z-index:100000;background:var(--panel,#171a21);border:1px solid var(--hairline);border-radius:22px;padding:42px 52px;text-align:center;box-shadow:0 30px 80px rgba(0,0,0,.5);transform:scale(.7);transition:transform .45s cubic-bezier(.18,1.6,.4,1)}
+#fete-overlay.show .fete-card{transform:scale(1)}
+.fete-emoji{font-size:56px;line-height:1;margin-bottom:10px;animation:fete-bounce 1.1s ease infinite}
+.fete-title{font-size:26px;font-weight:800;letter-spacing:-.02em;color:var(--ink);margin-bottom:6px}
+.fete-sub{font-size:14px;color:var(--mute);margin-bottom:4px}
+.fete-streak{display:inline-flex;align-items:center;gap:6px;margin-top:14px;font-size:13px;font-weight:700;color:#f59e0b;background:rgba(245,158,11,.12);border:1px solid rgba(245,158,11,.3);padding:6px 16px;border-radius:999px}
+.fete-close{margin-top:22px;padding:9px 26px;border-radius:999px;border:none;background:linear-gradient(135deg,#ff7a17,#f59e0b);color:#fff;font-weight:700;font-size:13px;cursor:pointer}
+@keyframes fete-bounce{0%,100%{transform:translateY(0) rotate(-4deg)}50%{transform:translateY(-12px) rotate(4deg)}}
+.hp-fill.gold{background:linear-gradient(90deg,#f59e0b,#ffd34d)!important;box-shadow:0 0 10px rgba(245,158,11,.6)}
 </style>
 </head>
 <body>
@@ -603,11 +617,11 @@ select option{background:var(--canvas-card)}
 <div id="login-screen">
   <div class="login-card">
     <div class="login-logo"><em>system</em><strong>lab.</strong></div>
-    <div class="login-sub">Sign in to your team workspace</div>
-    <input type="email" id="l-email" placeholder="Your Email (e.g. john@company.com)" style="margin-bottom:12px" onkeydown="if(event.key==='Enter')loginApp()">
-    <input type="password" id="l-pass" placeholder="Workspace Passcode" style="margin-bottom:20px" onkeydown="if(event.key==='Enter')loginApp()">
-    <button class="btn btn-primary" id="l-btn" style="padding:10px;justify-content:center" onclick="loginApp()">Enter Workspace</button>
-    <div class="login-err" id="l-err">Please enter your email and passcode.</div>
+    <div class="login-sub">Welcome back — sign in with your Pixelizt account</div>
+    <input type="email" id="l-email" placeholder="Your work email" style="margin-bottom:12px" onkeydown="if(event.key==='Enter')loginApp()" autocomplete="username">
+    <input type="password" id="l-pass" placeholder="Password" style="margin-bottom:20px" onkeydown="if(event.key==='Enter')loginApp()" autocomplete="current-password">
+    <button class="btn btn-primary" id="l-btn" style="padding:10px;justify-content:center" onclick="loginApp()">Sign In</button>
+    <div class="login-err" id="l-err">Please enter your email and password.</div>
   </div>
 </div>
 
@@ -1691,6 +1705,17 @@ function saveMemo() {
 }
 window.saveMemo = saveMemo;
 
+// ─── PER-USER AUTH ────────────────────────────────────────────────────
+// Each team member has their own account (email + salted SHA-256 password).
+// Accounts live at workspaces/<ws>/v3/users/<uid>.
+const WS_ID = localStorage.getItem('sl_ws_override') || '123456';
+let currentUserObj = null; // {id, name, email, role: 'admin'|'member', empId}
+
+async function sha256hex(s) {
+  const buf = await crypto.subtle.digest('SHA-256', new TextEncoder().encode(s));
+  return [...new Uint8Array(buf)].map(b => b.toString(16).padStart(2, '0')).join('');
+}
+
 window.bootApp = function() {
   const auth = localStorage.getItem('systemlab_auth');
   if (!auth) {
@@ -1699,9 +1724,11 @@ window.bootApp = function() {
   } else {
     try {
       const a = JSON.parse(auth);
-      // Support both old (userName) and new (userEmail) auth format
-      connectToWorkspace(a.workspaceId, a.userEmail || a.userName || '');
+      if (!a.uid) throw new Error('old session format — sign in again');
+      currentUserObj = a.user || null;
+      connectToWorkspace(a.workspaceId || WS_ID, a.userEmail || '');
     } catch(e) {
+      localStorage.removeItem('systemlab_auth');
       document.getElementById('login-screen').style.display='flex';
       document.getElementById('app').style.display='none';
     }
@@ -1709,24 +1736,37 @@ window.bootApp = function() {
 };
 
 async function loginApp() {
-  const email = document.getElementById('l-email').value.trim();
-  const pass = document.getElementById('l-pass').value.trim();
+  const email = document.getElementById('l-email').value.trim().toLowerCase();
+  const pass = document.getElementById('l-pass').value;
+  const errEl = document.getElementById('l-err');
   const emailValid = /^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(email);
   if(!email || !pass || !emailValid) {
-    document.getElementById('l-err').textContent = 'Please enter a valid email and passcode.';
-    document.getElementById('l-err').style.display='block';
+    errEl.textContent = 'Please enter a valid email and password.';
+    errEl.style.display='block';
     return;
   }
-  document.getElementById('l-btn').textContent = 'Connecting...';
-  document.getElementById('l-err').style.display='none';
+  document.getElementById('l-btn').textContent = 'Signing in...';
+  errEl.style.display='none';
   try {
-    // Workspace is identified by passcode. Email is the user identifier.
-    await connectToWorkspace(pass.toLowerCase(), email);
+    const snap = await Promise.race([
+      db.ref('workspaces/' + WS_ID + '/v3/users').once('value'),
+      new Promise((_, rej) => setTimeout(() => rej(new Error('timeout')), 8000))
+    ]);
+    const users = snap.val() || {};
+    const user = Object.values(users).find(u => u && (u.email||'').toLowerCase() === email);
+    if (!user) throw new Error('no-user');
+    const hash = await sha256hex((user.salt || '') + pass);
+    if (hash !== user.pass) throw new Error('bad-pass');
+    currentUserObj = { id: user.id, name: user.name, email: user.email, role: user.role || 'member', empId: user.empId || null };
+    localStorage.setItem('systemlab_auth', JSON.stringify({ workspaceId: WS_ID, userEmail: user.email, uid: user.id, user: currentUserObj }));
+    await connectToWorkspace(WS_ID, user.email);
   } catch(e) {
     console.error(e);
-    document.getElementById('l-err').textContent = 'Failed to connect. Check your passcode and try again.';
-    document.getElementById('l-err').style.display='block';
-    document.getElementById('l-btn').textContent = 'Enter Workspace';
+    errEl.textContent = (e.message === 'no-user' || e.message === 'bad-pass')
+      ? 'Wrong email or password. Ask your admin if you need access.'
+      : 'Could not reach the server. Check your connection and try again.';
+    errEl.style.display='block';
+    document.getElementById('l-btn').textContent = 'Sign In';
   }
 }
 
@@ -1784,29 +1824,61 @@ function updateConnectionBadge(connected) {
   }
 }
 
+// ─── V3 SYNC ENGINE ───────────────────────────────────────────────────
+// Every entity is its own Firebase node (tasks/<id>, att/<emp>/<date>, …).
+// Writes are atomic multi-path child updates — one device can never
+// overwrite another device's records. Deletes are real child removes
+// plus tombstones, so nothing ever resurrects.
+let _myRev = 0;             // _rev of our own last write (suppress echo toasts)
+let _lastPeerToast = 0;     // throttle "updated by teammate" toasts
+
+function objVals(o) { return (o && typeof o === 'object') ? Object.values(o).filter(x => x != null) : []; }
+
+function hydrateFromV3(v, { mergeLocal } = { mergeLocal: true }) {
+  if (!v) return;
+  S.deleted = mergeDeletedMaps(v.deleted, S.deleted);
+  const rTasks = objVals(v.tasks);
+  S.tasks = mergeLocal ? mergeTasks(rTasks, S.tasks) : rTasks;
+  const rEmp = objVals(v.employees);
+  if (rEmp.length || !S.employees.length) S.employees = rEmp;
+  const rDepts = objVals(v.depts);
+  if (rDepts.length) S.depts = rDepts;
+  const rSops = objVals(v.sops);
+  if (rSops.length || !S.sops.length) S.sops = rSops;
+  S.recurring = objVals(v.recurring);
+  const rDocs = objVals(v.docs); if (rDocs.length || !(S.docs||[]).length) S.docs = rDocs;
+  const rPrompts = objVals(v.prompts); if (rPrompts.length || !(S.prompts||[]).length) S.prompts = rPrompts;
+  const rPC = objVals(v.promptCategories); if (rPC.length) S.promptCategories = rPC;
+  S.att = mergeAttMaps(v.att, S.att);
+  S.leadgen = safeMerge(v.leadgen, S.leadgen, {});
+  if (v.meta) {
+    if (v.meta.workspaceName) S.workspaceName = v.meta.workspaceName;
+    if (v.meta._rev) S._rev = v.meta._rev;
+    if (v.meta._changelog) S._changelog = v.meta._changelog;
+  }
+  applyTombstones();
+}
+
 async function connectToWorkspace(workspaceId, userName) {
   currentWorkspaceId = workspaceId;
   currentUser = userName;
 
-  const path = 'workspaces/' + workspaceId;
   const localKey = 'systemlab_ws_' + workspaceId;
 
   // ─── OPTIMISTIC UI UPDATE ───
   document.getElementById('login-screen').style.display = 'none';
   document.getElementById('app').style.display = 'grid';
-  
+
   const emailEl = document.getElementById('topbar-email');
-  if (emailEl) emailEl.textContent = userName || '';
-  
+  if (emailEl) emailEl.textContent = (currentUserObj && currentUserObj.name) || userName || '';
+
   // ─── Load from localStorage for instant UI ───
-  let localRev = 0;
   const localData = localStorage.getItem(localKey);
   if (localData) {
     try {
       const d = JSON.parse(localData);
-      localRev = d._rev || 0;
       if (d.workspaceName) S.workspaceName = d.workspaceName;
-      S._rev = localRev;
+      S._rev = d._rev || 0;
       S.depts = d.depts || S.depts;
       S.sops = d.sops || [];
       S.employees = d.employees || [];
@@ -1833,50 +1905,22 @@ async function connectToWorkspace(workspaceId, userName) {
     });
   }
 
-  // ─── One-time cloud load to determine initial state ───
-  let loadedFromCloud = false;
-  _fbRef = db.ref(path);
-  
+  // ─── One-time cloud hydrate (per-entity v3 structure) ───
+  _fbRef = db.ref('workspaces/' + workspaceId + '/v3');
+  let cloudHadData = false;
   try {
-    // Add a 3-second timeout so it doesn't hang forever if network is poor
     const snapshot = await Promise.race([
       _fbRef.once('value'),
-      new Promise((_, reject) => setTimeout(() => reject(new Error('timeout')), 3000))
+      new Promise((_, reject) => setTimeout(() => reject(new Error('timeout')), 4000))
     ]);
-    const existing = snapshot.val();
-    if (existing && existing.data) {
-      const remoteS = JSON.parse(existing.data);
-      const cloudRev = remoteS._rev || 0;
-      cloudEnabled = true;
-      
-      if (cloudRev >= localRev) {
-        const remoteTaskIds = new Set((remoteS.tasks||[]).map(t=>t?.id).filter(Boolean));
-        S._rev = cloudRev || Date.now();
-        S.depts = remoteS.depts || S.depts;
-        S.sops = safeMerge(remoteS.sops, S.sops, []);
-        S.workspaceName = remoteS.workspaceName || S.workspaceName;
-        S.employees = remoteS.employees && remoteS.employees.length > 0 ? remoteS.employees : S.employees || [];
-        S.tasks = mergeTasks(remoteS.tasks, S.tasks);
-        S.att = safeMerge(remoteS.att, S.att, {});
-        S.recurring = Array.isArray(remoteS.recurring) ? remoteS.recurring : [];
-        S.leadgen = safeMerge(remoteS.leadgen, S.leadgen, {});
-        S.docs = safeMerge(remoteS.docs, S.docs, []);
-        S.prompts = safeMerge(remoteS.prompts, S.prompts, []);
-        S.promptCategories = safeMerge(remoteS.promptCategories, S.promptCategories, S.promptCategories);
-        S._changelog = remoteS._changelog || S._changelog || [];
-        S.deleted = mergeDeletedMaps(remoteS.deleted, S.deleted);
-        applyTombstones();
-        loadedFromCloud = true;
-        // If merge recovered local tasks that Firebase was missing, flag for writeback
-        const mergeRecoveredTasks = S.tasks.some(t => t?.id && !remoteTaskIds.has(t.id));
-        if (mergeRecoveredTasks) loadedFromCloud = false; // triggers the push block below
-        console.log('Cloud is newer, using cloud. Cloud _rev:', cloudRev, 'Local _rev:', localRev, 'Recovered local tasks:', mergeRecoveredTasks);
-      } else {
-        console.log('LOCAL is newer! Keeping local. Cloud _rev:', cloudRev, 'Local _rev:', localRev);
-      }
+    const v = snapshot.val();
+    cloudEnabled = true;
+    if (v && (v.tasks || v.employees || v.sops || v.meta)) {
+      cloudHadData = true;
+      hydrateFromV3(v);
+      console.log('v3 hydrated. tasks:', S.tasks.length, 'employees:', S.employees.length);
     } else {
-      cloudEnabled = true;
-      console.log('Firebase reachable but workspace is empty');
+      console.log('Firebase reachable but v3 workspace is empty');
     }
   } catch(e) {
     console.warn('Firebase initial load failed or timed out, using local data:', e.message);
@@ -1889,24 +1933,15 @@ async function connectToWorkspace(workspaceId, userName) {
     SEEDS.forEach((s,i) => S.sops.push({...s, id:'s'+i, versions:makeVersions(s.body)}));
   }
 
-  // ─── Save auth + cache locally ───
-  localStorage.setItem('systemlab_auth', JSON.stringify({workspaceId, userEmail: userName}));
+  // ─── Cache locally + daily backup ───
   saveLocal(localKey);
-
-  // ─── Daily backup snapshot (before any mutations) ───
   saveDailyBackup();
 
   // ─── Spawn recurring tasks for today ───
   spawnRecurringForDate(getLocalISODate());
 
-  // ─── If local was newer or cloud was empty, push to cloud ───
-  if (cloudEnabled && !loadedFromCloud) {
-    S._rev = Date.now();
-    saveLocal(localKey);
-    _fbRef.set({ data: buildPayloadStr() })
-      .then(() => console.log('Pushed local data to Firebase'))
-      .catch(e => console.warn('Firebase push failed:', e.message));
-  }
+  // ─── Push local state to cloud if cloud was empty (first run / seeding) ───
+  if (cloudEnabled && !cloudHadData) persist();
 
   // ─── Inject built-in SOPs if missing ───
   injectSystemSOPs();
@@ -1916,94 +1951,76 @@ async function connectToWorkspace(workspaceId, userName) {
   renderDashboard();
   updateGreeting();
   setTimeout(() => {
-    const emailEl = document.getElementById('topbar-email');
-    if (emailEl) emailEl.textContent = userName || '';
+    const el = document.getElementById('topbar-email');
+    if (el) el.textContent = (currentUserObj && currentUserObj.name) || userName || '';
   }, 0);
   if (S.sops.length === 0) document.getElementById('onboard-hint').style.display = 'inline-flex';
+  if (cloudEnabled) showToast(currentUserObj ? ('👋 Welcome, ' + (currentUserObj.name.split(' ')[0])) : '☁️ Cloud sync active');
 
-  if (loadedFromCloud) showToast('✅ Workspace synced from cloud');
-  else if (cloudEnabled) showToast('☁️ Cloud sync active');
+  // ─── Team member experience: land on YOUR day, attendance auto-marked ───
+  if (currentUserObj && currentUserObj.role !== 'admin' && currentUserObj.empId) {
+    const me = S.employees.find(e => e.id === currentUserObj.empId);
+    if (me) {
+      const todayISO = getLocalISODate();
+      const myAtt = (S.att[me.id] || {})[todayISO];
+      if (!myAtt || !myAtt.loginTime) {
+        markAtt(me.id, 'present'); // stamps loginTime — attendance just happens
+        showToast('🕐 Attendance marked — logged in at ' + ((S.att[me.id][todayISO]||{}).loginTime || nowTime()));
+      }
+      openEmployee(me.id);
+    }
+  }
 
-  // ─── REAL-TIME LISTENER (Firebase SDK — true WebSocket, auto-reconnect) ───
+  // ─── REAL-TIME LISTENER on the v3 node ───
   if (unsubSnapshot) { unsubSnapshot(); unsubSnapshot = null; }
-  
+
   const onValueCallback = (snapshot) => {
-    const val = snapshot.val();
-    if (!val || !val.data) return;
+    const v = snapshot.val();
+    if (!v) return;
+    const isOwnEcho = v.meta && v.meta._rev && v.meta._rev === _myRev;
+    isSyncing = true;
     try {
-      const remoteS = JSON.parse(val.data);
-      // Skip remote if it's strictly older — but never skip when we have a pending offline write
-      // (we need to merge their changes with ours before we push the combined state)
-      if (!_pendingWrite && S._rev && remoteS._rev && remoteS._rev < S._rev) return;
-      
-      isSyncing = true;
-      try {
-        S._rev = remoteS._rev || Date.now();
-        S.depts = remoteS.depts || S.depts;
-        S.sops = remoteS.sops || S.sops;
-        if (remoteS.workspaceName) S.workspaceName = remoteS.workspaceName;
-        S.employees = remoteS.employees || S.employees || [];
-        const _rtIds = new Set((remoteS.tasks||[]).map(t=>t?.id).filter(Boolean));
-        S.tasks = mergeTasks(remoteS.tasks, S.tasks);
-        S.att = safeMerge(remoteS.att, S.att, {});
-        // Firebase RTDB silently drops empty arrays — treat missing/null as intentionally cleared
-        S.recurring = Array.isArray(remoteS.recurring) ? remoteS.recurring : [];
-        S.leadgen = safeMerge(remoteS.leadgen, S.leadgen, {});
-        S.docs = safeMerge(remoteS.docs, S.docs, []);
-        S.prompts = safeMerge(remoteS.prompts, S.prompts, []);
-        S.promptCategories = safeMerge(remoteS.promptCategories, S.promptCategories, S.promptCategories);
-        S._changelog = remoteS._changelog || S._changelog || [];
-        S.deleted = mergeDeletedMaps(remoteS.deleted, S.deleted);
-        applyTombstones();
-        saveLocal(localKey);
-        // If merge recovered tasks that Firebase was missing, write them back so all users see them
-        const _rtRecovered = S.tasks.some(t => t?.id && !_rtIds.has(t.id));
-        if (_rtRecovered && navigator.onLine) {
-          setTimeout(() => { if (!isSyncing) try { persist(); } catch(e) {} }, 800);
-        }
-        renderSidebar();
-        renderDashboard();
-        updateGreeting();
-        if (typeof renderTeam === 'function') renderTeam();
-        if (typeof renderRecurringList === 'function') renderRecurringList();
-        if (typeof curEmp !== 'undefined' && curEmp && typeof openEmployee === 'function') {
-          const empView = document.getElementById('v-employee');
-          if (empView && empView.classList.contains('active')) {
-            openEmployee(curEmp);
+      hydrateFromV3(v);
+      saveLocal(localKey);
+      renderSidebar();
+      renderDashboard();
+      updateGreeting();
+      if (typeof renderTeam === 'function') renderTeam();
+      if (typeof renderRecurringList === 'function') renderRecurringList();
+      if (typeof curEmp !== 'undefined' && curEmp && typeof openEmployee === 'function') {
+        const empView = document.getElementById('v-employee');
+        if (empView && empView.classList.contains('active')) openEmployee(curEmp);
+      }
+      if (typeof lgRender === 'function') lgRender();
+      if (typeof docRender === 'function' && document.getElementById('v-docs')?.classList.contains('active')) docRender();
+      if (typeof promptRender === 'function' && document.getElementById('v-prompts')?.classList.contains('active')) promptRender();
+      if (!isOwnEcho && Date.now() - _lastPeerToast > 30000) {
+        _lastPeerToast = Date.now();
+        showToast('🔄 Workspace updated');
+      }
+      const activeId = typeof curSOP === 'function' ? curSOP()?.id : null;
+      if (activeId) {
+        const updatedSOP = S.sops.find(s=>s.id===activeId);
+        const edTa = document.getElementById('ed-ta');
+        if (updatedSOP && edTa && edTa.value !== updatedSOP.body) {
+          if (document.activeElement !== edTa) {
+            edTa.value = updatedSOP.body;
+            if (typeof onMdInput === 'function') onMdInput();
           }
         }
-        if (typeof lgRender === 'function') lgRender(); // always sync leadgen state, showView gates actual display
-        if (typeof docRender === 'function' && document.getElementById('v-docs')?.classList.contains('active')) docRender();
-        if (typeof promptRender === 'function' && document.getElementById('v-prompts')?.classList.contains('active')) promptRender();
-        showToast('🔄 Workspace updated from another session');
-        const activeId = typeof curSOP === 'function' ? curSOP()?.id : null;
-        if (activeId) {
-          const updatedSOP = S.sops.find(s=>s.id===activeId);
-          const edTa = document.getElementById('ed-ta');
-          if (updatedSOP && edTa && edTa.value !== updatedSOP.body) {
-            if (document.activeElement !== edTa) {
-              edTa.value = updatedSOP.body;
-              if (typeof onMdInput === 'function') onMdInput();
-            }
-          }
-        }
-      } finally {
-        isSyncing = false;
       }
-      // Spawn recurring tasks for today if not yet done this session
-      // (runs after isSyncing=false so persist() is not blocked)
-      const _syncDate = TT_TODAY || getLocalISODate();
-      if (_recurringSpawnedDate !== _syncDate) {
-        _recurringSpawnedDate = _syncDate;
-        setTimeout(() => spawnRecurringForDate(_syncDate), 0);
-      }
-    } catch(e) { console.error('Sync parse error', e); }
+    } catch(e) { console.error('Sync error', e); }
+    finally { isSyncing = false; }
+    // Spawn recurring tasks for today if not yet done this session
+    const _syncDate = TT_TODAY || getLocalISODate();
+    if (_recurringSpawnedDate !== _syncDate) {
+      _recurringSpawnedDate = _syncDate;
+      setTimeout(() => spawnRecurringForDate(_syncDate), 0);
+    }
   };
-  
+
   _fbRef.on('value', onValueCallback);
   unsubSnapshot = () => _fbRef.off('value', onValueCallback);
-
-  // (Connection state monitoring moved to top of function)
 }
 
 
@@ -2415,45 +2432,78 @@ function persist() {
     localStorage.setItem('systemlab_ws_' + currentWorkspaceId, str);
   }
 
-  if (_fbRef) {
-    if (!navigator.onLine) {
-      // Queue write — will flush the moment the device reconnects
-      _pendingWrite = true;
-      return;
-    }
-    // Merge-on-write: combine our state with whatever is CURRENTLY in the cloud,
-    // so a save can never drop tasks another device added, and tombstones are honoured.
-    _fbRef.transaction(current => {
-      let out = JSON.parse(buildPayloadStr());
-      if (current && current.data) {
-        try {
-          const cloud = JSON.parse(current.data);
-          const del = mergeDeletedMaps(cloud.deleted, out.deleted);
-          out.deleted   = del;
-          out.tasks     = mergeTasks(cloud.tasks, out.tasks).filter(t => t && t.id && !del[t.id]);
-          out.recurring = unionById(cloud.recurring, out.recurring).filter(r => r && r.id && !del[r.id]);
-          out.att       = mergeAttMaps(cloud.att, out.att);
-          // Keep cloud-only library items so a stale device never clobbers them
-          out.sops      = unionById(cloud.sops, out.sops);
-          out.docs      = unionById(cloud.docs, out.docs);
-          out.prompts   = unionById(cloud.prompts, out.prompts);
-        } catch (e) { /* malformed cloud — fall back to our snapshot */ }
-      }
-      out._rev = Date.now();
-      return { data: JSON.stringify(out) };
-    }, (err, committed) => {
-      if (err) { console.warn('Firebase write (txn) error:', err.message); _pendingWrite = true; }
-      else if (committed) { cloudEnabled = true; _pendingWrite = false; }
-    }, false /* applyLocally: let the value listener fold the merged result back in */);
+  if (!_fbRef) return;
+  if (!navigator.onLine) {
+    _pendingWrite = true; // flushed the moment the device reconnects
+    return;
   }
-}
 
+  // Atomic multi-path update: every record is written as its OWN child node.
+  // Children we don't know about (a teammate's new tasks) are never touched,
+  // so one device can never wipe another's work. Tombstoned ids are nulled
+  // (real deletes) and skipped from writes, so deletions never resurrect.
+  const u = {};
+  const del = S.deleted || {};
+  const clean = (x) => JSON.parse(JSON.stringify(x)); // strip undefined
+  const putAll = (node, arr) => (arr || []).forEach(x => {
+    if (x && x.id && !del[x.id]) u[node + '/' + x.id] = clean(x);
+  });
+  putAll('tasks', S.tasks);
+  putAll('employees', S.employees);
+  putAll('depts', S.depts);
+  putAll('sops', S.sops);
+  putAll('recurring', S.recurring);
+  putAll('docs', S.docs);
+  putAll('prompts', S.prompts);
+  putAll('promptCategories', S.promptCategories);
+  for (const e in (S.att || {})) {
+    for (const d in S.att[e]) u['att/' + e + '/' + d] = clean(S.att[e][d]);
+  }
+  for (const ch in (S.leadgen || {})) {
+    const v = S.leadgen[ch];
+    if (v && typeof v === 'object' && !Array.isArray(v)) {
+      for (const mo in v) u['leadgen/' + ch + '/' + mo] = clean(v[mo]);
+    }
+  }
+  for (const id in del) {
+    u['deleted/' + id] = del[id];
+    // Real deletes across every collection — harmless if the child doesn't exist
+    u['tasks/' + id] = null;
+    u['recurring/' + id] = null;
+    u['employees/' + id] = null;
+    u['sops/' + id] = null;
+    u['docs/' + id] = null;
+    u['prompts/' + id] = null;
+  }
+  u['meta/workspaceName'] = S.workspaceName || 'My Workspace';
+  u['meta/_rev'] = S._rev;
+  u['meta/_changelog'] = clean((S._changelog || []).slice(-200));
+  _myRev = S._rev;
+
+  _fbRef.update(u)
+    .then(() => { cloudEnabled = true; _pendingWrite = false; })
+    .catch(e => {
+      console.warn('Firebase write error:', e.message);
+      _pendingWrite = true; // retry on reconnect
+    });
+}
 function logoutApp() {
+  // Members: stamp attendance logout automatically — logout = attendance closed
+  try {
+    if (currentUserObj && currentUserObj.role !== 'admin' && currentUserObj.empId) {
+      const _today = getLocalISODate();
+      const _a = (S.att[currentUserObj.empId] || {})[_today];
+      if (_a && _a.loginTime && !_a.logoutTime) {
+        _a.logoutTime = nowTime();
+        persist();
+      }
+    }
+  } catch(e) {}
   localStorage.removeItem('systemlab_auth');
   if (unsubSnapshot) { unsubSnapshot(); unsubSnapshot = null; }
   if (_fbRef) _fbRef.off();
   if (_fbConnRef) _fbConnRef.off();
-  location.reload();
+  setTimeout(() => location.reload(), 300); // let the final write flush
 }
 
 function makeVersions(body) {
@@ -3173,6 +3223,8 @@ function confirmDelete(id) {
   document.getElementById('confirm-box').classList.add('open');
   confirmCb = () => {
     S.sops = S.sops.filter(s=>s.id!==id);
+    if (!S.deleted) S.deleted = {};
+    S.deleted[id] = Date.now();
     persist();
     renderSidebar(); renderDashboard();
     if (S.deptFilter) showDept(S.deptFilter); else renderListView(S.sops,'All SOPs','var(--mute)');
@@ -3759,6 +3811,94 @@ function promptNote(tid) {
   }
 }
 
+// ─── 8-HOUR CELEBRATION ───────────────────────────────────────────────
+// When a team member completes 8 hours of tasks in a day: confetti,
+// a personal shout-out, and their 8h-day streak. Fires once per day.
+function _doneMinsFor(empId, date) {
+  return (S.tasks||[]).filter(t => t.empId === empId && t.date === date && t.done)
+    .reduce((a,t) => a + (parseInt(t.mins)||0), 0);
+}
+function _hourStreak(empId, uptoDate) {
+  // consecutive days (ending at uptoDate) with >= 480 done minutes
+  let streak = 0;
+  const d = new Date(uptoDate + 'T12:00:00Z');
+  for (let i = 0; i < 60; i++) {
+    const iso = d.toISOString().slice(0,10);
+    if (_doneMinsFor(empId, iso) >= 480) { streak++; d.setUTCDate(d.getUTCDate()-1); }
+    else break;
+  }
+  return streak;
+}
+function fireConfetti(durationMs) {
+  let cv = document.getElementById('fete-canvas');
+  if (!cv) { cv = document.createElement('canvas'); cv.id = 'fete-canvas'; document.body.appendChild(cv); }
+  cv.width = innerWidth; cv.height = innerHeight;
+  const ctx = cv.getContext('2d');
+  const colors = ['#ff7a17','#f59e0b','#22c55e','#60a5fa','#a78bfa','#f472b6','#ffd34d'];
+  const P = [];
+  for (let i = 0; i < 180; i++) P.push({
+    x: Math.random()*cv.width, y: -20 - Math.random()*cv.height*0.5,
+    w: 6+Math.random()*6, h: 8+Math.random()*8,
+    vy: 2+Math.random()*3.5, vx: -1.5+Math.random()*3,
+    rot: Math.random()*Math.PI, vr: -0.1+Math.random()*0.2,
+    c: colors[i % colors.length]
+  });
+  const t0 = Date.now();
+  (function frame(){
+    ctx.clearRect(0,0,cv.width,cv.height);
+    P.forEach(p => {
+      p.x += p.vx; p.y += p.vy; p.rot += p.vr;
+      ctx.save(); ctx.translate(p.x,p.y); ctx.rotate(p.rot);
+      ctx.fillStyle = p.c; ctx.fillRect(-p.w/2,-p.h/2,p.w,p.h); ctx.restore();
+      if (p.y > cv.height + 20) { p.y = -20; p.x = Math.random()*cv.width; }
+    });
+    if (Date.now() - t0 < durationMs) requestAnimationFrame(frame);
+    else { ctx.clearRect(0,0,cv.width,cv.height); cv.remove(); }
+  })();
+}
+function fireCelebration(empId) {
+  const e = S.employees.find(x => x.id === empId);
+  const first = e ? e.name.split(' ')[0] : 'Champion';
+  const streak = _hourStreak(empId, TT_TODAY);
+  let ov = document.getElementById('fete-overlay');
+  if (!ov) {
+    ov = document.createElement('div'); ov.id = 'fete-overlay';
+    document.body.appendChild(ov);
+  }
+  ov.innerHTML = `<div class="fete-card">
+      <div class="fete-emoji">🏆</div>
+      <div class="fete-title">8 hours. Crushed.</div>
+      <div class="fete-sub">${first}, every single task hour is in. That's an A-player day.</div>
+      ${streak > 1 ? `<div class="fete-streak">🔥 ${streak} days in a row</div>` : `<div class="fete-streak">⭐ Day one of your streak</div>`}
+      <button class="fete-close" onclick="document.getElementById('fete-overlay').classList.remove('show')">Keep winning</button>
+    </div>`;
+  requestAnimationFrame(() => ov.classList.add('show'));
+  fireConfetti(4200);
+  setTimeout(() => ov.classList.remove('show'), 6500);
+  try { // soft two-note chime
+    const ac = new (window.AudioContext||window.webkitAudioContext)();
+    [[523.25,0],[783.99,0.18]].forEach(([f,d]) => {
+      const o = ac.createOscillator(), g = ac.createGain();
+      o.frequency.value = f; o.type = 'sine';
+      g.gain.setValueAtTime(0.001, ac.currentTime+d);
+      g.gain.exponentialRampToValueAtTime(0.12, ac.currentTime+d+0.03);
+      g.gain.exponentialRampToValueAtTime(0.001, ac.currentTime+d+0.7);
+      o.connect(g); g.connect(ac.destination);
+      o.start(ac.currentTime+d); o.stop(ac.currentTime+d+0.8);
+    });
+  } catch(e) {}
+}
+function checkCelebration(empId) {
+  if (!empId) return;
+  if (_doneMinsFor(empId, TT_TODAY) < 480) return;
+  if (!S.att[empId]) S.att[empId] = {};
+  if (!S.att[empId][TT_TODAY]) S.att[empId][TT_TODAY] = {};
+  if (S.att[empId][TT_TODAY].fete) return; // already celebrated today
+  S.att[empId][TT_TODAY].fete = 1;
+  persist();
+  fireCelebration(empId);
+}
+
 function toggleTask(tid) {
   const t = S.tasks.find(x => x.id === tid);
   if (!t) return;
@@ -3767,6 +3907,7 @@ function toggleTask(tid) {
   t.updatedAt = Date.now();
   persist();
   openEmployee(curEmp);
+  if (t.done) checkCelebration(t.empId);
 }
 
 function deleteTask(tid) {
@@ -3886,9 +4027,9 @@ document.getElementById('empDetailHead').innerHTML = `
   const assignedH = tasks.reduce((a,t) => a + t.mins, 0) / 60;
   const hp_pct = Math.min(100, (doneH / 8) * 100);
   document.getElementById('hourProg').innerHTML = `
-    <div class="hp-bar"><div class="hp-fill" style="width:${hp_pct.toFixed(0)}%"></div></div>
-    <span style="color:var(--sunset);font-weight:600">${doneH.toFixed(1)}h</span>
-    <span>of 8h target</span>
+    <div class="hp-bar"><div class="hp-fill${hp_pct>=100?' gold':''}" style="width:${hp_pct.toFixed(0)}%"></div></div>
+    <span style="color:${hp_pct>=100?'#f59e0b':'var(--sunset)'};font-weight:600">${doneH.toFixed(1)}h</span>
+    <span>${hp_pct>=100?'— 8h day complete! 🏆':'of 8h target'}</span>
     <span style="color:var(--mute2)">·</span>
     <span style="color:var(--ink);font-weight:600">${assignedH.toFixed(1)}h</span>
     <span>Assigned</span>`;
@@ -4110,6 +4251,7 @@ function deleteEmployee() {
   S.employees = S.employees.filter(x => x.id !== curEmp);
   if (S.att && S.att[curEmp]) delete S.att[curEmp];
   if (!S.deleted) S.deleted = {};
+  S.deleted[curEmp] = Date.now();
   if (S.tasks) S.tasks = S.tasks.filter(t => { if (t.empId === curEmp) { S.deleted[t.id] = Date.now(); return false; } return true; });
   (S.recurring || []).forEach(r => { if (r.empId === curEmp) S.deleted[r.id] = Date.now(); });
   S.recurring = (S.recurring || []).filter(r => r.empId !== curEmp);
@@ -4436,11 +4578,13 @@ function docDelete(id) {
     if (children.length>0 && !confirm('This folder contains '+children.length+' item(s). Delete everything?')) return;
     function rmChildren(pid) {
       S.docs.filter(x=>x.parentId===pid).forEach(c=>{if(c.type==='folder') rmChildren(c.id);});
+      S.docs.forEach(x=>{ if(x.parentId===pid){ if(!S.deleted)S.deleted={}; S.deleted[x.id]=Date.now(); } });
       S.docs = S.docs.filter(x=>x.parentId!==pid);
     }
     rmChildren(id);
   }
   if (!confirm('Delete "'+d.name+'"?')) return;
+  if(!S.deleted)S.deleted={}; S.deleted[id]=Date.now();
   S.docs = S.docs.filter(x=>x.id!==id);
   addChangelog('doc_delete','Deleted "'+d.name+'"');
   persist(); docRender();
@@ -4688,6 +4832,7 @@ function promptToggleFav(id) {
 function promptDelete(id) {
   const p = S.prompts.find(x=>x.id===id);
   if (!p||!confirm('Delete prompt "'+p.title+'"?')) return;
+  if(!S.deleted)S.deleted={}; S.deleted[id]=Date.now();
   S.prompts = S.prompts.filter(x=>x.id!==id);
   addChangelog('prompt_delete','Deleted prompt "'+p.title+'"');
   persist(); promptRender();
