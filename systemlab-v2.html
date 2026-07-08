@@ -1946,6 +1946,41 @@ function updateConnectionBadge(connected) {
 // overwrite another device's records. Deletes are real child removes
 // plus tombstones, so nothing ever resurrects.
 let _myRev = 0;             // _rev of our own last write (suppress echo toasts)
+
+// ─── CLOUD SHADOW — the cure for stale-tab clobbering ────────────────────
+// _shadow maps every cloud path (e.g. 'tasks/t_abc') to a signature of the
+// content we LAST SAW in the cloud. persist() only writes paths whose local
+// content differs from that signature — i.e. records this device actually
+// changed. A tab that slept for 3 days holds stale copies of records it never
+// touched; those match its stale shadow, are skipped, and can no longer
+// regress teammates' fresh updates. Persisted to localStorage so the guard
+// also holds across page reloads.
+let _shadow = {};
+let _lastSaveToast = 0;
+function _sigOf(x){ const s = typeof x === 'string' ? x : JSON.stringify(x); let h = 0x811c9dc5; for (let i = 0; i < s.length; i++){ h ^= s.charCodeAt(i); h = Math.imul(h, 0x01000193) >>> 0; } return h.toString(36) + ':' + s.length; }
+function _shadowKey(){ return 'systemlab_shadow3_' + (currentWorkspaceId || ''); }
+function _loadShadow(){ try { _shadow = JSON.parse(localStorage.getItem(_shadowKey()) || '{}') || {}; } catch(e){ _shadow = {}; } }
+function _saveShadow(){ try { localStorage.setItem(_shadowKey(), JSON.stringify(_shadow)); } catch(e){} }
+function _rebuildShadowFromCloud(v){
+  if (!v) return;
+  const sh = {};
+  const put = (node, map) => { for (const id in (map || {})) sh[node + '/' + id] = _sigOf(map[id]); };
+  put('tasks', v.tasks); put('employees', v.employees); put('depts', v.depts);
+  put('sops', v.sops); put('recurring', v.recurring); put('goals', v.goals);
+  put('docs', v.docs); put('prompts', v.prompts); put('promptCategories', v.promptCategories);
+  put('deleted', v.deleted);
+  for (const e in (v.att || {})) for (const d in v.att[e]) sh['att/' + e + '/' + d] = _sigOf(v.att[e][d]);
+  for (const ch in (v.leadgen || {})) { const m = v.leadgen[ch]; if (m && typeof m === 'object' && !Array.isArray(m)) for (const mo in m) sh['leadgen/' + ch + '/' + mo] = _sigOf(m[mo]); }
+  if (v.meta) { sh['meta/workspaceName'] = _sigOf(v.meta.workspaceName || ''); sh['meta/_changelog'] = _sigOf(v.meta._changelog || []); }
+  // Tombstoned ids that are already gone from the cloud: remember "already
+  // null" so persist() doesn't re-send hundreds of no-op deletes every write.
+  for (const id in (v.deleted || {})) {
+    ['tasks','recurring','employees','sops','docs','prompts','goals'].forEach(n => {
+      if (!((v[n] || {})[id])) sh[n + '/' + id] = '~null~';
+    });
+  }
+  _shadow = sh; _saveShadow();
+}
 let _lastPeerToast = 0;     // throttle "updated by teammate" toasts
 
 function objVals(o) { return (o && typeof o === 'object') ? Object.values(o).filter(x => x != null) : []; }
@@ -1981,6 +2016,7 @@ async function connectToWorkspace(workspaceId, userName) {
   currentUser = userName;
 
   const localKey = 'systemlab_ws_' + workspaceId;
+  _loadShadow(); // last-seen-cloud signatures survive reloads — stale-write guard from the first click
 
   // ─── OPTIMISTIC UI UPDATE ───
   document.getElementById('login-screen').style.display = 'none';
@@ -2036,6 +2072,7 @@ async function connectToWorkspace(workspaceId, userName) {
     if (v && (v.tasks || v.employees || v.sops || v.meta)) {
       cloudHadData = true;
       hydrateFromV3(v);
+      _rebuildShadowFromCloud(v);
       console.log('v3 hydrated. tasks:', S.tasks.length, 'employees:', S.employees.length);
     } else {
       console.log('Firebase reachable but v3 workspace is empty');
@@ -2099,6 +2136,7 @@ async function connectToWorkspace(workspaceId, userName) {
     isSyncing = true;
     try {
       hydrateFromV3(v);
+      _rebuildShadowFromCloud(v);
       saveLocal(localKey);
       renderSidebar();
       renderDashboard();
@@ -2140,6 +2178,19 @@ async function connectToWorkspace(workspaceId, userName) {
 
   _fbRef.on('value', onValueCallback);
   unsubSnapshot = () => _fbRef.off('value', onValueCallback);
+
+  // ─── WAKE-UP RESYNC ───
+  // A laptop lid closed overnight (or a tab macOS put to sleep) can leave the
+  // realtime socket dead. The moment the tab becomes visible or the network
+  // returns, pull a fresh snapshot BEFORE the user can edit stale data.
+  window._slResync = () => {
+    if (!_fbRef) return;
+    _fbRef.once('value').then(s => { try { onValueCallback(s); } catch(e){} }).catch(() => {});
+  };
+  if (!window._slWakeHooked) {
+    window._slWakeHooked = true;
+    document.addEventListener('visibilitychange', () => { if (!document.hidden && window._slResync) window._slResync(); });
+  }
 }
 
 
@@ -2598,12 +2649,32 @@ function persist() {
     u['goals/' + id] = null;
   }
   u['meta/workspaceName'] = S.workspaceName || 'My Workspace';
-  u['meta/_rev'] = S._rev;
   u['meta/_changelog'] = clean((S._changelog || []).slice(-200));
+
+  // ── Dirty-only writes (see _shadow above) ──
+  // Skip every path whose content matches what we last saw in the cloud;
+  // only records this device actually changed go over the wire.
+  const dirty = {};
+  let nDirty = 0;
+  for (const k in u) {
+    const sig = u[k] === null ? '~null~' : _sigOf(u[k]);
+    if (_shadow[k] !== sig) { dirty[k] = u[k]; nDirty++; }
+  }
+  if (!nDirty) { _pendingWrite = false; return; } // nothing actually changed — write nothing
+
+  dirty['meta/_rev'] = S._rev;
   _myRev = S._rev;
 
-  _fbRef.update(u)
-    .then(() => { cloudEnabled = true; _pendingWrite = false; })
+  _fbRef.update(dirty)
+    .then(() => {
+      cloudEnabled = true; _pendingWrite = false;
+      for (const k in dirty) {
+        if (k === 'meta/_rev') continue;
+        _shadow[k] = dirty[k] === null ? '~null~' : _sigOf(dirty[k]);
+      }
+      _saveShadow();
+      if (Date.now() - _lastSaveToast > 20000) { _lastSaveToast = Date.now(); showToast('✓ Saved to cloud'); }
+    })
     .catch(e => {
       console.warn('Firebase write error:', e.message);
       _pendingWrite = true; // retry on reconnect
@@ -3557,10 +3628,13 @@ window.addEventListener('offline', () => {
 });
 window.addEventListener('online', () => {
   updateConnectionBadge(true);
+  // FIRST pull what teammates changed while we were offline (refreshes the
+  // shadow), THEN flush our own pending edits — order matters: flushing first
+  // would push stale state.
+  if (window._slResync) window._slResync();
   if (_pendingWrite) {
     showToast('📶 Back online — syncing your changes...');
-    // Small delay so Firebase SDK re-establishes its own connection first
-    setTimeout(() => { try { persist(); } catch(e) {} }, 800);
+    setTimeout(() => { try { persist(); } catch(e) {} }, 1500);
   }
 });
 setInterval(refreshToday, 60000);
