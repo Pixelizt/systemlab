@@ -1910,7 +1910,7 @@ const RTDB_URL = 'https://system-labs-default-rtdb.firebaseio.com';
 // Week-1 security rollout: when FB_API_KEY is set, every login also signs in
 // to Firebase Auth, and the database rules only allow authenticated team
 // members. Empty key = legacy open behavior (pre-rollout).
-const FB_API_KEY = '';
+const FB_API_KEY = 'AIzaSyCRS2fwIZkQ12ivMg55Q0uZnJXzhtDl9A8';
 const firebaseApp = firebase.initializeApp(FB_API_KEY
   ? { apiKey: FB_API_KEY, databaseURL: RTDB_URL }
   : { databaseURL: RTDB_URL });
