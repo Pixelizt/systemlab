@@ -15,6 +15,7 @@
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600&family=JetBrains+Mono:wght@400;500&family=Playfair+Display:ital,wght@1,500;1,700&display=swap" rel="stylesheet">
 <script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-database-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-auth-compat.js"></script>
 <style>
 *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
 :root{
@@ -1832,7 +1833,7 @@ async function sha256hex(s) {
   return [...new Uint8Array(buf)].map(b => b.toString(16).padStart(2, '0')).join('');
 }
 
-window.bootApp = function() {
+window.bootApp = async function() {
   const auth = localStorage.getItem('systemlab_auth');
   if (!auth) {
     document.getElementById('login-screen').style.display='flex';
@@ -1841,6 +1842,12 @@ window.bootApp = function() {
     try {
       const a = JSON.parse(auth);
       if (!a.uid) throw new Error('old session format — sign in again');
+      if (FB_API_KEY) {
+        // Locked DB: the local session alone isn't enough — a Firebase Auth
+        // session must exist too, or every read would be permission-denied.
+        const u = await fbAuthReady();
+        if (!u) throw new Error('firebase session expired — sign in again');
+      }
       currentUserObj = a.user || null;
       connectToWorkspace(a.workspaceId || WS_ID, a.userEmail || '');
     } catch(e) {
@@ -1864,6 +1871,18 @@ async function loginApp() {
   document.getElementById('l-btn').textContent = 'Signing in...';
   errEl.style.display='none';
   try {
+    if (FB_API_KEY) {
+      // Real gate: Firebase Auth. The DB rules only open for team accounts,
+      // so this must succeed before the users node is even readable.
+      try {
+        await firebase.auth().signInWithEmailAndPassword(email, pass);
+      } catch(fe) {
+        const c = (fe && fe.code) || '';
+        if (c === 'auth/user-not-found' || c === 'auth/wrong-password' ||
+            c === 'auth/invalid-credential' || c === 'auth/invalid-login-credentials') throw new Error('bad-pass');
+        throw fe;
+      }
+    }
     const snap = await Promise.race([
       db.ref('wsv3/' + WS_ID + '/users').once('value'),
       new Promise((_, rej) => setTimeout(() => rej(new Error('timeout')), 8000))
@@ -1888,8 +1907,24 @@ async function loginApp() {
 
 // ─── FIREBASE SDK INITIALIZATION ───
 const RTDB_URL = 'https://system-labs-default-rtdb.firebaseio.com';
-const firebaseApp = firebase.initializeApp({ databaseURL: RTDB_URL });
+// Week-1 security rollout: when FB_API_KEY is set, every login also signs in
+// to Firebase Auth, and the database rules only allow authenticated team
+// members. Empty key = legacy open behavior (pre-rollout).
+const FB_API_KEY = '';
+const firebaseApp = firebase.initializeApp(FB_API_KEY
+  ? { apiKey: FB_API_KEY, databaseURL: RTDB_URL }
+  : { databaseURL: RTDB_URL });
 const db = firebase.database();
+
+// Resolves the Firebase Auth session (or null) — used before any DB read.
+function fbAuthReady() {
+  if (!FB_API_KEY) return Promise.resolve(null);
+  return new Promise(res => {
+    let done = false;
+    const off = firebase.auth().onAuthStateChanged(u => { if (!done) { done = true; off(); res(u); } });
+    setTimeout(() => { if (!done) { done = true; res(firebase.auth().currentUser); } }, 3500);
+  });
+}
 let _fbRef = null;       // Reference to workspace node
 let _fbConnRef = null;   // Reference to .info/connected
 
@@ -2696,6 +2731,7 @@ function logoutApp() {
   if (unsubSnapshot) { unsubSnapshot(); unsubSnapshot = null; }
   if (_fbRef) _fbRef.off();
   if (_fbConnRef) _fbConnRef.off();
+  try { if (FB_API_KEY) firebase.auth().signOut(); } catch(e) {}
   setTimeout(() => location.reload(), 300); // let the final write flush
 }
 
