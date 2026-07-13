@@ -4859,10 +4859,12 @@ function clDetailHTML(c){
   const dates = clDates(c).map(r =>
     '<div class="cl-date"><div class="l">' + r.l + '</div><div class="v">' + clFmtD(r.d) +
     (r.chip ? ' <span class="cl-chip ' + r.state + '">' + r.chip + '</span>' : '') + '</div></div>').join('');
-  const tabs = [['ob','Onboarding ' + ob.done + '/' + ob.total], ['mo','Monthly ops'], ['gt','Guarantee']];
+  const tabs = [['ob','Onboarding ' + ob.done + '/' + ob.total], ['pay','Payments'], ['mo','Monthly ops'], ['dl','Deliverables'], ['gt','Guarantee']];
   let body = '';
   if (clTab === 'ob') body = clObHTML(c);
+  else if (clTab === 'pay') body = clPayHTML(c);
   else if (clTab === 'mo') body = clMoHTML(c);
+  else if (clTab === 'dl') body = clDlHTML(c);
   else body = clGtHTML(c);
   return '<div class="cl-wrap">' +
     '<div class="cl-dhead"><button class="btn btn-ghost btn-sm" onclick="clBack()">‹ Clients</button>' +
@@ -4949,6 +4951,82 @@ function clGtHTML(c){
     '<tbody>' + rows + '</tbody></table></div>' +
     '<div style="font-size:11px;color:var(--mute2);margin-top:10px">Conditions met = QR active + ≥3 collabs + poster up + newspaper (Y or N/A). Growth = (calls + directions) vs Week-1 baseline — the 90-day results guarantee.</div></div>';
 }
+/* PAYMENTS tab — mirrors PAYMENTS & RENEWALS sheet; GST/payable/balance/status auto */
+function clPayCalc(c){
+  const p = c.pay || {};
+  const total = +p.total || 0, gst = p.gst === 'Y';
+  const gstAmt = gst ? Math.round(total * 0.18) : 0;
+  const payable = total + gstAmt;
+  const adv = +p.adv || 0;
+  const bal = Math.max(0, payable - adv);
+  const due = c.start ? clAddD(c.start, 30) : null;
+  let chip, cls;
+  if (!total) { chip = 'Set deal value'; cls = ''; }
+  else if (!p.advRecd) { chip = 'Raise advance invoice'; cls = 'amber'; }
+  else if (!p.balRecd) {
+    const late = due && due.toLocaleDateString('en-CA') < clToday();
+    chip = late ? '⚠ Balance overdue' : 'Advance paid · balance pending';
+    cls = late ? 'red' : 'blue';
+  } else { chip = '✓ Fully collected'; cls = 'green'; }
+  return { total, gstAmt, payable, adv, bal, due, chip, cls };
+}
+function clPayHTML(c){
+  const p = c.pay || {}; const k = clPayCalc(c);
+  const F = (l, inner) => '<div class="f"><label>' + l + '</label>' + inner + '</div>';
+  const D = (l, v, hot) => '<div class="cl-date"><div class="l">' + l + '</div><div class="v"' + (hot?' style="color:var(--red)"':'') + '>' + v + '</div></div>';
+  return '<div class="cl-sec"><h3>Payments <small>Sadhana raises · Kiran collects · GST + balance auto-calculate</small> ' +
+    '<span class="cl-chip ' + k.cls + '" style="margin-left:auto">' + k.chip + '</span></h3>' +
+    '<div class="cl-info" style="margin-top:10px">' +
+      F('Deal value (ex GST) ₹','<input type="number" min="0" value="' + (p.total??'') + '" onchange="clPaySet(\'total\',+this.value||0)">') +
+      F('GST applicable','<select onchange="clPaySet(\'gst\',this.value)"><option value="N"' + (p.gst!=='Y'?' selected':'') + '>No</option><option value="Y"' + (p.gst==='Y'?' selected':'') + '>Yes · 18%</option></select>') +
+      F('GST invoice raised','<select onchange="clPaySet(\'gstInv\',this.value)"><option value="N"' + (p.gstInv!=='Y'?' selected':'') + '>No</option><option value="Y"' + (p.gstInv==='Y'?' selected':'') + '>Yes</option></select>') +
+      F('Advance ₹','<input type="number" min="0" value="' + (p.adv??'') + '" onchange="clPaySet(\'adv\',+this.value||0)">') +
+      F('Advance received on','<input type="date" value="' + (p.advRecd||'') + '" onchange="clPaySet(\'advRecd\',this.value)">') +
+      F('Balance received on','<input type="date" value="' + (p.balRecd||'') + '" onchange="clPaySet(\'balRecd\',this.value)">') +
+    '</div>' +
+    '<div class="cl-dates" style="margin:6px 0 0">' +
+      D('GST amount', '₹' + k.gstAmt.toLocaleString('en-IN')) +
+      D('Total payable', '₹' + k.payable.toLocaleString('en-IN')) +
+      D('Balance pending', '₹' + k.bal.toLocaleString('en-IN'), k.bal>0 && p.advRecd && !p.balRecd) +
+      D('Balance due · Day 30', clFmtD(k.due)) +
+    '</div>' +
+    '<div style="font-size:11px;color:var(--mute2);margin-top:10px">Rule from the audit: no deliverables released until the balance is paid. New deals: 50% on signing, 50% before month 2.</div></div>';
+}
+function clPaySet(f, v){ const c = clById(clCur); if (!c) return; c.pay = c.pay || {}; c.pay[f] = v; clSaveC(c); }
+
+/* DELIVERABLES tab — the 10 promises with definition of done */
+const CL_DL = [
+  {t:'Custom Website', o:'Arshitha', dod:'Live on client domain, mobile-first'},
+  {t:'Google Business Profile', o:'GBP Specialist', dod:'Fully built profile; 2 posts/week ongoing'},
+  {t:'Website SEO', o:'Jenifer + Claude', dod:'Monthly cycle via approved pull requests'},
+  {t:'AI Search Optimisation', o:'Jenifer + Claude', dod:'Setup Month 2–3; monthly AI-presence check'},
+  {t:'Walk-in Poster Creatives', o:'Arshitha', dod:'Print-ready file delivered; refresh on request'},
+  {t:'Influencer System', o:'Jenifer', dod:'Brief issued monthly; client hosts 3 collabs'},
+  {t:'Photo Shoot (complimentary)', o:'Founder', dod:'Edited set delivered by Day 21'},
+  {t:'Newspaper Insert (complimentary)', o:'Arshitha', dod:'Print-ready design; client books quarterly'},
+  {t:'QR Review System (complimentary)', o:'Arshitha', dod:'QR on tables; review velocity monitored daily'},
+  {t:'Monthly Performance Report', o:'Sadhana', dod:'Sent by the 5th, every month'},
+];
+function clDlHTML(c){
+  const dl = c.dl || {};
+  const done = CL_DL.filter((_,i) => dl[i] && dl[i].d).length;
+  return '<div class="cl-sec"><h3>Deliverables <small>' + done + ' of ' + CL_DL.length + ' · what the client is paying for</small></h3>' +
+    '<div class="cl-bar" style="margin:4px 0 10px"><i style="width:' + Math.round(done/CL_DL.length*100) + '%"></i></div>' +
+    CL_DL.map((x,i) => {
+      const on = dl[i] && dl[i].d;
+      return '<div class="cl-ob' + (on?' on':'') + '"><div class="ck' + (on?' on':'') + '" onclick="clToggleDl(' + i + ')"></div>' +
+        '<span class="t"><b>' + clEsc(x.t) + '</b><div style="font-size:11px;color:var(--mute2);margin-top:1px">' + clEsc(x.dod) + '</div></span>' +
+        '<span class="ow">' + clEsc(x.o) + '</span><span class="at">' + (on && dl[i].at ? clFmtD(new Date(dl[i].at+'T12:00:00')) : '') + '</span></div>';
+    }).join('') + '</div>';
+}
+function clToggleDl(i){
+  const c = clById(clCur); if (!c) return;
+  c.dl = c.dl || {};
+  const on = c.dl[i] && c.dl[i].d;
+  c.dl[i] = on ? { d:0 } : { d:1, at: clToday() };
+  clSaveC(c);
+}
+
 /* mutators */
 function clSaveC(c){ c.updatedAt = Date.now(); persist(); renderClients(); }
 function clOpen(id){ clCur = id; clTab = 'ob'; clMoView = null; renderClients(); }
