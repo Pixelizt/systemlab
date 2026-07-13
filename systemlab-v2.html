@@ -451,6 +451,19 @@ select option{background:var(--canvas-card)}
   .mermaid-wrap svg marker path { fill: #000 !important; stroke: none !important; }
   .mermaid-wrap svg .edgeLabel { background: #fff !important; color: #000 !important; }
 }
+/* ── SHARED LAYOUT (formerly lead-gen; used by Team view) ── */
+/* ── LEAD GENERATION ── */
+.lg-head{display:flex;justify-content:space-between;align-items:flex-end;padding:32px 32px 18px;border-bottom:1px solid var(--hairline);flex-shrink:0}
+.lg-tabs{display:flex;gap:4px;padding:8px 32px;border-bottom:1px solid var(--hairline);flex-shrink:0;background:rgba(255,255,255,0.01)}
+.lg-tab{padding:6px 14px;font-size:12px;font-weight:500;color:var(--mute);border-radius:var(--r-pill);cursor:pointer;transition:all 0.13s;border:1px solid transparent;background:transparent}
+.lg-tab:hover{color:var(--body);background:rgba(255,255,255,0.03)}
+.lg-tab.active{color:var(--ink);background:rgba(255,255,255,0.06);border-color:var(--hairline)}
+.lg-stats{display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:12px;padding:16px 32px;border-bottom:1px solid var(--hairline);flex-shrink:0}
+.lg-stat{background:var(--canvas-card);border:1px solid var(--hairline);border-radius:var(--r-md);padding:14px 16px;display:flex;flex-direction:column;gap:4px}
+.lg-stat-val{font-size:22px;font-weight:600;letter-spacing:-0.03em;line-height:1}
+.lg-stat-label{font-size:10px;color:var(--mute);text-transform:uppercase;letter-spacing:0.06em;font-weight:600}
+.lg-stat-sub{font-size:10px;color:var(--mute2);font-family:var(--mono)}
+.lg-head,.lg-tabs,.lg-toolbar,.sidebar,.topbar{display:none!important}
 /* ─── 8-HOUR CELEBRATION ─── */
 #fete-overlay{position:fixed;inset:0;z-index:99998;display:none;align-items:center;justify-content:center;background:rgba(10,12,18,.55);backdrop-filter:blur(3px);opacity:0;transition:opacity .35s}
 #fete-overlay.show{display:flex;opacity:1}
@@ -3943,6 +3956,44 @@ function checkCelebration(empId) {
   fireCelebration(empId);
 }
 
+// ─── TASK → GOOGLE CALENDAR ───────────────────────────────────────────
+// The slot is CALCULATED: day starts at the member's login time (or 10:00),
+// and each task begins where the previous task's duration ends.
+function _parseLoginTime(s) { // "9:48 AM" -> minutes since midnight
+  const m = /^(\d{1,2}):(\d{2})\s*(AM|PM)$/i.exec((s||'').trim());
+  if (!m) return null;
+  let h = parseInt(m[1]) % 12;
+  if (/pm/i.test(m[3])) h += 12;
+  return h * 60 + parseInt(m[2]);
+}
+function taskToCalendar(tid) {
+  const t = S.tasks.find(x => x.id === tid);
+  if (!t) return;
+  const dayTasks = getTasks(t.empId, t.date); // rendered order
+  const att = (S.att[t.empId] || {})[t.date] || {};
+  let startMin = _parseLoginTime(att.loginTime);
+  if (startMin === null) startMin = 10 * 60; // SOP day start
+  for (const x of dayTasks) {
+    if (x.id === tid) break;
+    startMin += parseInt(x.mins) || 0;
+  }
+  const endMin = startMin + (parseInt(t.mins) || 30);
+  const pad = n => String(n).padStart(2, '0');
+  const dstr = t.date.replace(/-/g, '');
+  const fmt = (mins) => pad(Math.floor(mins / 60) % 24) + pad(mins % 60) + '00';
+  const emp = S.employees.find(e => e.id === t.empId);
+  const title = encodeURIComponent(t.name);
+  const details = encodeURIComponent(
+    'SystemLab task · ' + (emp ? emp.name : '') + ' · ' + fmtMins(t.mins) +
+    (S.objective && S.objective.title ? '\n🏔️ Mission: ' + S.objective.title : ''));
+  const url = 'https://calendar.google.com/calendar/r/eventedit?text=' + title +
+    '&dates=' + dstr + 'T' + fmt(startMin) + '/' + dstr + 'T' + fmt(endMin) +
+    '&details=' + details + '&sf=true';
+  window.open(url, '_blank', 'noopener');
+  showToast('📅 ' + (Math.floor(startMin/60)%12||12) + ':' + pad(startMin%60) + (startMin>=720?' PM':' AM') + ' slot — save it in Calendar');
+}
+window.taskToCalendar = taskToCalendar;
+
 function toggleTask(tid) {
   const t = S.tasks.find(x => x.id === tid);
   if (!t) return;
@@ -4115,6 +4166,7 @@ document.getElementById('empDetailHead').innerHTML = `
         <div class="tlogged ${t.done?'has':''}">${t.done ? fmtMins(t.mins) : '—'}</div>
         <div class="tdoneat ${t.doneAt?'has':''}">${t.doneAt || '—'}</div>
         <div style="display:flex; gap:4px">
+          <button class="tdel" style="font-size:12px; color:var(--mute)" title="Add to Google Calendar — slot auto-calculated from your day" onclick="taskToCalendar('${t.id}')">📅</button>
           <button class="tdel" style="font-size:12px; color:var(--mute)" onclick="openEditTask('${t.id}')">✎</button>
           <button class="tdel" onclick="deleteTask('${t.id}')">×</button>
         </div>
