@@ -19,7 +19,7 @@
 <style>
 *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
 :root{
-  --canvas:#0a0a0a;--canvas-soft:#141416;--canvas-card:#191919;--canvas-mid:#222327;
+  --canvas:#0a0a0b;--canvas-soft:#131316;--canvas-card:#1a1b1f;--canvas-mid:#222327;
   --hairline:#212327;--hairline-mid:#2c2f35;
   --ink:#ffffff;--body:#dadbdf;--mute:#7d8187;--mute2:#4a4d54;
   --sunset:#ff7a17;--sunset-soft:rgba(255,122,23,0.12);
@@ -27,7 +27,7 @@
   --yellow:#eab308;--red:#ef4444;
   --blue:#60a5fa;--purple:#a78bfa;
   --sans:'Inter',system-ui,sans-serif;--mono:'JetBrains Mono',monospace;
-  --r-sm:8px;--r-md:10px;--r-pill:9999px;
+  --r-sm:10px;--r-md:14px;--r-pill:9999px;--glass-shadow:0 8px 28px rgba(0,0,0,0.35);
   --shadow:0 0 0 1px var(--hairline);
   --serif:'Playfair Display',serif;
 }
@@ -40,7 +40,7 @@ body{font-family:var(--sans);font-size:14px;line-height:1.5;color:var(--ink);-we
 ::-webkit-scrollbar-thumb:hover{background:var(--mute2)}
 
 /* BUTTONS */
-.btn{display:inline-flex;align-items:center;justify-content:center;gap:6px;font-family:var(--sans);font-size:13px;font-weight:400;padding:6px 14px;border-radius:var(--r-pill);cursor:pointer;white-space:nowrap;transition:all 0.13s;border:1px solid var(--hairline);background:transparent;color:var(--body);line-height:1.4}
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:6px;font-family:var(--sans);font-size:13px;font-weight:600;padding:6px 14px;border-radius:var(--r-pill);cursor:pointer;white-space:nowrap;transition:all 0.13s;border:1px solid var(--hairline);background:transparent;color:var(--body);line-height:1.4}
 .btn:hover{background:rgba(255,255,255,0.05);border-color:rgba(255,255,255,0.15);color:var(--ink)}
 .btn-primary{background:var(--ink);color:#000;border-color:var(--ink);font-weight:500}
 .btn-primary:hover{background:#e8e8e8;border-color:#e8e8e8;color:#000}
@@ -483,7 +483,7 @@ select option{background:var(--canvas-card)}
 #v-goals.active{display:flex}
 .gl-head{display:flex;align-items:flex-start;justify-content:space-between;padding:22px 28px 0;flex-shrink:0}
 .gl-strip{display:flex;gap:14px;padding:16px 28px 14px;flex-shrink:0}
-.gl-stat{flex:1;background:var(--canvas-card);border:1px solid var(--hairline);border-radius:var(--r-md);padding:13px 16px}
+.gl-stat{flex:1;background:var(--canvas-card);border:1px solid var(--hairline);border-radius:var(--r-md);padding:13px 16px;box-shadow:var(--glass-shadow)}
 .gl-stat-top{display:flex;align-items:baseline;justify-content:space-between;margin-bottom:8px}
 .gl-stat-label{font-family:var(--mono);font-size:9px;letter-spacing:.09em;text-transform:uppercase;color:var(--mute)}
 .gl-stat-n{font-size:16px;font-weight:700;color:var(--ink)}
@@ -507,6 +507,7 @@ select option{background:var(--canvas-card)}
 .gl-chip{font-size:9.5px;font-weight:700;letter-spacing:.04em;text-transform:uppercase;padding:2px 8px;border-radius:999px}
 .gl-chip.weekly{background:rgba(96,165,250,.13);color:#60a5fa;border:1px solid rgba(96,165,250,.25)}
 .gl-chip.monthly{background:rgba(167,139,250,.13);color:#a78bfa;border:1px solid rgba(167,139,250,.25)}
+.gl-chip.quarterly{background:rgba(255,122,23,.13);color:#ff9a4d;border:1px solid rgba(255,122,23,.25)}
 .gl-owner{display:inline-flex;align-items:center;justify-content:center;width:20px;height:20px;border-radius:50%;font-size:9px;font-weight:800;flex-shrink:0}
 .gl-date{font-family:var(--mono);font-size:10px;color:var(--mute);margin-left:auto}
 .gl-date.late{color:var(--red);font-weight:700}
@@ -564,37 +565,30 @@ select option{background:var(--canvas-card)}
   <div id="sidebar">
     <div class="sidebar-scroll">
       <div class="sidebar-section">
-        <div class="nav-item active" data-view="dashboard" onclick="showView('dashboard',this)">
-          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/></svg>
-          Dashboard
+        <div class="nav-item" id="nav-myday" style="display:none" onclick="goMyDay(this)">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+          My Day
         </div>
         <div class="nav-item" data-view="team" onclick="showView('team',this)">
-          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><path d="M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 00-3-3.87"/><path d="M16 3.13a4 4 0 010 7.75"/></svg>
           Team
         </div>
-        <div class="nav-item" data-view="all" onclick="showView('all',this)">
-          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
-          All SOPs
-          <span class="nav-count" id="cnt-all">0</span>
-        </div>
-      </div>
-      <div class="sidebar-section">
-        <div class="sidebar-label">Growth</div>
         <div class="nav-item" data-view="goals" onclick="showView('goals',this)">
           <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><circle cx="12" cy="12" r="10"/><circle cx="12" cy="12" r="6"/><circle cx="12" cy="12" r="2"/></svg>
           Goals
           <span class="nav-count" id="cnt-goals" style="display:none">0</span>
         </div>
+        <div class="nav-item" data-view="reports" onclick="showView('reports',this)">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><path d="M3 21V10M9 21V3M15 21v-8M21 21V7"/></svg>
+          Reports
+        </div>
       </div>
       <div class="sidebar-section">
-        <div class="sidebar-label">Resources</div>
-        <div class="nav-item" data-view="docs" onclick="showView('docs',this)">
-          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"/></svg>
-          Documents
-        </div>
-        <div class="nav-item" data-view="prompts" onclick="showView('prompts',this)">
-          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/></svg>
-          Prompts
+        <div class="sidebar-label">Library</div>
+        <div class="nav-item" data-view="all" onclick="showView('all',this)">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
+          All SOPs
+          <span class="nav-count" id="cnt-all">0</span>
         </div>
       </div>
       <div class="sidebar-section">
@@ -618,7 +612,7 @@ select option{background:var(--canvas-card)}
   <div id="main">
 
     <!-- DASHBOARD -->
-    <div id="v-dashboard" class="view active">
+    <div id="v-dashboard" class="view">
       <div class="dash-head" style="display:block">
         <div class="dash-h1" id="greeting">Loading...</div>
         <div class="dash-sub">Your team's operating system — every process, SOP, and system in one place.</div>
@@ -843,21 +837,16 @@ select option{background:var(--canvas-card)}
       
       <div style="display:flex; justify-content:space-between; align-items:center; margin-top:20px; margin-bottom:12px; padding:0 24px;">
         <div style="font-size:14px; font-weight:600; color:var(--ink)">Daily Tasks</div>
+        <button class="btn btn-xs" id="pending-btn" style="display:none;background:transparent;border:1px solid rgba(245,158,11,.35);color:#f59e0b" onclick="openPending()">⏳ Pending <span id="pending-count"></span></button>
         <button class="btn btn-xs" id="gcal-sync-btn" style="display:none;background:transparent; border:1px solid var(--hairline); color:var(--mute)" onclick="slGcalSyncDay()" title="Your tasks go straight into Google Calendar, slotted from your login time">📅 Sync day to Google Calendar</button>
         <button class="btn btn-xs" style="background:transparent; border:1px solid var(--hairline); color:var(--mute)" onclick="openRecurringModal()">↻ Manage Recurring</button>
       </div>
       <div class="task-toolbar">
-        <input type="text" id="newTaskInput" placeholder="Add a task for today (e.g. Daily Standup)" onkeydown="if(event.key==='Enter') addTask()">
-        <select id="newTaskDur">
-          <option value="5">5m</option>
-          <option value="15">15m</option>
-          <option value="30" selected>30m</option>
-          <option value="45">45m</option>
-          <option value="60">1h</option>
-          <option value="90">1.5h</option>
-          <option value="120">2h</option>
-          <option value="240">4h</option>
-        </select>
+        <input type="text" id="newTaskInput" placeholder="Add a task (e.g. Client website revisions)" onkeydown="if(event.key==='Enter') addTask()">
+        <input type="time" id="newTaskStart" title="Start time" onchange="taskTimeHint()" style="width:104px">
+        <span style="color:var(--mute2);font-size:12px">→</span>
+        <input type="time" id="newTaskEnd" title="End time" onchange="taskTimeHint()" style="width:104px">
+        <span id="taskDurHint" style="font-size:11px;color:var(--sunset);font-weight:600;min-width:44px;text-align:center">—</span>
         <button class="btn btn-primary btn-sm" onclick="addTask()">Add Task</button>
       </div>
       <div class="task-thead">
@@ -867,71 +856,6 @@ select option{background:var(--canvas-card)}
     </div>
 
 
-    <!-- DOCUMENT VAULT VIEW -->
-    <div id="v-docs" class="view">
-      <div class="dash-head">
-        <div>
-          <div class="dash-h1">📁 Document Vault</div>
-          <div class="dash-sub">Every link your team needs — found in 2 clicks.</div>
-        </div>
-        <div style="display:flex;gap:8px;flex-shrink:0">
-          <button class="btn btn-sm" onclick="docAddFolder()">📂 Folder</button>
-          <button class="btn btn-sm btn-primary" onclick="docAddLink()">🔗 Add Link</button>
-        </div>
-      </div>
-      <div style="flex:1;overflow-y:auto;padding:20px 28px 32px">
-        <!-- Quick Access Strip -->
-        <div id="docs-quick-area" style="display:none" class="docs-quick-area">
-          <div class="docs-quick-label">⚡ Quick Access</div>
-          <div class="docs-quick-strip" id="docs-quick-chips"></div>
-        </div>
-        <!-- Filter Bar -->
-        <div class="docs-filter-bar">
-          <input type="text" id="docs-search" placeholder="Search by name, client, tag…" oninput="docRender()" class="input" style="max-width:240px">
-          <div class="docs-type-chips" id="docs-type-filters"></div>
-          <div class="docs-view-toggle">
-            <button id="docs-grid-btn" class="active" onclick="docSetView('grid')">▦</button>
-            <button id="docs-list-btn" onclick="docSetView('list')">☰</button>
-          </div>
-        </div>
-        <div class="docs-breadcrumb" id="docs-breadcrumb"></div>
-        <div class="docs-grid" id="docs-grid"></div>
-      </div>
-    </div>
-
-    <!-- PROMPT VAULT VIEW -->
-    <div id="v-prompts" class="view">
-      <div class="dash-head">
-        <div>
-          <div class="dash-h1">✨ Prompt Vault</div>
-          <div class="dash-sub">Your AI arsenal. Use {{variables}} — fill once, copy perfect.</div>
-        </div>
-        <div style="display:flex;gap:8px;flex-shrink:0">
-          <button class="btn btn-sm" onclick="promptManageCategories()">⚙️ Categories</button>
-          <button class="btn btn-sm btn-primary" onclick="promptAdd()">+ New Prompt</button>
-        </div>
-      </div>
-      <!-- Category Tabs — flush full-width border -->
-      <div class="prompt-tabs-bar" id="prompt-tabs-bar" style="padding:0 28px;flex-shrink:0"></div>
-      <div style="flex:1;overflow-y:auto;padding:16px 28px 32px">
-        <!-- Recently Used -->
-        <div id="prompt-recent-area" style="display:none" class="prompt-recent-area">
-          <div class="prompt-recent-row">
-            <span class="prompt-recent-label">Recently used</span>
-            <div id="prompt-recent-chips" style="display:flex;gap:6px;flex-wrap:wrap"></div>
-          </div>
-        </div>
-        <!-- Search + count -->
-        <div class="prompts-toolbar">
-          <input type="text" id="prompts-search" placeholder="Search prompts…" oninput="promptRender()" class="input" style="max-width:260px">
-          <span id="prompts-count" style="font-size:11px;color:var(--mute)"></span>
-        </div>
-        <div class="prompts-grid" id="prompts-grid"></div>
-      </div>
-    </div>
-
-
-    <!-- LEAD GENERATION VIEW -->
     <!-- GOALS BOARD -->
     <div id="v-goals" class="view">
       <div class="gl-head">
@@ -947,6 +871,7 @@ select option{background:var(--canvas-card)}
         <button class="gl-pill active" data-h="all" onclick="glSetFilter('all',this)">All</button>
         <button class="gl-pill" data-h="weekly" onclick="glSetFilter('weekly',this)">This Week</button>
         <button class="gl-pill" data-h="monthly" onclick="glSetFilter('monthly',this)">This Month</button>
+        <button class="gl-pill" data-h="quarterly" onclick="glSetFilter('quarterly',this)">This Quarter</button>
         <span style="width:1px;height:18px;background:var(--hairline);margin:0 4px"></span>
         <span id="gl-owner-pills" style="display:flex;gap:6px;flex-wrap:wrap"></span>
         <div style="flex:1"></div>
@@ -954,6 +879,34 @@ select option{background:var(--canvas-card)}
       </div>
       <div class="gl-board" id="gl-board"></div>
     </div>
+
+    <!-- REPORTS -->
+    <div id="v-reports" class="view">
+      <div class="gl-head" style="align-items:center">
+        <div>
+          <div class="dash-h1">📊 Monthly Report</div>
+          <div class="dash-sub">Present days, hours logged, hours completed — per person, per month.</div>
+        </div>
+        <div style="display:flex;align-items:center;gap:8px">
+          <button class="btn btn-sm" onclick="repChangeMonth(-1)">❮</button>
+          <span id="rep-month-label" style="font-size:13px;font-weight:700;min-width:110px;text-align:center;color:var(--ink)"></span>
+          <button class="btn btn-sm" onclick="repChangeMonth(1)">❯</button>
+        </div>
+      </div>
+      <div class="gl-strip" id="rep-strip" style="padding-top:16px"></div>
+      <div id="rep-body" style="flex:1;overflow-y:auto;padding:4px 28px 28px;display:flex;flex-direction:column;gap:12px"></div>
+    </div>
+
+    <!-- PENDING TASKS MODAL -->
+<div class="modal-overlay" id="pending-modal">
+  <div class="modal" style="width:520px;max-width:94vw">
+    <div class="modal-head">
+      <div class="modal-title">⏳ Pending tasks — unfinished from earlier days</div>
+      <button class="btn btn-xs btn-ghost" onclick="this.closest('.modal-overlay').classList.remove('open')">✕</button>
+    </div>
+    <div class="modal-body" id="pending-body" style="max-height:60vh;overflow-y:auto"></div>
+  </div>
+</div>
 
     <!-- EDIT TASK MODAL -->
 <div class="modal-overlay" id="edit-task-modal">
@@ -969,17 +922,12 @@ select option{background:var(--canvas-card)}
         <input type="text" id="editTaskName" class="inp" placeholder="Task Name">
       </div>
       <div class="form-group" style="margin-bottom:16px">
-        <label>Duration</label>
-        <select id="editTaskDur" class="inp">
-          <option value="5">5m</option>
-          <option value="15">15m</option>
-          <option value="30">30m</option>
-          <option value="45">45m</option>
-          <option value="60">1h</option>
-          <option value="90">1.5h</option>
-          <option value="120">2h</option>
-          <option value="240">4h</option>
-        </select>
+        <label>Time</label>
+        <div style="display:flex;gap:8px;align-items:center">
+          <input type="time" id="editTaskStart" class="inp" style="flex:1">
+          <span style="color:var(--mute2)">→</span>
+          <input type="time" id="editTaskEnd" class="inp" style="flex:1">
+        </div>
       </div>
       <button class="btn btn-primary" style="width:100%; justify-content:center" onclick="saveEditTask()">Save Changes</button>
     </div>
@@ -1055,6 +1003,7 @@ select option{background:var(--canvas-card)}
           <select id="gm-horizon" class="inp">
             <option value="weekly">🔵 Weekly goal</option>
             <option value="monthly">🟣 Monthly goal</option>
+            <option value="quarterly">🟠 Quarterly goal</option>
           </select>
         </div>
       </div>
@@ -1299,119 +1248,6 @@ select option{background:var(--canvas-card)}
 <!-- TOAST -->
 <div id="toast"></div>
 
-<!-- DOC LINK MODAL -->
-<div class="modal-overlay" id="doc-link-modal">
-  <div class="modal" style="width:480px;max-width:95vw">
-    <div class="modal-head">
-      <div class="modal-title" id="doc-modal-title">Add Link</div>
-      <button class="btn btn-xs btn-ghost" onclick="this.closest('.modal-overlay').classList.remove('open')">✕</button>
-    </div>
-    <div class="modal-body">
-      <div class="field-group"><div class="field-label">URL</div><input type="url" id="dm-url" placeholder="https://drive.google.com/..." oninput="docPreviewIcon()"></div>
-      <div style="display:flex;align-items:center;gap:10px;margin:-6px 0 14px"><span id="dm-icon-preview" style="font-size:24px">🔗</span><span style="font-size:11px;color:var(--mute)" id="dm-icon-label">Paste a URL to auto-detect type</span></div>
-      <div class="field-group"><div class="field-label">Name</div><input type="text" id="dm-name" placeholder="e.g. Brand Guidelines v3"></div>
-      <div class="field-group"><div class="field-label">Description (optional)</div><input type="text" id="dm-desc" placeholder="Short description..."></div>
-      <div class="field-group"><div class="field-label">Client / Project <span style="font-weight:400;color:var(--mute)">(optional)</span></div><input type="text" id="dm-client" placeholder="e.g. Acme Corp, Q3 Campaign"></div>
-      <div class="field-group"><div class="field-label">Tags <span style="font-weight:400;color:var(--mute)">(comma-separated)</span></div><input type="text" id="dm-tags" placeholder="e.g. branding, design, logo"></div>
-    </div>
-    <div class="modal-foot">
-      <button class="btn btn-sm" onclick="this.closest('.modal-overlay').classList.remove('open')">Cancel</button>
-      <button class="btn btn-sm btn-primary" id="dm-save-btn" onclick="docSaveLink()">Add Link</button>
-    </div>
-  </div>
-</div>
-
-<!-- DOC FOLDER MODAL -->
-<div class="modal-overlay" id="doc-folder-modal">
-  <div class="modal" style="width:360px;max-width:95vw">
-    <div class="modal-head">
-      <div class="modal-title">New Folder</div>
-      <button class="btn btn-xs btn-ghost" onclick="this.closest('.modal-overlay').classList.remove('open')">✕</button>
-    </div>
-    <div class="modal-body">
-      <div class="field-group"><div class="field-label">Folder Name</div><input type="text" id="df-name" placeholder="e.g. Brand Assets"></div>
-    </div>
-    <div class="modal-foot">
-      <button class="btn btn-sm" onclick="this.closest('.modal-overlay').classList.remove('open')">Cancel</button>
-      <button class="btn btn-sm btn-primary" onclick="docSaveFolder()">Create Folder</button>
-    </div>
-  </div>
-</div>
-
-<!-- PROMPT MODAL -->
-<div class="modal-overlay" id="prompt-modal">
-  <div class="modal" style="width:560px;max-width:95vw">
-    <div class="modal-head">
-      <div class="modal-title" id="pm-title">New Prompt</div>
-      <button class="btn btn-xs btn-ghost" onclick="this.closest('.modal-overlay').classList.remove('open')">✕</button>
-    </div>
-    <div class="modal-body">
-      <div class="field-group"><div class="field-label">Title</div><input type="text" id="pm-name" placeholder="e.g. Facebook Ad Copy — Lead Gen"></div>
-      <div class="field-group"><div class="field-label">Category</div>
-        <select id="pm-cat"><option value="">(No Category)</option></select>
-      </div>
-      <div class="field-group">
-        <div class="field-label" style="display:flex;align-items:center;justify-content:space-between">
-          Prompt Text
-          <span style="font-size:10px;font-weight:400;color:var(--mute);background:rgba(167,139,250,.1);color:#a78bfa;padding:2px 8px;border-radius:999px;border:1px solid rgba(167,139,250,.2)">Use {{variable_name}} for fill-in fields</span>
-        </div>
-        <textarea id="pm-body" rows="8" placeholder="e.g. Write a LinkedIn post for {{client_name}} about {{topic}}. Tone: {{tone}}." style="font-family:var(--mono);font-size:12px;line-height:1.5;resize:vertical"></textarea>
-      </div>
-      <div class="field-group"><div class="field-label">Tags (comma-separated)</div><input type="text" id="pm-tags" placeholder="e.g. facebook, ads, leadgen"></div>
-    </div>
-    <div class="modal-foot">
-      <button class="btn btn-sm" onclick="this.closest('.modal-overlay').classList.remove('open')">Cancel</button>
-      <button class="btn btn-sm btn-primary" id="pm-save-btn" onclick="promptSaveModal()">Save Prompt</button>
-    </div>
-  </div>
-</div>
-
-<!-- CATEGORY MANAGER MODAL -->
-<div class="modal-overlay" id="cat-modal">
-  <div class="modal" style="width:420px;max-width:95vw">
-    <div class="modal-head">
-      <div class="modal-title">Manage Categories</div>
-      <button class="btn btn-xs btn-ghost" onclick="this.closest('.modal-overlay').classList.remove('open')">✕</button>
-    </div>
-    <div class="modal-body">
-      <div id="cat-list" style="display:flex;flex-direction:column;gap:8px;margin-bottom:16px"></div>
-      <div style="border-top:1px solid var(--hairline);padding-top:14px">
-        <div class="field-label" style="margin-bottom:8px">Add New Category</div>
-        <div style="display:flex;gap:8px;align-items:center">
-          <input type="text" id="cat-new-icon" placeholder="📌" style="width:44px;text-align:center;font-size:18px">
-          <input type="text" id="cat-new-name" placeholder="Category name..." style="flex:1">
-          <button class="btn btn-sm btn-primary" onclick="catAdd()">Add</button>
-        </div>
-      </div>
-    </div>
-    <div class="modal-foot">
-      <button class="btn btn-sm btn-primary" onclick="this.closest('.modal-overlay').classList.remove('open')">Done</button>
-    </div>
-  </div>
-</div>
-
-<!-- PROMPT USE (VARIABLE FILL) MODAL -->
-<div class="modal-overlay" id="prompt-use-modal">
-  <div class="modal" style="width:600px;max-width:95vw">
-    <div class="modal-head">
-      <div>
-        <div class="modal-title" id="pum-title">Use Prompt</div>
-        <div id="pum-subtitle" style="font-size:11px;color:var(--mute);margin-top:2px"></div>
-      </div>
-      <button class="btn btn-xs btn-ghost" onclick="this.closest('.modal-overlay').classList.remove('open')">✕</button>
-    </div>
-    <div class="modal-body">
-      <div id="pum-vars"></div>
-      <div style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.06em;color:var(--mute2);margin-bottom:8px">Preview</div>
-      <div class="pvar-preview-box" id="pum-preview"></div>
-    </div>
-    <div class="modal-foot">
-      <button class="btn btn-sm" onclick="this.closest('.modal-overlay').classList.remove('open')">Cancel</button>
-      <button class="btn btn-sm btn-primary" onclick="promptFillAndCopy()">📋 Copy Prompt</button>
-    </div>
-  </div>
-</div>
-
 <script>
 /* ════════════════════════════════
    STATE
@@ -1592,7 +1428,8 @@ function openEditTask(tid) {
   if (!t) return;
   document.getElementById('editTaskId').value = t.id;
   document.getElementById('editTaskName').value = t.name;
-  document.getElementById('editTaskDur').value = t.mins;
+  document.getElementById('editTaskStart').value = t.start || '';
+  document.getElementById('editTaskEnd').value = t.end || '';
   document.getElementById('edit-task-modal').classList.add('open');
 }
 window.openEditTask = openEditTask;
@@ -1602,8 +1439,15 @@ function saveEditTask() {
   const t = S.tasks.find(x => x.id === tid);
   if (!t) return;
   t.name = document.getElementById('editTaskName').value.trim();
-  t.mins = parseInt(document.getElementById('editTaskDur').value);
+  const _es = document.getElementById('editTaskStart').value;
+  const _ee = document.getElementById('editTaskEnd').value;
+  const _em = taskDurFrom(_es, _ee);
+  if (_es && _ee && _em === null) { showToast('End time must be after start time'); return; }
+  t.start = _es || null;
+  t.end = _ee || null;
+  if (_em !== null) t.mins = _em;
   t.updatedAt = Date.now();
+  slGcalAutoSync(t.empId);
   document.getElementById('edit-task-modal').classList.remove('open');
   persist();
   openEmployee(curEmp);
@@ -1970,8 +1814,15 @@ async function connectToWorkspace(workspaceId, userName) {
         markAtt(me.id, 'present'); // stamps loginTime — attendance just happens
         showToast('🕐 Attendance marked — logged in at ' + ((S.att[me.id][todayISO]||{}).loginTime || nowTime()));
       }
+      const nm = document.getElementById('nav-myday');
+      if (nm) nm.style.display = '';
       openEmployee(me.id);
+      document.querySelectorAll('.nav-item').forEach(n=>n.classList.remove('active'));
+      if (nm) nm.classList.add('active');
     }
+  } else {
+    // Admin lands on Team — the dashboard is retired
+    showView('team', document.querySelector('.nav-item[data-view="team"]'));
   }
 
   // ─── REAL-TIME LISTENER on the v3 node ───
@@ -1996,8 +1847,6 @@ async function connectToWorkspace(workspaceId, userName) {
         if (empView && empView.classList.contains('active')) openEmployee(curEmp);
       }
       if (typeof renderGoals === 'function' && document.getElementById('v-goals')?.classList.contains('active')) renderGoals();
-      if (typeof docRender === 'function' && document.getElementById('v-docs')?.classList.contains('active')) docRender();
-      if (typeof promptRender === 'function' && document.getElementById('v-prompts')?.classList.contains('active')) promptRender();
       if (!isOwnEcho && Date.now() - _lastPeerToast > 30000) {
         _lastPeerToast = Date.now();
         showToast('🔄 Workspace updated');
@@ -2598,8 +2447,7 @@ function showView(id, navEl) {
   }
   if (id==='all') { S.deptFilter=null; renderListView(S.sops,'All SOPs','var(--mute)'); }
   if (id==='goals') { if (typeof renderGoals === 'function') renderGoals(); }
-  if (id==='docs') { if (typeof docRender === 'function') docRender(); }
-  if (id==='prompts') { if (typeof promptRender === 'function') promptRender(); }
+  if (id==='reports') { if (typeof renderReports === 'function') renderReports(); }
 }
 
 function showDept(id, navEl) {
@@ -3354,7 +3202,7 @@ const PAL_STATIC = [
   {g:'Actions',icon:'✍️',title:'New SOP',short:['⌘','N'],fn:()=>newSOP()},
   {g:'Actions',icon:'⬡', title:'Build Flowchart',short:[],fn:()=>openFlowModal()},
   {g:'Actions',icon:'🏢',title:'Manage Departments',short:[],fn:()=>openDeptManager()},
-  {g:'Navigate',icon:'🏠',title:'Go to Dashboard',short:['G','D'],fn:()=>showView('dashboard',document.querySelector('.nav-item[data-view="dashboard"]'))},
+  {g:'Navigate',icon:'🏠',title:'My Day',short:['G','D'],fn:()=>goMyDay(document.getElementById('nav-myday'))},
   {g:'Navigate',icon:'📋',title:'All SOPs',short:['G','A'],fn:()=>showView('all',document.querySelector('.nav-item[data-view="all"]'))},
 ];
 
@@ -3832,29 +3680,59 @@ function renderTeam() {
 
 
 // Add task functionality
+// ── Task times: they type start → end, we calculate the duration ──
+function hm2min(s){ const m=/^(\d{1,2}):(\d{2})$/.exec(s||''); return m ? (+m[1])*60+(+m[2]) : null; }
+function min2label(mins){ if(mins==null) return '—'; if(mins%60===0) return (mins/60)+'h'; if(mins<60) return mins+'m'; return Math.floor(mins/60)+'h '+(mins%60)+'m'; }
+function to12(s){ const m=hm2min(s); if(m==null) return ''; const h=Math.floor(m/60), mm=m%60; return ((h%12)||12)+':'+String(mm).padStart(2,'0')+(h>=12?' PM':' AM'); }
+function taskDurFrom(start,end){ const a=hm2min(start), b=hm2min(end); if(a==null||b==null) return null; const d=b-a; return d>0?d:null; }
+window.taskTimeHint = function(){
+  const d = taskDurFrom(document.getElementById('newTaskStart').value, document.getElementById('newTaskEnd').value);
+  document.getElementById('taskDurHint').textContent = min2label(d);
+};
+function _nextFreeStart(){
+  // suggest: after the last timed task, else after stacked durations from login
+  const tasks = getTasks(curEmp, TT_TODAY);
+  const att = (S.att[curEmp]||{})[TT_TODAY]||{};
+  let cursor = _parseLoginTime(att.loginTime);
+  if (cursor === null) cursor = 10*60;
+  tasks.forEach(t => {
+    const e = hm2min(t.end);
+    if (e != null) cursor = Math.max(cursor, e);
+    else cursor += parseInt(t.mins)||0;
+  });
+  return String(Math.floor(cursor/60)%24).padStart(2,'0')+':'+String(cursor%60).padStart(2,'0');
+}
 function addTask() {
   const input = document.getElementById('newTaskInput');
-  const dur = document.getElementById('newTaskDur');
   const name = input.value.trim();
   if (!name) return;
-  
+  const start = document.getElementById('newTaskStart').value;
+  const end = document.getElementById('newTaskEnd').value;
+  const mins = taskDurFrom(start, end);
+  if (start && end && mins === null) { showToast('End time must be after start time'); return; }
   const _now = Date.now();
   S.tasks.push({
     id: 't_' + _now.toString(36),
     empId: curEmp,
     date: TT_TODAY,
     name: name,
-    mins: parseInt(dur.value, 10),
+    start: start || null,
+    end: end || null,
+    mins: mins !== null ? mins : 30,
     done: false,
     doneAt: null,
     order: _now,
     updatedAt: _now
   });
-  
   input.value = '';
   persist();
   openEmployee(curEmp);
   slGcalAutoSync(curEmp);
+  // pre-fill the next task's start where this one ended
+  setTimeout(() => {
+    const ns = document.getElementById('newTaskStart');
+    if (ns) { ns.value = _nextFreeStart(); document.getElementById('newTaskEnd').value=''; taskTimeHint(); }
+  }, 60);
 }
 
 
@@ -3958,6 +3836,124 @@ function checkCelebration(empId) {
   fireCelebration(empId);
 }
 
+// ─── PENDING TASKS — nothing unfinished slips away ────────────────────
+function pendingTasksFor(empId) {
+  return (S.tasks||[]).filter(t => t.empId === empId && !t.done && t.date && t.date < getLocalISODate())
+    .sort((a,b) => (a.date||'').localeCompare(b.date||''));
+}
+function _updatePendingBtn() {
+  const b = document.getElementById('pending-btn');
+  if (!b) return;
+  const n = curEmp ? pendingTasksFor(curEmp).length : 0;
+  b.style.display = n ? '' : 'none';
+  const c = document.getElementById('pending-count');
+  if (c) c.textContent = '(' + n + ')';
+}
+window.openPending = function() {
+  const list = pendingTasksFor(curEmp);
+  const body = document.getElementById('pending-body');
+  if (!list.length) {
+    body.innerHTML = '<div style="padding:26px;text-align:center;color:var(--mute)">Nothing pending. Clean slate ✨</div>';
+  } else {
+    body.innerHTML = list.map(t => `
+      <div style="display:flex;align-items:center;gap:10px;padding:10px 4px;border-bottom:1px solid var(--hairline)">
+        <div style="flex:1;min-width:0">
+          <div style="font-size:13px;font-weight:600;color:var(--body)">${t.name}</div>
+          <div style="font-size:10.5px;color:var(--red);font-family:var(--mono)">${t.date.split('-').reverse().slice(0,2).join('/')} · ${fmtMins(t.mins)}</div>
+        </div>
+        <button class="btn btn-xs" style="color:var(--green);border-color:rgba(34,197,94,.3)" onclick="pendingDone('${t.id}')">✓ Done</button>
+        <button class="btn btn-xs" onclick="pendingToToday('${t.id}')">→ Today</button>
+        <button class="btn btn-xs btn-ghost" style="color:var(--mute2)" onclick="pendingDrop('${t.id}')">✕</button>
+      </div>`).join('');
+  }
+  document.getElementById('pending-modal').classList.add('open');
+};
+window.pendingDone = function(tid) {
+  const t = S.tasks.find(x => x.id === tid);
+  if (!t) return;
+  t.done = true; t.doneAt = nowTime(); t.updatedAt = Date.now();
+  persist(); openPending(); _updatePendingBtn(); openEmployee(curEmp);
+};
+window.pendingToToday = function(tid) {
+  const t = S.tasks.find(x => x.id === tid);
+  if (!t) return;
+  t.date = TT_TODAY; t.start = null; t.end = null; t.order = Date.now(); t.updatedAt = Date.now();
+  persist(); openPending(); _updatePendingBtn(); openEmployee(curEmp);
+  slGcalAutoSync(t.empId);
+  showToast('Moved to today — set its time when you plan the day');
+};
+window.pendingDrop = function(tid) {
+  if (!confirm('Remove this task completely?')) return;
+  deleteTask(tid);
+  openPending(); _updatePendingBtn();
+};
+
+// ─── MONTHLY REPORT — the founder's month at a glance ─────────────────
+let repMonth = new Date();
+window.repChangeMonth = function(d){ repMonth.setMonth(repMonth.getMonth()+d); renderReports(); };
+function _monthISO(){ return repMonth.getFullYear() + '-' + String(repMonth.getMonth()+1).padStart(2,'0'); }
+function renderReports() {
+  const lbl = document.getElementById('rep-month-label');
+  if (!lbl) return;
+  lbl.textContent = repMonth.toLocaleDateString('en-GB',{month:'long',year:'numeric'});
+  const mk = _monthISO();
+  let tPresent=0, tLogged=0, tDone=0;
+  const rows = S.employees.map(e => {
+    const att = S.att[e.id] || {};
+    let present=0, logged=0;
+    Object.entries(att).forEach(([d,a]) => {
+      if (!d.startsWith(mk) || !a) return;
+      if (a.status === 'present') present++;
+      if (a.loginTime && a.logoutTime) {
+        let diff = parseTimeStr(a.logoutTime) - parseTimeStr(a.loginTime);
+        if (diff < 0) diff += 24*60;
+        logged += diff;
+      }
+    });
+    const monthTasks = (S.tasks||[]).filter(t => t.empId===e.id && (t.date||'').startsWith(mk));
+    const doneMins = monthTasks.filter(t=>t.done).reduce((a,t)=>a+(parseInt(t.mins)||0),0);
+    const totalMins = monthTasks.reduce((a,t)=>a+(parseInt(t.mins)||0),0);
+    const byDay = {};
+    monthTasks.filter(t=>t.done).forEach(t => { byDay[t.date]=(byDay[t.date]||0)+(parseInt(t.mins)||0); });
+    const fullDays = Object.values(byDay).filter(m=>m>=480).length;
+    tPresent+=present; tLogged+=logged; tDone+=doneMins;
+    const c = tt_col(e.ci);
+    const comp = totalMins ? Math.round(doneMins/totalMins*100) : 0;
+    return `<div style="background:var(--canvas-card);border:1px solid var(--hairline);border-radius:14px;padding:16px 20px;display:flex;align-items:center;gap:18px;flex-wrap:wrap">
+      <div style="display:flex;align-items:center;gap:12px;min-width:190px">
+        <span style="width:34px;height:34px;border-radius:50%;background:${c.bg};color:${c.fg};display:inline-flex;align-items:center;justify-content:center;font-size:12px;font-weight:800">${tt_initials(e.name)}</span>
+        <div><div style="font-size:14px;font-weight:700;color:var(--ink)">${e.name}</div><div style="font-size:11px;color:var(--mute)">${e.role||''}</div></div>
+      </div>
+      <div style="flex:1;display:grid;grid-template-columns:repeat(auto-fit,minmax(105px,1fr));gap:10px;min-width:320px">
+        <div><div style="font-size:18px;font-weight:800;color:var(--ink)">${present}</div><div style="font-size:9.5px;letter-spacing:.08em;color:var(--mute);text-transform:uppercase">Present days</div></div>
+        <div><div style="font-size:18px;font-weight:800;color:#60a5fa">${(logged/60).toFixed(1)}h</div><div style="font-size:9.5px;letter-spacing:.08em;color:var(--mute);text-transform:uppercase">Hours logged</div></div>
+        <div><div style="font-size:18px;font-weight:800;color:var(--green,#22c55e)">${(doneMins/60).toFixed(1)}h</div><div style="font-size:9.5px;letter-spacing:.08em;color:var(--mute);text-transform:uppercase">Hours completed</div></div>
+        <div><div style="font-size:18px;font-weight:800;color:#f59e0b">${fullDays}</div><div style="font-size:9.5px;letter-spacing:.08em;color:var(--mute);text-transform:uppercase">8h days</div></div>
+        <div><div style="font-size:18px;font-weight:800;color:${comp>=80?'var(--green,#22c55e)':comp>=50?'#f59e0b':'var(--red,#ef4444)'}">${comp}%</div><div style="font-size:9.5px;letter-spacing:.08em;color:var(--mute);text-transform:uppercase">Completion</div></div>
+      </div>
+    </div>`;
+  }).join('');
+  document.getElementById('rep-body').innerHTML = rows || '<div style="padding:30px;color:var(--mute)">No team members yet.</div>';
+  const sMk = (label,val,color) => `<div class="gl-stat"><div class="gl-stat-top"><span class="gl-stat-label">${label}</span><span class="gl-stat-n" style="color:${color}">${val}</span></div></div>`;
+  document.getElementById('rep-strip').innerHTML =
+    sMk('Team present days', tPresent, 'var(--ink)') +
+    sMk('Team hours logged', (tLogged/60).toFixed(1)+'h', '#60a5fa') +
+    sMk('Team hours completed', (tDone/60).toFixed(1)+'h', 'var(--green,#22c55e)');
+}
+window.renderReports = renderReports;
+
+// ─── LANDING ──────────────────────────────────────────────────────────
+function goMyDay(navEl) {
+  if (currentUserObj && currentUserObj.empId) {
+    openEmployee(currentUserObj.empId);
+    document.querySelectorAll('.nav-item').forEach(n=>n.classList.remove('active'));
+    const n = document.getElementById('nav-myday'); if (n) n.classList.add('active');
+  } else {
+    showView('team', document.querySelector('.nav-item[data-view="team"]'));
+  }
+}
+window.goMyDay = goMyDay;
+
 // ─── GOOGLE CALENDAR SYNC (direct, no downloads) ─────────────────────
 // Member connects Google once. After that their day syncs straight into
 // Google Calendar: every task an event, slots calculated from login time,
@@ -4040,8 +4036,11 @@ async function slGcalSyncDay(silent) {
   let created = 0, updated = 0, failed = 0;
   try {
     for (const t of tasks) {
-      const startM = cursor, endM = cursor + (parseInt(t.mins) || 30);
-      cursor = endM;
+      let startM, endM;
+      const ts = hm2min(t.start), te = hm2min(t.end);
+      if (ts != null && te != null && te > ts) { startM = ts; endM = te; }
+      else { startM = cursor; endM = cursor + (parseInt(t.mins) || 30); }
+      cursor = Math.max(cursor, endM);
       const ev = {
         summary: t.name,
         description: 'SystemLab · ' + fmtMins(t.mins) + ((S.objective && S.objective.title) ? '\n🏔️ ' + S.objective.title : ''),
@@ -4176,7 +4175,7 @@ document.getElementById('empDetailHead').innerHTML = `
     </div>
     
     <div style="display:flex;gap:6px">
-      <button class="btn btn-danger btn-xs" onclick="deleteEmployee()">Remove Team Member</button>
+      ${currentUserObj && currentUserObj.role === 'admin' ? `<button class="btn btn-danger btn-xs" onclick="deleteEmployee()">Remove Team Member</button>` : ''}
     </div>
   `;
   // Ignore the old replacement by commenting out next lines in python logic
@@ -4214,27 +4213,35 @@ document.getElementById('empDetailHead').innerHTML = `
     <div class="stat-cell" style="padding:16px 24px;border-right:1px solid var(--hairline);flex:1"><div class="stat-n" style="color:var(--sunset);font-size:24px;font-weight:700">${compRate}%</div><div style="font-size:10px;color:var(--mute);text-transform:uppercase;font-weight:600;letter-spacing:0.05em;margin-top:2px">Completion</div></div>
     <div class="stat-cell" style="padding:16px 24px;flex:1"><div class="stat-n" style="color:var(--yellow);font-size:24px;font-weight:700">${streak}d</div><div style="font-size:10px;color:var(--mute);text-transform:uppercase;font-weight:600;letter-spacing:0.05em;margin-top:2px">Present Streak</div></div>`;
 
-  // MY GOALS — connect today's work to this person's weekly & monthly goals
+  // MY FOCUS — mission + week/month/quarter goals, right above the day's tasks
   const gEl = document.getElementById('empGoals');
   if (gEl) {
     const mine = (S.goals||[]).filter(g => g.ownerId === eid || !g.ownerId);
-    const open = mine.filter(g => g.col !== 'done');
     if (!mine.length && !(S.objective && S.objective.title)) { gEl.innerHTML = ''; }
     else {
-      const wk = mine.filter(g=>g.horizon==='weekly');
-      const mo = mine.filter(g=>g.horizon==='monthly');
-      const wkDone = wk.filter(g=>g.col==='done').length, moDone = mo.filter(g=>g.col==='done').length;
-      const chips = open.slice(0,4).map(g =>
-        `<span style="display:inline-flex;align-items:center;gap:6px;background:var(--canvas-soft);border:1px solid var(--hairline);border-radius:999px;padding:4px 12px;font-size:11.5px;white-space:nowrap">
-          <span style="width:7px;height:7px;border-radius:50%;background:${g.horizon==='weekly'?'#60a5fa':'#a78bfa'}"></span>
-          <b style="color:var(--body)">${escGl(g.title)}</b>
-          ${g.target?`<span style="color:var(--mute2);font-size:10px">by ${g.target.split('-').reverse().slice(0,2).join('/')}</span>`:''}
-        </span>`).join('');
-      gEl.innerHTML = `<div onclick="glOwnerFilter='${eid}';showView('goals',document.querySelector('.nav-item[data-view=\'goals\']'))" style="display:flex;align-items:center;gap:10px;padding:8px 24px;border-bottom:1px solid var(--hairline);cursor:pointer;overflow-x:auto">
-        <span style="font-size:9.5px;font-weight:800;letter-spacing:.12em;text-transform:uppercase;color:var(--sunset);flex-shrink:0">🎯 My goals</span>
-        <span style="font-size:11px;color:var(--mute);flex-shrink:0">week ${wkDone}/${wk.length} · month ${moDone}/${mo.length}</span>
-        ${chips || '<span style="font-size:11.5px;color:var(--mute2)">No goals yet — tap to open the board</span>'}
-        ${S.objective && S.objective.title ? `<span style="margin-left:auto;font-size:11px;color:var(--mute);flex-shrink:0">🏔️ ${escGl(S.objective.title)}</span>` : ''}
+      const hor = [
+        ['weekly','THIS WEEK','#60a5fa'],
+        ['monthly','THIS MONTH','#a78bfa'],
+        ['quarterly','THIS QUARTER','#ff9a4d']
+      ];
+      const rows = hor.map(([h,label,color]) => {
+        const all = mine.filter(g=>g.horizon===h);
+        if (!all.length) return '';
+        const done = all.filter(g=>g.col==='done').length;
+        const open = all.filter(g=>g.col!=='done');
+        const chips = open.slice(0,3).map(g =>
+          `<span style="display:inline-flex;align-items:center;gap:6px;background:var(--canvas-card);border:1px solid var(--hairline);border-radius:999px;padding:3px 11px;font-size:11.5px;white-space:nowrap"><b style="color:var(--body)">${escGl(g.title)}</b>${g.target?`<span style="color:var(--mute2);font-size:10px">${g.target.split('-').reverse().slice(0,2).join('/')}</span>`:''}</span>`
+        ).join('') || `<span style="font-size:11px;color:var(--green,#22c55e)">All done 🏆</span>`;
+        return `<div style="display:flex;align-items:center;gap:10px;overflow-x:auto">
+          <span style="font-size:9px;font-weight:800;letter-spacing:.12em;color:${color};min-width:88px;flex-shrink:0">${label}</span>
+          <span style="font-family:var(--mono);font-size:10.5px;color:var(--mute);flex-shrink:0">${done}/${all.length}</span>
+          <div style="width:56px;height:4px;background:var(--hairline);border-radius:2px;overflow:hidden;flex-shrink:0"><div style="width:${all.length?Math.round(done/all.length*100):0}%;height:100%;background:${color}"></div></div>
+          ${chips}
+        </div>`;
+      }).filter(Boolean).join('');
+      gEl.innerHTML = `<div onclick="glOwnerFilter='${eid}';showView('goals',document.querySelector('.nav-item[data-view=\'goals\']'))" style="display:flex;flex-direction:column;gap:8px;padding:12px 24px;border-bottom:1px solid var(--hairline);cursor:pointer;background:var(--canvas-soft)">
+        ${S.objective && S.objective.title ? `<div style="display:flex;align-items:center;gap:8px"><span style="font-size:9px;font-weight:800;letter-spacing:.12em;color:var(--sunset)">🏔️ MISSION</span><span style="font-size:12px;font-weight:700;color:var(--ink)">${escGl(S.objective.title)}</span></div>` : ''}
+        ${rows || '<span style="font-size:11.5px;color:var(--mute2)">No goals set yet — tap to open the board</span>'}
       </div>`;
     }
   }
@@ -4258,7 +4265,7 @@ document.getElementById('empDetailHead').innerHTML = `
       <div class="task-row ${t.done?'done':''}" draggable="true" ondragstart="dragTask(event, '${t.id}')" ondragover="allowDropTask(event)" ondrop="dropTask(event, '${t.id}')">
         <div class="tcheck ${t.done?'checked':''}" onclick="toggleTask('${t.id}')"></div>
         <div class="tname ${t.done?'struck':''}">${t.name}</div>
-        <div class="tdur">${fmtMins(t.mins)}</div>
+        <div class="tdur">${t.start&&t.end ? `<span style="color:var(--body)">${to12(t.start)}–${to12(t.end)}</span> · ${fmtMins(t.mins)}` : fmtMins(t.mins)}</div>
         <div class="tlogged ${t.done?'has':''}">${t.done ? fmtMins(t.mins) : '—'}</div>
         <div class="tdoneat ${t.doneAt?'has':''}">${t.doneAt || '—'}</div>
         <div style="display:flex; gap:4px">
@@ -4275,6 +4282,9 @@ document.getElementById('empDetailHead').innerHTML = `
   
   showView('employee', document.querySelector('.nav-item[data-view="team"]'));
   if (typeof _slGcalUpdateBtn === 'function') _slGcalUpdateBtn();
+  const _ns = document.getElementById('newTaskStart');
+  if (_ns && !_ns.value) { _ns.value = _nextFreeStart(); if (typeof taskTimeHint==='function') taskTimeHint(); }
+  if (typeof _updatePendingBtn === 'function') _updatePendingBtn();
 }
 
 let draggedTaskId = null;
@@ -4511,594 +4521,6 @@ function saveEmployee() {
 }
 
 /* ════════════════════════════════
-   DOCUMENT VAULT MODULE
-════════════════════════════════ */
-let docCurrentFolder = null;
-let docViewMode = 'grid';
-let docTypeFilter = null;
-let docEditingId = null;
-
-function docDetectType(url) {
-  if (!url) return 'other';
-  const u = url.toLowerCase();
-  if (u.includes('drive.google.com')||u.includes('docs.google.com')||u.includes('sheets.google.com')||u.includes('slides.google.com')||u.includes('forms.google.com')) return 'google';
-  if (u.includes('notion.so')||u.includes('notion.site')) return 'notion';
-  if (u.includes('figma.com')||u.includes('canva.com')) return 'design';
-  if (u.includes('clickup.com')||u.includes('asana.com')||u.includes('trello.com')||u.includes('monday.com')||u.includes('linear.app')||u.includes('jira.')) return 'pm';
-  if (u.includes('youtube.com')||u.includes('youtu.be')||u.includes('loom.com')||u.includes('vimeo.com')) return 'video';
-  if (u.includes('airtable.com')) return 'airtable';
-  if (u.includes('dropbox.com')||u.includes('onedrive.com')||u.includes('box.com')) return 'storage';
-  return 'other';
-}
-
-function docDetectIcon(url) {
-  if (!url) return '🔗';
-  const u = url.toLowerCase();
-  if (u.includes('docs.google.com')) return '📝';
-  if (u.includes('sheets.google.com')) return '📊';
-  if (u.includes('slides.google.com')) return '📑';
-  if (u.includes('drive.google.com')) return '📂';
-  if (u.includes('forms.google.com')) return '📋';
-  if (u.includes('notion.so')||u.includes('notion.site')) return '⬛';
-  if (u.includes('figma.com')) return '🎨';
-  if (u.includes('canva.com')) return '✏️';
-  if (u.includes('youtube.com')||u.includes('youtu.be')) return '▶️';
-  if (u.includes('loom.com')) return '🎬';
-  if (u.includes('clickup.com')) return '✅';
-  if (u.includes('asana.com')) return '📌';
-  if (u.includes('trello.com')) return '📋';
-  if (u.includes('monday.com')) return '📅';
-  if (u.includes('linear.app')) return '⚡';
-  if (u.includes('airtable.com')) return '🔷';
-  if (u.includes('github.com')) return '⚙️';
-  if (u.includes('slack.com')) return '💬';
-  if (u.includes('dropbox.com')||u.includes('onedrive.com')) return '☁️';
-  return '🔗';
-}
-
-function docPreviewIcon() {
-  const url = document.getElementById('dm-url').value;
-  const icon = docDetectIcon(url);
-  document.getElementById('dm-icon-preview').textContent = icon;
-  const type = docDetectType(url);
-  const labels = {google:'Google Workspace',notion:'Notion',design:'Figma / Canva',pm:'Project Management',video:'Video',airtable:'Airtable',storage:'Cloud Storage',other:'Link'};
-  document.getElementById('dm-icon-label').textContent = labels[type] || 'Link';
-}
-
-function docSetView(mode) {
-  docViewMode = mode;
-  const grid = document.getElementById('docs-grid');
-  if (grid) grid.className = 'docs-grid' + (mode === 'list' ? ' list-mode' : '');
-  const gb = document.getElementById('docs-grid-btn');
-  const lb = document.getElementById('docs-list-btn');
-  if (gb) gb.className = mode === 'grid' ? 'active' : '';
-  if (lb) lb.className = mode === 'list' ? 'active' : '';
-}
-
-function docTogglePin(id, e) {
-  if (e) e.stopPropagation();
-  const d = S.docs.find(x => x.id === id);
-  if (!d) return;
-  d.pinned = !d.pinned;
-  persist(); docRender();
-  showToast(d.pinned ? '📌 Pinned to Quick Access' : '📍 Unpinned');
-}
-
-function docGetBreadcrumb() {
-  const path = [];
-  let cur = docCurrentFolder;
-  while (cur) {
-    const f = S.docs.find(d => d.id === cur && d.type === 'folder');
-    if (!f) break;
-    path.unshift(f);
-    cur = f.parentId;
-  }
-  return path;
-}
-
-function docRender() {
-  if (!S.docs) S.docs = [];
-  const search = (document.getElementById('docs-search')?.value || '').toLowerCase();
-
-  // Quick access strip
-  const pinned = S.docs.filter(d => d.pinned && d.type !== 'folder');
-  const quickArea = document.getElementById('docs-quick-area');
-  const quickChips = document.getElementById('docs-quick-chips');
-  if (quickArea && quickChips) {
-    if (pinned.length > 0) {
-      quickArea.style.display = '';
-      quickChips.innerHTML = pinned.map(d =>
-        `<div class="docs-quick-chip" onclick="docOpenLink('${d.id}')">
-          <span class="dqc-icon">${docDetectIcon(d.url)}</span>
-          <span class="dqc-name">${d.name}</span>
-          <button class="dqc-unpin" onclick="docTogglePin('${d.id}',event)" title="Unpin">✕</button>
-        </div>`).join('');
-    } else {
-      quickArea.style.display = 'none';
-    }
-  }
-
-  // Type filter chips
-  const allLinks = S.docs.filter(d => d.type !== 'folder' && d.url);
-  const types = [...new Set(allLinks.map(d => docDetectType(d.url)))];
-  const typeLabels = {google:'Google',notion:'Notion',design:'Design',pm:'PM',video:'Video',airtable:'Airtable',storage:'Storage',other:'Other'};
-  const typeFiltersEl = document.getElementById('docs-type-filters');
-  if (typeFiltersEl) {
-    typeFiltersEl.innerHTML = `<span class="docs-type-chip ${!docTypeFilter?'active':''}" onclick="docTypeFilter=null;docRender()">All</span>` +
-      types.map(t => `<span class="docs-type-chip ${docTypeFilter===t?'active':''}" onclick="docTypeFilter='${t}';docRender()">${typeLabels[t]||t}</span>`).join('');
-  }
-
-  // Breadcrumb
-  const bc = document.getElementById('docs-breadcrumb');
-  const path = docGetBreadcrumb();
-  if (bc) {
-    bc.innerHTML = `<span onclick="docCurrentFolder=null;docRender()">🏠 Root</span>` +
-      path.map(f => `<span class="bc-sep">›</span><span onclick="docCurrentFolder='${f.id}';docRender()">${f.name}</span>`).join('');
-    if (path.length > 0) bc.lastChild.classList.add('bc-current');
-  }
-
-  // Filter items
-  let items = S.docs.filter(d => {
-    if (search) {
-      return (d.name||'').toLowerCase().includes(search) ||
-             (d.description||'').toLowerCase().includes(search) ||
-             (d.client||'').toLowerCase().includes(search) ||
-             (d.tags||[]).some(t=>t.toLowerCase().includes(search));
-    }
-    if (docTypeFilter && d.type !== 'folder') {
-      if (docDetectType(d.url) !== docTypeFilter) return false;
-    }
-    if (!search) return d.parentId === docCurrentFolder;
-    return true;
-  });
-
-  items.sort((a,b) => {
-    if (a.type==='folder' && b.type!=='folder') return -1;
-    if (a.type!=='folder' && b.type==='folder') return 1;
-    return (a.name||'').localeCompare(b.name||'');
-  });
-
-  const grid = document.getElementById('docs-grid');
-  if (!grid) return;
-
-  if (items.length === 0) {
-    grid.innerHTML = `<div class="doc-empty"><div class="doc-empty-icon">${search ? '🔍' : '📂'}</div><div style="font-weight:600;color:var(--ink);margin-bottom:6px">${search ? 'No results' : 'Empty folder'}</div><div style="font-size:11px">${search ? 'Try a different search' : 'Add your first link above'}</div></div>`;
-    return;
-  }
-
-  grid.innerHTML = items.map(d => {
-    if (d.type === 'folder') {
-      const count = S.docs.filter(x => x.parentId === d.id).length;
-      return `<div class="doc-card doc-card-folder" onclick="docCurrentFolder='${d.id}';docRender()">
-        <div class="doc-card-actions">
-          <button onclick="event.stopPropagation();docEdit('${d.id}')" title="Rename">✏️</button>
-          <button onclick="event.stopPropagation();docDelete('${d.id}')" title="Delete">🗑️</button>
-        </div>
-        <div class="doc-card-icon">📁</div>
-        <div class="doc-card-name">${d.name}</div>
-        <div class="doc-card-desc" style="margin-bottom:0">${count} item${count!==1?'s':''}</div>
-      </div>`;
-    } else {
-      const icon = docDetectIcon(d.url);
-      const hasTags = d.tags && d.tags.length > 0;
-      return `<div class="doc-card" onclick="docOpenLink('${d.id}')">
-        <div class="doc-card-actions">
-          <button class="pin-btn ${d.pinned?'pinned':''}" onclick="docTogglePin('${d.id}',event)" title="${d.pinned?'Unpin':'Pin to Quick Access'}">${d.pinned?'📌':'📍'}</button>
-          <button onclick="event.stopPropagation();docCopyUrl('${d.id}')" title="Copy URL">📋</button>
-          <button onclick="event.stopPropagation();docEdit('${d.id}')" title="Edit">✏️</button>
-          <button onclick="event.stopPropagation();docDelete('${d.id}')" title="Delete">🗑️</button>
-        </div>
-        <div class="doc-card-icon">${icon}</div>
-        <div class="doc-card-name">${d.name}</div>
-        ${d.description ? `<div class="doc-card-desc">${d.description}</div>` : ''}
-        <div class="doc-card-meta">
-          ${d.client ? `<span class="doc-client-tag">${d.client}</span>` : ''}
-          ${hasTags ? d.tags.map(t=>`<span class="doc-tag">${t}</span>`).join('') : ''}
-        </div>
-      </div>`;
-    }
-  }).join('');
-}
-
-function docAddFolder() {
-  document.getElementById('df-name').value = '';
-  docEditingId = null;
-  document.getElementById('doc-folder-modal').classList.add('open');
-  setTimeout(()=>document.getElementById('df-name').focus(),100);
-}
-
-function docSaveFolder() {
-  const name = document.getElementById('df-name').value.trim();
-  if (!name) return;
-  if (docEditingId) {
-    const d = S.docs.find(x => x.id === docEditingId);
-    if (d) d.name = name;
-    addChangelog('doc_edit','Renamed folder to "'+name+'"');
-  } else {
-    S.docs.push({id:'doc_'+Math.random().toString(36).substr(2,9),name,type:'folder',parentId:docCurrentFolder,createdAt:Date.now(),createdBy:currentUser});
-    addChangelog('doc_add','Created folder "'+name+'"');
-  }
-  document.getElementById('doc-folder-modal').classList.remove('open');
-  persist(); docRender();
-}
-
-function docAddLink() {
-  docEditingId = null;
-  document.getElementById('doc-modal-title').textContent = 'Add Link';
-  document.getElementById('dm-save-btn').textContent = 'Add Link';
-  document.getElementById('dm-url').value = '';
-  document.getElementById('dm-name').value = '';
-  document.getElementById('dm-desc').value = '';
-  document.getElementById('dm-tags').value = '';
-  document.getElementById('dm-client').value = '';
-  document.getElementById('dm-icon-preview').textContent = '🔗';
-  document.getElementById('dm-icon-label').textContent = 'Paste a URL to auto-detect type';
-  document.getElementById('doc-link-modal').classList.add('open');
-  setTimeout(()=>document.getElementById('dm-url').focus(),100);
-}
-
-function docSaveLink() {
-  const url = document.getElementById('dm-url').value.trim();
-  const name = document.getElementById('dm-name').value.trim();
-  if (!url||!name) { showToast('⚠️ URL and Name are required'); return; }
-  const desc = document.getElementById('dm-desc').value.trim();
-  const client = document.getElementById('dm-client').value.trim();
-  const tags = document.getElementById('dm-tags').value.split(',').map(t=>t.trim()).filter(Boolean);
-  if (docEditingId) {
-    const d = S.docs.find(x=>x.id===docEditingId);
-    if (d) { d.url=url; d.name=name; d.description=desc; d.tags=tags; d.client=client; d.icon=docDetectIcon(url); }
-    addChangelog('doc_edit','Updated "'+name+'"');
-  } else {
-    S.docs.push({id:'doc_'+Math.random().toString(36).substr(2,9),name,type:'link',parentId:docCurrentFolder,url,icon:docDetectIcon(url),description:desc,client,tags,createdAt:Date.now(),createdBy:currentUser});
-    addChangelog('doc_add','Added link "'+name+'"');
-  }
-  document.getElementById('doc-link-modal').classList.remove('open');
-  persist(); docRender();
-  showToast(docEditingId?'✅ Link updated':'🔗 Link added');
-}
-
-function docOpenLink(id) {
-  const d = S.docs.find(x=>x.id===id);
-  if (d&&d.url) window.open(d.url,'_blank');
-}
-
-function docCopyUrl(id) {
-  const d = S.docs.find(x=>x.id===id);
-  if (d&&d.url) navigator.clipboard.writeText(d.url).then(()=>showToast('📋 URL copied'));
-}
-
-function docEdit(id) {
-  const d = S.docs.find(x=>x.id===id);
-  if (!d) return;
-  docEditingId = id;
-  if (d.type==='folder') {
-    document.getElementById('df-name').value = d.name;
-    document.getElementById('doc-folder-modal').classList.add('open');
-    setTimeout(()=>document.getElementById('df-name').focus(),100);
-  } else {
-    document.getElementById('doc-modal-title').textContent = 'Edit Link';
-    document.getElementById('dm-save-btn').textContent = 'Save Changes';
-    document.getElementById('dm-url').value = d.url||'';
-    document.getElementById('dm-name').value = d.name||'';
-    document.getElementById('dm-desc').value = d.description||'';
-    document.getElementById('dm-tags').value = (d.tags||[]).join(', ');
-    document.getElementById('dm-client').value = d.client||'';
-    docPreviewIcon();
-    document.getElementById('doc-link-modal').classList.add('open');
-  }
-}
-
-function docDelete(id) {
-  const d = S.docs.find(x=>x.id===id);
-  if (!d) return;
-  if (d.type==='folder') {
-    const children = S.docs.filter(x=>x.parentId===id);
-    if (children.length>0 && !confirm('This folder contains '+children.length+' item(s). Delete everything?')) return;
-    function rmChildren(pid) {
-      S.docs.filter(x=>x.parentId===pid).forEach(c=>{if(c.type==='folder') rmChildren(c.id);});
-      S.docs.forEach(x=>{ if(x.parentId===pid){ if(!S.deleted)S.deleted={}; S.deleted[x.id]=Date.now(); } });
-      S.docs = S.docs.filter(x=>x.parentId!==pid);
-    }
-    rmChildren(id);
-  }
-  if (!confirm('Delete "'+d.name+'"?')) return;
-  if(!S.deleted)S.deleted={}; S.deleted[id]=Date.now();
-  S.docs = S.docs.filter(x=>x.id!==id);
-  addChangelog('doc_delete','Deleted "'+d.name+'"');
-  persist(); docRender();
-}
-
-/* ════════════════════════════════
-   PROMPT VAULT MODULE
-════════════════════════════════ */
-let promptFilterCat = null;
-let promptEditingId = null;
-let promptUseId = null;
-let _promptRecentIds = null;
-
-function promptGetRecent() {
-  if (!_promptRecentIds) {
-    try { _promptRecentIds = JSON.parse(localStorage.getItem('sl_prompt_recent')||'[]'); } catch(e) { _promptRecentIds = []; }
-  }
-  return _promptRecentIds;
-}
-
-function promptTrackRecent(id) {
-  const r = promptGetRecent();
-  _promptRecentIds = [id, ...r.filter(x=>x!==id)].slice(0,5);
-  try { localStorage.setItem('sl_prompt_recent', JSON.stringify(_promptRecentIds)); } catch(e) {}
-}
-
-function promptExtractVars(text) {
-  const matches = (text||'').match(/\{\{([^}]+)\}\}/g)||[];
-  return [...new Set(matches.map(m=>m.replace(/^\{\{|\}\}$/g,'').trim()))];
-}
-
-function promptRender() {
-  if (!S.prompts) S.prompts = [];
-  if (!S.promptCategories) S.promptCategories = [];
-  const search = (document.getElementById('prompts-search')?.value||'').toLowerCase();
-
-  // Recently used strip
-  const recentIds = promptGetRecent();
-  const recentPrompts = recentIds.map(id=>S.prompts.find(p=>p.id===id)).filter(Boolean);
-  const recentArea = document.getElementById('prompt-recent-area');
-  const recentChips = document.getElementById('prompt-recent-chips');
-  if (recentArea && recentChips) {
-    if (recentPrompts.length > 0) {
-      recentArea.style.display = '';
-      recentChips.innerHTML = recentPrompts.map(p => {
-        const cat = S.promptCategories.find(c=>c.id===p.category);
-        return `<span class="prompt-recent-chip" onclick="promptUse('${p.id}')" title="${escHtml(p.title)}">${cat?cat.icon+' ':''}${escHtml(p.title)}</span>`;
-      }).join('');
-    } else {
-      recentArea.style.display = 'none';
-    }
-  }
-
-  // Tab bar
-  const tabsEl = document.getElementById('prompt-tabs-bar');
-  if (tabsEl) {
-    tabsEl.innerHTML =
-      `<div class="prompt-tab ${!promptFilterCat?'active':''}" onclick="promptFilterCat=null;promptRender()">All <span style="font-size:10px;opacity:.5">${S.prompts.length}</span></div>` +
-      `<div class="prompt-tab ${promptFilterCat==='_fav'?'active':''}" onclick="promptFilterCat='_fav';promptRender()">⭐ Saved</div>` +
-      S.promptCategories.map(c=>{
-        const cnt = S.prompts.filter(p=>p.category===c.id).length;
-        return `<div class="prompt-tab ${promptFilterCat===c.id?'active':''}" onclick="promptFilterCat='${c.id}';promptRender()" style="${promptFilterCat===c.id?'color:'+c.color+';border-bottom-color:'+c.color:''}">${c.icon} ${c.name} <span style="font-size:10px;opacity:.5">${cnt}</span></div>`;
-      }).join('');
-  }
-
-  // Filter
-  let items = S.prompts.filter(p=>{
-    if (promptFilterCat==='_fav' && !p.isFavorite) return false;
-    if (promptFilterCat && promptFilterCat!=='_fav' && p.category!==promptFilterCat) return false;
-    if (search) return (p.title||'').toLowerCase().includes(search)||(p.prompt||'').toLowerCase().includes(search)||(p.tags||[]).some(t=>t.toLowerCase().includes(search));
-    return true;
-  });
-
-  items.sort((a,b)=>{
-    if (a.isFavorite&&!b.isFavorite) return -1;
-    if (!a.isFavorite&&b.isFavorite) return 1;
-    return (b.updatedAt||b.createdAt||0)-(a.updatedAt||a.createdAt||0);
-  });
-
-  const countEl = document.getElementById('prompts-count');
-  if (countEl) countEl.textContent = items.length>0 ? `${items.length} prompt${items.length!==1?'s':''}` : '';
-
-  const grid = document.getElementById('prompts-grid');
-  if (!grid) return;
-  if (items.length===0) {
-    grid.innerHTML = `<div class="prompt-empty"><div style="font-size:40px;margin-bottom:12px;opacity:.4">${search?'🔍':'✨'}</div><div style="font-weight:600;color:var(--ink);margin-bottom:6px">${search?'No prompts found':'Vault is empty'}</div><div style="font-size:11px">${search?'Try a different search':'Click "+ New Prompt" to build your AI arsenal'}</div></div>`;
-    return;
-  }
-
-  grid.innerHTML = items.map(p=>{
-    const cat = S.promptCategories.find(c=>c.id===p.category);
-    const catBadge = cat?`<span class="prompt-card-cat" style="background:${cat.color}15;color:${cat.color};border:1px solid ${cat.color}30">${cat.icon} ${cat.name}</span>`:'';
-    const vars = promptExtractVars(p.prompt);
-    const varStrip = vars.length>0?`<div class="prompt-var-strip">${vars.map(v=>`<span class="prompt-var-badge">{{${v}}}</span>`).join('')}</div>`:'';
-    const hasVars = vars.length>0;
-    const usageBadge = p.usageCount?`<span class="prompt-usage">${p.usageCount}× used</span>`:'';
-    return `<div class="prompt-card">
-      <button class="prompt-card-fav ${p.isFavorite?'active':''}" onclick="promptToggleFav('${p.id}')" title="Save">${p.isFavorite?'⭐':'☆'}</button>
-      <div class="prompt-card-head">
-        <div class="prompt-card-title">${escHtml(p.title)}</div>
-        ${catBadge}
-      </div>
-      ${varStrip}
-      <div class="prompt-card-body" onclick="this.classList.toggle('expanded')">${escHtml(p.prompt)}</div>
-      <div class="prompt-card-footer">
-        ${usageBadge}
-        ${(p.tags||[]).map(t=>`<span class="doc-tag">${t}</span>`).join('')}
-        <div class="prompt-card-actions">
-          <button class="prompt-btn-use" onclick="promptUse('${p.id}')">${hasVars?'⚡ Use':'📋 Copy'}</button>
-          <button onclick="promptEdit('${p.id}')">✏️</button>
-          <button onclick="promptDelete('${p.id}')">🗑️</button>
-        </div>
-      </div>
-    </div>`;
-  }).join('');
-}
-
-function promptUse(id) {
-  const p = S.prompts.find(x=>x.id===id);
-  if (!p) return;
-  const vars = promptExtractVars(p.prompt);
-  if (vars.length===0) {
-    navigator.clipboard.writeText(p.prompt).then(()=>{
-      p.usageCount = (p.usageCount||0)+1;
-      p.lastUsed = Date.now();
-      promptTrackRecent(id);
-      persist(); promptRender();
-      showToast('📋 Copied to clipboard');
-    });
-    return;
-  }
-  promptUseId = id;
-  document.getElementById('pum-title').textContent = p.title;
-  document.getElementById('pum-subtitle').textContent = vars.length+' variable'+(vars.length!==1?'s':'')+' to fill in';
-  const varsEl = document.getElementById('pum-vars');
-  varsEl.innerHTML = vars.map(v=>`
-    <div class="pvar-row">
-      <div class="pvar-label">${v.replace(/_/g,' ')}</div>
-      <input class="input" type="text" id="pvar-${v.replace(/[^a-z0-9]/gi,'_')}" placeholder="Enter ${v.replace(/_/g,' ')}…" oninput="promptUpdatePreview()" style="margin:0 0 0 0">
-    </div>`).join('');
-  promptUpdatePreview();
-  document.getElementById('prompt-use-modal').classList.add('open');
-  setTimeout(()=>varsEl.querySelector('input')?.focus(),120);
-}
-
-function promptUpdatePreview() {
-  const p = S.prompts.find(x=>x.id===promptUseId);
-  if (!p) return;
-  const vars = promptExtractVars(p.prompt);
-  let text = p.prompt||'';
-  vars.forEach(v=>{
-    const el = document.getElementById('pvar-'+v.replace(/[^a-z0-9]/gi,'_'));
-    const val = el?.value||'';
-    if (val) text = text.split('{{'+v+'}}').join(val);
-  });
-  const preview = document.getElementById('pum-preview');
-  if (!preview) return;
-  const escaped = text.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/\n/g,'<br>');
-  preview.innerHTML = escaped.replace(/\{\{([^}]+)\}\}/g,'<span class="pvar-hl">{{$1}}</span>');
-}
-
-function promptFillAndCopy() {
-  const p = S.prompts.find(x=>x.id===promptUseId);
-  if (!p) return;
-  const vars = promptExtractVars(p.prompt);
-  let text = p.prompt||'';
-  vars.forEach(v=>{
-    const el = document.getElementById('pvar-'+v.replace(/[^a-z0-9]/gi,'_'));
-    const val = (el?.value||'').trim()||'{{'+v+'}}';
-    text = text.split('{{'+v+'}}').join(val);
-  });
-  navigator.clipboard.writeText(text).then(()=>{
-    p.usageCount = (p.usageCount||0)+1;
-    p.lastUsed = Date.now();
-    promptTrackRecent(promptUseId);
-    document.getElementById('prompt-use-modal').classList.remove('open');
-    persist(); promptRender();
-    showToast('📋 Prompt copied — paste it in Claude!');
-  });
-}
-
-function promptCopy(id) { promptUse(id); }
-
-function escHtml(str) {
-  const div = document.createElement('div'); div.textContent = str||''; return div.innerHTML;
-}
-
-function promptPopulateCatSelect(selectedId) {
-  const sel = document.getElementById('pm-cat');
-  sel.innerHTML = '<option value="">(No Category)</option>' +
-    S.promptCategories.map(c=>`<option value="${c.id}" ${c.id===selectedId?'selected':''}>${c.icon} ${c.name}</option>`).join('');
-}
-
-function promptAdd() {
-  promptEditingId = null;
-  document.getElementById('pm-title').textContent = 'New Prompt';
-  document.getElementById('pm-save-btn').textContent = 'Save Prompt';
-  document.getElementById('pm-name').value = '';
-  document.getElementById('pm-body').value = '';
-  document.getElementById('pm-tags').value = '';
-  promptPopulateCatSelect(null);
-  document.getElementById('prompt-modal').classList.add('open');
-  setTimeout(()=>document.getElementById('pm-name').focus(),100);
-}
-
-function promptEdit(id) {
-  const p = S.prompts.find(x=>x.id===id);
-  if (!p) return;
-  promptEditingId = id;
-  document.getElementById('pm-title').textContent = 'Edit Prompt';
-  document.getElementById('pm-save-btn').textContent = 'Save Changes';
-  document.getElementById('pm-name').value = p.title||'';
-  document.getElementById('pm-body').value = p.prompt||'';
-  document.getElementById('pm-tags').value = (p.tags||[]).join(', ');
-  promptPopulateCatSelect(p.category);
-  document.getElementById('prompt-modal').classList.add('open');
-}
-
-function promptSaveModal() {
-  const title = document.getElementById('pm-name').value.trim();
-  const body = document.getElementById('pm-body').value.trim();
-  if (!title||!body) { showToast('⚠️ Title and prompt text are required'); return; }
-  const catId = document.getElementById('pm-cat').value||null;
-  const tags = document.getElementById('pm-tags').value.split(',').map(t=>t.trim()).filter(Boolean);
-  if (promptEditingId) {
-    const p = S.prompts.find(x=>x.id===promptEditingId);
-    if (p) { p.title=title; p.prompt=body; p.category=catId; p.tags=tags; p.updatedAt=Date.now(); }
-    addChangelog('prompt_edit','Updated prompt "'+title+'"');
-  } else {
-    S.prompts.push({id:'pr_'+Math.random().toString(36).substr(2,9),title,category:catId,prompt:body,tags,isFavorite:false,usageCount:0,createdAt:Date.now(),createdBy:currentUser,updatedAt:Date.now()});
-    addChangelog('prompt_add','Added prompt "'+title+'"');
-  }
-  document.getElementById('prompt-modal').classList.remove('open');
-  persist(); promptRender();
-  showToast(promptEditingId?'✅ Prompt updated':'✨ Prompt saved');
-}
-
-function promptToggleFav(id) {
-  const p = S.prompts.find(x=>x.id===id);
-  if (!p) return;
-  p.isFavorite = !p.isFavorite;
-  persist(); promptRender();
-}
-
-function promptDelete(id) {
-  const p = S.prompts.find(x=>x.id===id);
-  if (!p||!confirm('Delete prompt "'+p.title+'"?')) return;
-  if(!S.deleted)S.deleted={}; S.deleted[id]=Date.now();
-  S.prompts = S.prompts.filter(x=>x.id!==id);
-  addChangelog('prompt_delete','Deleted prompt "'+p.title+'"');
-  persist(); promptRender();
-}
-
-function promptManageCategories() {
-  catRenderList();
-  document.getElementById('cat-new-icon').value = '';
-  document.getElementById('cat-new-name').value = '';
-  document.getElementById('cat-modal').classList.add('open');
-}
-
-function catRenderList() {
-  const list = document.getElementById('cat-list');
-  if (!S.promptCategories.length) {
-    list.innerHTML = '<div style="font-size:12px;color:var(--mute);padding:8px 0">No categories yet</div>';
-    return;
-  }
-  list.innerHTML = S.promptCategories.map((c,i)=>`
-    <div style="display:flex;align-items:center;gap:8px;padding:8px 10px;border:1px solid var(--hairline);border-radius:8px;background:var(--canvas-soft)">
-      <span style="font-size:18px">${c.icon}</span>
-      <span style="flex:1;font-size:13px;font-weight:500;color:var(--ink)">${c.name}</span>
-      <span style="width:12px;height:12px;border-radius:50%;background:${c.color}"></span>
-      <button class="btn btn-xs btn-ghost" onclick="catDelete(${i})" style="color:var(--mute);font-size:11px">✕</button>
-    </div>`).join('');
-}
-
-function catAdd() {
-  const name = document.getElementById('cat-new-name').value.trim();
-  if (!name) return;
-  const icon = document.getElementById('cat-new-icon').value.trim()||'📌';
-  const colors = ['#f59e0b','#22c55e','#60a5fa','#a78bfa','#f472b6','#ef4444','#06b6d4','#84cc16'];
-  S.promptCategories.push({id:'pc_'+Math.random().toString(36).substr(2,5),name,color:colors[S.promptCategories.length%colors.length],icon});
-  document.getElementById('cat-new-icon').value = '';
-  document.getElementById('cat-new-name').value = '';
-  persist(); catRenderList();
-  showToast('✅ Category added');
-}
-
-function catDelete(idx) {
-  if (idx>=0&&idx<S.promptCategories.length) {
-    S.promptCategories.splice(idx,1);
-    persist(); catRenderList();
-  }
-}
-
-
-/* ════════════════════════════════
    GOALS BOARD — weekly & monthly business outcomes
    ════════════════════════════════ */
 if (!S.goals) S.goals = [];
@@ -5217,7 +4639,7 @@ function renderGoals() {
   };
   const doing = (S.goals||[]).filter(g => g.col==='doing').length;
   const late = (S.goals||[]).filter(g => g.col!=='done' && g.target && g.target < today).length;
-  if (strip) strip.innerHTML = mk('This week\'s goals','weekly','#60a5fa') + mk('This month\'s goals','monthly','#a78bfa') +
+  if (strip) strip.innerHTML = mk('This week','weekly','#60a5fa') + mk('This month','monthly','#a78bfa') + mk('This quarter','quarterly','#ff9a4d') +
     `<div class="gl-stat"><div class="gl-stat-top"><span class="gl-stat-label">In motion right now</span><span class="gl-stat-n">${doing}</span></div>
       <div style="font-size:11px;color:${late?'var(--red)':'var(--mute)'};font-weight:600;margin-top:2px">${late ? '⚠️ ' + late + ' goal' + (late>1?'s':'') + ' past target date' : '✓ Nothing overdue'}</div></div>`;
 
@@ -5247,7 +4669,7 @@ function renderGoals() {
             <div class="gl-card-title">${escGl(g.title)}</div>
             <div class="gl-card-meta">
               ${glOwnerChip(g)}
-              <span class="gl-chip ${g.horizon}">${g.horizon==='weekly'?'Week':'Month'}</span>
+              <span class="gl-chip ${g.horizon}">${({weekly:'Week',monthly:'Month',quarterly:'Quarter'})[g.horizon]||'Goal'}</span>
               ${g.target ? `<span class="gl-date${isLate?' late':''}">${isLate?'⚠ ':''}${glFmtDate(g.target)}</span>` : ''}
             </div>
           </div>`;
