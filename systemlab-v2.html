@@ -843,6 +843,7 @@ select option{background:var(--canvas-card)}
       
       <div style="display:flex; justify-content:space-between; align-items:center; margin-top:20px; margin-bottom:12px; padding:0 24px;">
         <div style="font-size:14px; font-weight:600; color:var(--ink)">Daily Tasks</div>
+        <button class="btn btn-xs" style="background:transparent; border:1px solid var(--hairline); color:var(--mute)" onclick="dayToCalendar()" title="One file, every task pre-slotted from login time">📅 Day → Calendar</button>
         <button class="btn btn-xs" style="background:transparent; border:1px solid var(--hairline); color:var(--mute)" onclick="openRecurringModal()">↻ Manage Recurring</button>
       </div>
       <div class="task-toolbar">
@@ -3956,9 +3957,10 @@ function checkCelebration(empId) {
   fireCelebration(empId);
 }
 
-// ─── TASK → GOOGLE CALENDAR ───────────────────────────────────────────
-// The slot is CALCULATED: day starts at the member's login time (or 10:00),
-// and each task begins where the previous task's duration ends.
+// ─── DAY → CALENDAR ───────────────────────────────────────────────────
+// One tap exports the WHOLE day: every task becomes a calendar event,
+// slots calculated from the member's login time (10:00 fallback), each
+// task starting where the previous one ends. No per-task fiddling.
 function _parseLoginTime(s) { // "9:48 AM" -> minutes since midnight
   const m = /^(\d{1,2}):(\d{2})\s*(AM|PM)$/i.exec((s||'').trim());
   if (!m) return null;
@@ -3966,33 +3968,43 @@ function _parseLoginTime(s) { // "9:48 AM" -> minutes since midnight
   if (/pm/i.test(m[3])) h += 12;
   return h * 60 + parseInt(m[2]);
 }
-function taskToCalendar(tid) {
-  const t = S.tasks.find(x => x.id === tid);
-  if (!t) return;
-  const dayTasks = getTasks(t.empId, t.date); // rendered order
-  const att = (S.att[t.empId] || {})[t.date] || {};
-  let startMin = _parseLoginTime(att.loginTime);
-  if (startMin === null) startMin = 10 * 60; // SOP day start
-  for (const x of dayTasks) {
-    if (x.id === tid) break;
-    startMin += parseInt(x.mins) || 0;
-  }
-  const endMin = startMin + (parseInt(t.mins) || 30);
+function _icsEsc(s){ return (s||'').replace(/\\/g,'\\\\').replace(/;/g,'\\;').replace(/,/g,'\\,').replace(/\n/g,'\\n'); }
+function dayToCalendar() {
+  if (!curEmp) return;
+  const emp = S.employees.find(e => e.id === curEmp);
+  const tasks = getTasks(curEmp, TT_TODAY);
+  if (!tasks.length) { showToast('No tasks today — add them first'); return; }
+  const att = (S.att[curEmp] || {})[TT_TODAY] || {};
+  let cursor = _parseLoginTime(att.loginTime);
+  if (cursor === null) cursor = 10 * 60;
   const pad = n => String(n).padStart(2, '0');
-  const dstr = t.date.replace(/-/g, '');
-  const fmt = (mins) => pad(Math.floor(mins / 60) % 24) + pad(mins % 60) + '00';
-  const emp = S.employees.find(e => e.id === t.empId);
-  const title = encodeURIComponent(t.name);
-  const details = encodeURIComponent(
-    'SystemLab task · ' + (emp ? emp.name : '') + ' · ' + fmtMins(t.mins) +
-    (S.objective && S.objective.title ? '\n🏔️ Mission: ' + S.objective.title : ''));
-  const url = 'https://calendar.google.com/calendar/r/eventedit?text=' + title +
-    '&dates=' + dstr + 'T' + fmt(startMin) + '/' + dstr + 'T' + fmt(endMin) +
-    '&details=' + details + '&sf=true';
-  window.open(url, '_blank', 'noopener');
-  showToast('📅 ' + (Math.floor(startMin/60)%12||12) + ':' + pad(startMin%60) + (startMin>=720?' PM':' AM') + ' slot — save it in Calendar');
+  const d = TT_TODAY.replace(/-/g, '');
+  const stamp = d + 'T' + pad(new Date().getHours()) + pad(new Date().getMinutes()) + '00';
+  const fmt = m => d + 'T' + pad(Math.floor(m/60)%24) + pad(m%60) + '00';
+  let ics = 'BEGIN:VCALENDAR\r\nVERSION:2.0\r\nPRODID:-//SystemLab//Day Plan//EN\r\nCALSCALE:GREGORIAN\r\nMETHOD:PUBLISH\r\n';
+  tasks.forEach(t => {
+    const startM = cursor, endM = cursor + (parseInt(t.mins) || 30);
+    cursor = endM;
+    ics += 'BEGIN:VEVENT\r\n'
+      + 'UID:' + t.id + '-' + TT_TODAY + '@systemlab\r\n'
+      + 'DTSTAMP:' + stamp + '\r\n'
+      + 'DTSTART:' + fmt(startM) + '\r\n'
+      + 'DTEND:' + fmt(endM) + '\r\n'
+      + 'SUMMARY:' + _icsEsc(t.name) + '\r\n'
+      + 'DESCRIPTION:' + _icsEsc('SystemLab · ' + (emp?emp.name:'') + ' · ' + fmtMins(t.mins) + ((S.objective&&S.objective.title)?'\n🏔️ ' + S.objective.title:'')) + '\r\n'
+      + 'BEGIN:VALARM\r\nTRIGGER:-PT5M\r\nACTION:DISPLAY\r\nDESCRIPTION:Task starting\r\nEND:VALARM\r\n'
+      + 'END:VEVENT\r\n';
+  });
+  ics += 'END:VCALENDAR\r\n';
+  const blob = new Blob([ics], { type: 'text/calendar;charset=utf-8' });
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = (emp ? emp.name.split(' ')[0].toLowerCase() : 'day') + '-' + TT_TODAY + '.ics';
+  document.body.appendChild(a); a.click(); a.remove();
+  setTimeout(() => URL.revokeObjectURL(a.href), 4000);
+  showToast('📅 ' + tasks.length + ' tasks exported — open the file and your whole day lands in Calendar');
 }
-window.taskToCalendar = taskToCalendar;
+window.dayToCalendar = dayToCalendar;
 
 function toggleTask(tid) {
   const t = S.tasks.find(x => x.id === tid);
@@ -4166,7 +4178,6 @@ document.getElementById('empDetailHead').innerHTML = `
         <div class="tlogged ${t.done?'has':''}">${t.done ? fmtMins(t.mins) : '—'}</div>
         <div class="tdoneat ${t.doneAt?'has':''}">${t.doneAt || '—'}</div>
         <div style="display:flex; gap:4px">
-          <button class="tdel" style="font-size:12px; color:var(--mute)" title="Add to Google Calendar — slot auto-calculated from your day" onclick="taskToCalendar('${t.id}')">📅</button>
           <button class="tdel" style="font-size:12px; color:var(--mute)" onclick="openEditTask('${t.id}')">✎</button>
           <button class="tdel" onclick="deleteTask('${t.id}')">×</button>
         </div>
