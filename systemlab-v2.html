@@ -19,12 +19,13 @@
 <style>
 *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
 :root{
-  --canvas:#0a0a0b;--canvas-soft:#131316;--canvas-card:#1a1b1f;--canvas-mid:#222327;
-  --hairline:#212327;--hairline-mid:#2c2f35;
-  --ink:#ffffff;--body:#dadbdf;--mute:#7d8187;--mute2:#4a4d54;
-  --sunset:#ff7a17;--sunset-soft:rgba(255,122,23,0.12);
+  /* CEO-dashboard design tokens (ceo.pixelizt.com) — same visual system */
+  --canvas:#090909;--canvas-soft:#1c1c1c;--canvas-card:#141414;--canvas-mid:#222222;
+  --hairline:#1a1a1a;--hairline-mid:#262626;
+  --ink:#ffffff;--body:#d6d6d6;--mute:#999999;--mute2:#666666;
+  --sunset:#f0b429;--sunset-soft:rgba(240,180,41,0.12);
   --green:#22c55e;--green-soft:rgba(34,197,94,0.1);
-  --yellow:#eab308;--red:#ef4444;
+  --yellow:#f0b429;--red:#f87171;
   --blue:#60a5fa;--purple:#a78bfa;
   --sans:'Inter',system-ui,sans-serif;--mono:'JetBrains Mono',monospace;
   --r-sm:10px;--r-md:14px;--r-pill:9999px;--glass-shadow:0 8px 28px rgba(0,0,0,0.35);
@@ -33,7 +34,7 @@
 }
 .sop-content * { box-sizing: border-box; }
 html,body{height:100%;overflow:hidden;background:var(--canvas)}
-body{font-family:var(--sans);font-size:14px;line-height:1.5;color:var(--ink);-webkit-font-smoothing:antialiased}
+body{font-family:var(--sans);font-size:14px;line-height:1.5;color:var(--ink);-webkit-font-smoothing:antialiased;letter-spacing:-0.14px;font-feature-settings:'cv01','cv05','cv09','cv11','ss03'}
 ::-webkit-scrollbar{width:4px;height:4px}
 ::-webkit-scrollbar-track{background:transparent}
 ::-webkit-scrollbar-thumb{background:var(--hairline-mid);border-radius:2px}
@@ -68,6 +69,79 @@ select option{background:var(--canvas-card)}
 /* EYEBROW */
 .eyebrow{font-family:var(--mono);font-size:10px;font-weight:400;letter-spacing:1.2px;text-transform:uppercase;color:var(--mute)}
 
+
+/* ── CLIENTS (delivery ops) — CEO-dashboard visual language ── */
+.cl-wrap{max-width:1180px;margin:0 auto;padding:26px 28px 70px;width:100%}
+.cl-head{display:flex;align-items:flex-start;gap:14px;margin-bottom:18px}
+.cl-head h1{font-size:20px;font-weight:750;letter-spacing:-0.6px}
+.cl-head .sub{font-size:12.5px;color:var(--mute);margin-top:3px}
+.cl-tiles{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:10px;margin-bottom:18px}
+.cl-tile{background:var(--canvas-card);border:1px solid var(--hairline);border-radius:var(--r-md);padding:14px 16px 12px}
+.cl-tile .l{font-size:11px;color:var(--mute);font-weight:500;margin-bottom:6px;white-space:nowrap}
+.cl-tile .v{font-size:21px;font-weight:750;letter-spacing:-0.9px;font-variant-numeric:tabular-nums}
+.cl-tile.warn .v{color:var(--red)} .cl-tile.good .v{color:var(--green)}
+.cl-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(300px,1fr));gap:12px}
+.cl-card{background:var(--canvas-card);border:1px solid var(--hairline);border-radius:var(--r-md);padding:16px 18px;cursor:pointer;transition:border-color .12s,background .12s}
+.cl-card:hover{border-color:#333;background:#171717}
+.cl-card .nm{font-size:14.5px;font-weight:700;letter-spacing:-0.3px;display:flex;align-items:center;gap:8px;min-width:0}
+.cl-card .nm span{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.cl-card .meta{font-size:11.5px;color:var(--mute2);margin-top:3px}
+.cl-chip{display:inline-block;font-size:10.5px;font-weight:600;border-radius:var(--r-pill);padding:2.5px 9px;white-space:nowrap;border:1px solid var(--hairline);color:var(--mute);background:var(--canvas-soft);flex:none}
+.cl-chip.green{color:var(--green);background:rgba(34,197,94,.1);border-color:rgba(34,197,94,.25)}
+.cl-chip.red{color:var(--red);background:rgba(248,113,113,.1);border-color:rgba(248,113,113,.25)}
+.cl-chip.amber{color:var(--sunset);background:rgba(240,180,41,.1);border-color:rgba(240,180,41,.25)}
+.cl-chip.blue{color:var(--blue);background:rgba(96,165,250,.1);border-color:rgba(96,165,250,.25)}
+.cl-bar{height:5px;background:var(--canvas-soft);border-radius:var(--r-pill);overflow:hidden;margin-top:10px}
+.cl-bar i{display:block;height:100%;background:var(--green);border-radius:var(--r-pill)}
+.cl-card .foot{display:flex;justify-content:space-between;align-items:center;font-size:11px;color:var(--mute);margin-top:8px;gap:8px}
+.cl-next{display:flex;align-items:center;gap:7px;font-size:12px;color:var(--mute);margin-top:11px;min-width:0}
+.cl-next b{color:var(--body);font-weight:600;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+/* detail */
+.cl-dhead{display:flex;align-items:center;gap:12px;flex-wrap:wrap;margin-bottom:16px}
+.cl-dhead h1{font-size:21px;font-weight:750;letter-spacing:-0.7px}
+.cl-info{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:10px;margin-bottom:14px}
+.cl-info .f label{display:block;font-size:10px;text-transform:uppercase;letter-spacing:.5px;color:var(--mute2);font-weight:600;margin-bottom:5px}
+.cl-info .f input,.cl-info .f select{width:100%;font-size:13px;padding:8px 11px}
+.cl-dates{display:grid;grid-template-columns:repeat(auto-fit,minmax(155px,1fr));gap:10px;margin-bottom:20px}
+.cl-date{background:var(--canvas-card);border:1px solid var(--hairline);border-radius:var(--r-sm);padding:11px 13px}
+.cl-date .l{font-size:10px;text-transform:uppercase;letter-spacing:.5px;color:var(--mute2);font-weight:600;margin-bottom:5px}
+.cl-date .v{font-size:13.5px;font-weight:700;font-variant-numeric:tabular-nums;display:flex;align-items:center;gap:7px;flex-wrap:wrap}
+.cl-tabs{display:flex;gap:8px;margin-bottom:16px;flex-wrap:wrap}
+.cl-tab{font-size:12px;font-weight:600;color:var(--mute);border:1px solid var(--hairline);border-radius:var(--r-pill);padding:6px 15px;cursor:pointer;background:var(--canvas-card)}
+.cl-tab:hover{color:var(--ink)}
+.cl-tab.active{background:var(--ink);color:#000;border-color:var(--ink)}
+.cl-sec{background:var(--canvas-card);border:1px solid var(--hairline);border-radius:var(--r-md);padding:18px;margin-bottom:14px}
+.cl-sec h3{font-size:13px;font-weight:700;margin-bottom:4px;display:flex;align-items:center;gap:10px;flex-wrap:wrap}
+.cl-sec h3 small{color:var(--mute2);font-weight:500;font-size:11px}
+.cl-phase{font-size:10.5px;text-transform:uppercase;letter-spacing:.8px;color:var(--sunset);font-weight:700;margin:16px 0 6px}
+.cl-ob{display:flex;align-items:center;gap:11px;padding:8px 0;border-bottom:1px solid var(--hairline);font-size:12.5px}
+.cl-ob:last-child{border-bottom:none}
+.cl-ob .ck{width:18px;height:18px;border-radius:5px;border:1.5px solid var(--hairline-mid);cursor:pointer;display:flex;align-items:center;justify-content:center;flex:none;background:transparent;transition:all .12s}
+.cl-ob .ck:hover{border-color:rgba(255,255,255,.35)}
+.cl-ob .ck.on{background:var(--green);border-color:var(--green)}
+.cl-ob .ck.on::after{content:'✓';font-size:10px;color:#000;font-weight:800}
+.cl-ob .t{flex:1;color:var(--body);min-width:0}
+.cl-ob.on .t{color:var(--mute2);text-decoration:line-through}
+.cl-ob .day{width:52px;flex:none;color:var(--mute2);font-size:11px;font-variant-numeric:tabular-nums}
+.cl-ob .ow{width:120px;flex:none;color:var(--mute);font-size:11px;text-align:right;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.cl-ob .at{width:78px;flex:none;color:var(--mute2);font-size:10.5px;text-align:right;font-variant-numeric:tabular-nums}
+.cl-monav{display:flex;align-items:center;gap:2px;border:1px solid var(--hairline);border-radius:var(--r-pill);background:var(--canvas-soft);padding:2px;margin-left:auto}
+.cl-monav button{background:none;border:none;color:var(--mute);font-size:14px;line-height:1;padding:4px 9px;border-radius:var(--r-pill);cursor:pointer}
+.cl-monav button:hover{color:var(--ink)}
+.cl-monav b{font-size:11.5px;font-weight:600;padding:0 4px;min-width:70px;text-align:center}
+.cl-gt table{width:100%;border-collapse:collapse;font-size:12px}
+.cl-gt th{font-size:10px;text-transform:uppercase;letter-spacing:.4px;color:var(--mute2);font-weight:600;text-align:left;padding:6px 7px;border-bottom:1px solid var(--hairline);white-space:nowrap}
+.cl-gt td{padding:6px 7px;border-bottom:1px solid var(--hairline);white-space:nowrap;font-variant-numeric:tabular-nums}
+.cl-gt tr:last-child td{border-bottom:none}
+.cl-gt input,.cl-gt select{width:74px;padding:5px 8px;font-size:12px}
+.cl-gt select{width:64px}
+.cl-gt .wide{width:100%;min-width:120px}
+.cl-gtwrap{overflow-x:auto;margin:0 -18px;padding:0 18px}
+.cl-add{background:var(--canvas-card);border:1px dashed var(--hairline-mid);border-radius:var(--r-md);padding:16px 18px}
+.cl-add .row{display:flex;gap:10px;flex-wrap:wrap;margin-top:10px}
+.cl-add input,.cl-add select{font-size:13px}
+.cl-empty{color:var(--mute2);font-size:12.5px;padding:20px 0;text-align:center}
+@media(max-width:700px){.cl-wrap{padding:16px 14px 60px}.cl-ob .ow{display:none}.cl-ob .day{width:38px}}
 
 /* TEAM CSS */
 .emp-avatar { width: 28px; height: 28px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 11px; font-weight: 700; color: #000; flex-shrink: 0; }
@@ -573,6 +647,11 @@ select option{background:var(--canvas-card)}
           <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><path d="M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 00-3-3.87"/><path d="M16 3.13a4 4 0 010 7.75"/></svg>
           Team
         </div>
+        <div class="nav-item" data-view="clients" onclick="showView('clients',this)">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><path d="M3 9l9-6 9 6v11a2 2 0 01-2 2H5a2 2 0 01-2-2z"/><path d="M9 22V12h6v10"/></svg>
+          Clients
+          <span class="nav-count" id="cnt-clients" style="display:none">0</span>
+        </div>
         <div class="nav-item" data-view="goals" onclick="showView('goals',this)">
           <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><circle cx="12" cy="12" r="10"/><circle cx="12" cy="12" r="6"/><circle cx="12" cy="12" r="2"/></svg>
           Goals
@@ -854,6 +933,11 @@ select option{background:var(--canvas-card)}
 
 
     <!-- GOALS BOARD -->
+    <!-- CLIENTS: delivery ops (client master + onboarding + monthly ops + guarantee) -->
+    <div id="v-clients" class="view">
+      <div id="cl-root" style="flex:1;overflow-y:auto"></div>
+    </div>
+
     <div id="v-goals" class="view">
       <div class="gl-head">
         <div>
@@ -1268,6 +1352,7 @@ let S = {
   recurring: [],
   leadgen: {},
   goals: [],             // Business goals kanban
+  clients: [],           // Client delivery ops: onboarding, monthly ops, guarantee tracker
   objective: null,       // The Mission — org-wide objective {title, why, target, updatedAt}
   docs: [],              // Document Vault
   prompts: [],           // Prompt Library
@@ -1354,6 +1439,7 @@ function applyTombstones() {
   if (Array.isArray(S.tasks)) S.tasks = S.tasks.filter(t => !(t && del[t.id]));
   if (Array.isArray(S.recurring)) S.recurring = S.recurring.filter(r => !(r && del[r.id]));
   if (Array.isArray(S.goals)) S.goals = S.goals.filter(g => !(g && del[g.id]));
+  if (Array.isArray(S.clients)) S.clients = S.clients.filter(c => !(c && del[c.id]));
 }
 
 const STARTER = `# SOP Title
@@ -1685,6 +1771,7 @@ function hydrateFromV3(v, { mergeLocal } = { mergeLocal: true }) {
   if (rSops.length || !S.sops.length) S.sops = rSops;
   S.recurring = objVals(v.recurring);
   S.goals = mergeTasks(objVals(v.goals), S.goals);
+  S.clients = mergeTasks(objVals(v.clients), S.clients);
   const rDocs = objVals(v.docs); if (rDocs.length || !(S.docs||[]).length) S.docs = rDocs;
   const rPrompts = objVals(v.prompts); if (rPrompts.length || !(S.prompts||[]).length) S.prompts = rPrompts;
   const rPC = objVals(v.promptCategories); if (rPC.length) S.promptCategories = rPC;
@@ -1728,6 +1815,7 @@ async function connectToWorkspace(workspaceId, userName) {
       S.recurring = d.recurring || [];
       S.leadgen = safeMerge(d.leadgen, S.leadgen, {});
       S.goals = d.goals || [];
+      S.clients = d.clients || [];
       S.objective = d.objective || null;
       S.docs = d.docs || [];
       S.prompts = d.prompts || [];
@@ -2153,6 +2241,7 @@ function buildPayloadStr() {
     employees: S.employees||[], tasks: S.tasks||[], att: S.att||{},
     recurring: S.recurring||[], leadgen: S.leadgen||{},
     goals: S.goals||[],
+    clients: S.clients||[],
     objective: S.objective||null,
     docs: S.docs||[], prompts: S.prompts||[],
     promptCategories: S.promptCategories||[],
@@ -2319,6 +2408,7 @@ function persist() {
   putAll('sops', S.sops);
   putAll('recurring', S.recurring);
   putAll('goals', S.goals);
+  putAll('clients', S.clients);
   putAll('docs', S.docs);
   putAll('prompts', S.prompts);
   putAll('promptCategories', S.promptCategories);
@@ -2341,6 +2431,7 @@ function persist() {
     u['docs/' + id] = null;
     u['prompts/' + id] = null;
     u['goals/' + id] = null;
+    u['clients/' + id] = null;
   }
   u['meta/workspaceName'] = S.workspaceName || 'My Workspace';
   u['meta/objective'] = S.objective ? clean(S.objective) : null;
@@ -2444,6 +2535,7 @@ function showView(id, navEl) {
   }
   if (id==='all') { S.deptFilter=null; renderListView(S.sops,'All SOPs','var(--mute)'); }
   if (id==='goals') { if (typeof renderGoals === 'function') renderGoals(); }
+  if (id==='clients') { if (typeof renderClients === 'function') renderClients(); }
   if (id==='reports') { if (typeof renderReports === 'function') renderReports(); }
 }
 
@@ -4570,6 +4662,343 @@ function saveEmployee() {
   persist();
   closeAddEmpModal();
   renderTeam();
+}
+
+/* ════════════════════════════════
+   CLIENTS — delivery ops (mirrors Pixelizt_Team_Operations.xlsx:
+   CLIENT MASTER auto-deadlines + ONBOARDING + MONTHLY OPS + GUARANTEE TRACKER)
+   ════════════════════════════════ */
+if (!S.clients) S.clients = [];
+let clCur = null, clTab = 'ob', clMoView = null;
+
+const CL_OB = [
+  {ph:'Phase 0 — Acceptance & setup (Day 0–1)'},
+  {d:'0',   t:'Client acceptance received — log client here + deal in LeadLab', o:'Sadhana'},
+  {d:'0',   t:'Raise advance invoice ₹50,000 + GST; send payment instructions', o:'Sadhana'},
+  {d:'0–1', t:'Confirm advance received; mark payment in LeadLab', o:'Kiran', key:'advance'},
+  {d:'1',   t:'Create project WhatsApp group (POC + Sadhana + Jenifer + Arshitha); send intro', o:'Sadhana'},
+  {d:'1',   t:'Send welcome pack + onboarding form (Tally); outlet form per extra branch', o:'Sadhana'},
+  {ph:'Phase 1 — Access, tracking & brief (Day 1–5)'},
+  {d:'2–3', t:'30-min onboarding call with client POC', o:'Founder + Sadhana'},
+  {d:'1–5', t:'Collect access: GBP, domain registrar, existing site, brand assets', o:'Jenifer'},
+  {d:'2',   t:'Guide client to buy domain + hosting (client pays, client\'s name)', o:'Jenifer'},
+  {d:'3',   t:'Create GitHub repo from client-template; fill client.md; upload assets', o:'Arshitha'},
+  {d:'4',   t:'Tracking setup: GA4 + Search Console; verify ownership', o:'Jenifer'},
+  {d:'4',   t:'SNAPSHOT GBP BASELINE: calls, directions, impressions → Guarantee tab', o:'Jenifer', key:'baseline'},
+  {d:'5',   t:'GBP audit + optimisation plan; align categories with site pages', o:'GBP Specialist'},
+  {d:'1–5', t:'Book photoshoot date — earliest possible, latest Day 21', o:'Founder'},
+  {ph:'Phase 2 — Concept sprint (Day 5–7) · GUARANTEE DEADLINE'},
+  {d:'5–6', t:'Build first website concept with Claude Code from client.md', o:'Arshitha'},
+  {d:'6',   t:'Internal review of concept; revision pass', o:'Founder'},
+  {d:'7',   t:'PRESENT FIRST CONCEPT to client (preview link + Loom walkthrough)', o:'Arshitha + Sadhana', key:'concept'},
+  {ph:'Phase 3 — Build out (Day 7–28)'},
+  {d:'7–20',t:'Client revision rounds (target max 3; log each in notes)', o:'Arshitha'},
+  {d:'≤21', t:'Photoshoot done; edited; best shots into website + GBP', o:'Founder + Arshitha'},
+  {d:'≤21', t:'QR review system: link + printed cards + table tents handed over', o:'Arshitha'},
+  {d:'≤25', t:'Walk-in poster designed, approved, print-ready file to client', o:'Arshitha'},
+  {d:'≤28', t:'GBP full build: categories, services, menu, photos, Q&A, booking', o:'GBP Specialist'},
+  {d:'25',  t:'Raise balance invoice (due Day 30)', o:'Sadhana'},
+  {d:'30',  t:'Balance received and confirmed', o:'Kiran', key:'balance'},
+  {ph:'Phase 4 — Launch (Month 2)'},
+  {d:'Mo 2',t:'Final client approval on website', o:'Sadhana'},
+  {d:'Mo 2',t:'GO LIVE: DNS → Netlify, SSL, redirects (sets Actual Live date)', o:'Arshitha', key:'live'},
+  {d:'Mo 2',t:'Post-launch pass: sitemap, robots.txt, schema, page-speed', o:'Jenifer'},
+  {d:'Mo 2',t:'Generate seo-plan.md with Claude; team reviews and approves', o:'Jenifer'},
+  {d:'Mo 2',t:'Verify with client: QR live on tables + poster up (photo proof)', o:'Sadhana'},
+  {ph:'Phase 5 — Growth systems on (Month 2–3)'},
+  {d:'Mo 2–3',t:'AI search optimisation: schema, llms.txt, FAQs, AI-answer presence', o:'Jenifer'},
+  {d:'Mo 2–3',t:'Influencer system: research locals with Claude; first monthly brief', o:'Jenifer'},
+  {d:'Mo 3',t:'Newspaper insert delivered; client books first quarterly insertion', o:'Arshitha'},
+  {d:'Mo 3',t:'Onboarding retro (15 min): what was late, what was smooth', o:'Sadhana'},
+];
+const CL_MO = [
+  {k:'data',       t:'Pull last month\'s data — GSC / GA4 / GBP insights', o:'Jenifer',  w:'by 1st'},
+  {k:'seo',        t:'Claude monthly SEO pass — PR reviewed & merged', o:'Jenifer',  w:'1st–2nd'},
+  {k:'offpage',    t:'Off-page task list executed (backlinks, citations, outreach)', o:'Jenifer', w:'2nd–3rd'},
+  {k:'ai',         t:'AI presence check logged (ChatGPT / Perplexity / Google AI)', o:'Jenifer', w:'1st wk'},
+  {k:'report',     t:'Monthly performance report sent to client', o:'Sadhana', w:'by 5th'},
+  {k:'influencer', t:'Influencer brief issued + last month\'s 3 collabs verified', o:'Jenifer', w:'1st wk'},
+  {k:'compliance', t:'Compliance check: QR in use · poster up · newspaper (if qtr)', o:'Sadhana', w:'1st wk'},
+  {k:'gbpquery',   t:'Search-query data shared with GBP specialist', o:'Jenifer', w:'1st wk'},
+  {k:'payment',    t:'Payment status reviewed (LeadLab payments tab)', o:'Kiran', w:'mid-mo'},
+];
+const CL_POSTS_TARGET = 8; // 2 GBP posts / week
+
+const clEsc = s => String(s??'').replace(/[&<>"]/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+const clToday = () => getLocalISODate ? getLocalISODate() : new Date().toLocaleDateString('en-CA');
+const clMoKeyOf = d => 'm' + d.getFullYear() + '_' + String(d.getMonth()+1).padStart(2,'0');
+const clMoLbl = k => { const p = k.slice(1).split('_'); return new Date(+p[0], +p[1]-1, 1).toLocaleDateString('en-GB',{month:'short',year:'numeric'}); };
+function clAddD(iso, n){ const d = new Date(iso+'T12:00:00'); d.setDate(d.getDate()+n); return d; }
+function clAddM(iso, n){ const d = new Date(iso+'T12:00:00'); d.setMonth(d.getMonth()+n); return d; }
+const clFmtD = d => d ? d.toLocaleDateString('en-GB',{day:'numeric',month:'short',year:'2-digit'}) : '—';
+function clById(id){ return (S.clients||[]).find(c => c && c.id === id); }
+function clObDone(c, key){
+  const i = CL_OB.findIndex(x => x.key === key);
+  return i >= 0 && c.ob && c.ob[i] && c.ob[i].d;
+}
+// CLIENT MASTER auto-deadlines (same formulas as the sheet)
+function clDates(c){
+  if (!c.start) return [];
+  const today = clToday();
+  const planEnd = clAddM(c.start, +c.pkg || 6);
+  const rows = [
+    { l:'Concept due · Day 7',  d: clAddD(c.start, 7),  done: clObDone(c,'concept') },
+    { l:'Balance due · Day 30', d: clAddD(c.start, 30), done: clObDone(c,'balance') },
+    { l:'Target live · Month 2',d: clAddM(c.start, 2),  done: !!c.live },
+    { l:'90-day check',         d: c.live ? clAddD(c.live, 90) : null, done: false, need:'after go-live' },
+    { l:'Renewal talk opens',   d: clAddD(planEnd.toLocaleDateString('en-CA'), -30), done: false },
+    { l:'Plan ends',            d: planEnd, done: false },
+  ];
+  rows.forEach(r => {
+    if (!r.d) { r.state = 'grey'; r.chip = r.need || '—'; return; }
+    const iso = r.d.toLocaleDateString('en-CA');
+    if (r.done) { r.state = 'green'; r.chip = '✓ done'; }
+    else if (iso < today) { r.state = 'red'; r.chip = 'overdue'; }
+    else if (clAddD(today, 7).toLocaleDateString('en-CA') >= iso) { r.state = 'amber'; r.chip = 'soon'; }
+    else { r.state = 'grey'; r.chip = ''; }
+  });
+  return rows;
+}
+function clObProg(c){
+  const items = CL_OB.filter(x => !x.ph);
+  let n = 0; CL_OB.forEach((x,i) => { if (!x.ph && c.ob && c.ob[i] && c.ob[i].d) n++; });
+  return { done:n, total:items.length, pct: items.length ? Math.round(n/items.length*100) : 0 };
+}
+function clMoProg(c, mk){
+  const m = (c.mo||{})[mk] || {};
+  let n = 0; CL_MO.forEach(it => { if (m.done && m.done[it.k]) n++; });
+  const postsOk = (+m.posts||0) >= CL_POSTS_TARGET;
+  return { done: n + (postsOk?1:0), total: CL_MO.length + 1, pct: Math.round((n+(postsOk?1:0))/(CL_MO.length+1)*100), posts:+m.posts||0 };
+}
+function clRowMet(r){ // GUARANTEE TRACKER "All Conditions Met" formula
+  if (!r || r.qr==='' || r.qr==null) return null;
+  const collabsOk = (+r.collabs||0) >= 3;
+  return r.qr==='Y' && collabsOk && r.poster==='Y' && (r.news==='Y' || r.news==='NA');
+}
+function clGtCalc(c){
+  const g = c.gt || {}; const base = g.base || {};
+  const b = (+base.calls||0) + (+base.dirs||0);
+  const keys = Object.keys(g.rows||{}).sort();
+  let last = null, lastKey = null;
+  keys.forEach(k => { const r = g.rows[k]; if (r && (r.calls!=='' && r.calls!=null || r.dirs!=='' && r.dirs!=null)) { last = r; lastKey = k; } });
+  let growth = null;
+  if (b > 0 && last) growth = Math.round((((+last.calls||0)+(+last.dirs||0)) - b) / b * 100);
+  const met = last ? clRowMet(last) : null;
+  // verdict for the 90-day results guarantee
+  let verdict = 'No baseline yet', vs = 'grey';
+  if (b > 0) {
+    if (growth == null) { verdict = 'Baseline set — log months'; vs = 'grey'; }
+    else if (growth > 0) { verdict = 'On track · +' + growth + '%'; vs = 'green'; }
+    else { verdict = 'At risk · ' + growth + '%'; vs = 'red'; }
+  }
+  return { base:b, growth, met, lastKey, verdict, vs };
+}
+function clMoKeys(c){ // months from start (or live) through current month, newest first
+  const nowKey = clMoKeyOf(new Date());
+  if (!c.start) return [nowKey];
+  const out = [];
+  const d = new Date(c.start + 'T12:00:00'); d.setDate(1);
+  let guard = 0;
+  while (clMoKeyOf(d) <= nowKey && guard++ < 24) { out.push(clMoKeyOf(d)); d.setMonth(d.getMonth()+1); }
+  if (!out.length) out.push(nowKey);
+  return out.reverse();
+}
+const CL_STATUS = { onboarding:['Onboarding','blue'], active:['Active','green'], attention:['Needs attention','red'], paused:['Paused','amber'], complete:['Term complete','grey'] };
+
+function renderClients(){
+  const root = document.getElementById('cl-root'); if (!root) return;
+  const cnt = document.getElementById('cnt-clients');
+  const act = (S.clients||[]).filter(c => c && c.status !== 'complete');
+  if (cnt) { cnt.textContent = act.length; cnt.style.display = act.length ? '' : 'none'; }
+  if (clCur && clById(clCur)) { root.innerHTML = clDetailHTML(clById(clCur)); return; }
+  clCur = null;
+  const nowMk = clMoKeyOf(new Date());
+  let overdue = 0, atRisk = 0, opsSum = 0, opsN = 0;
+  act.forEach(c => {
+    clDates(c).forEach(r => { if (r.state === 'red') overdue++; });
+    const gt = clGtCalc(c); if (gt.vs === 'red') atRisk++;
+    if (c.live || clObProg(c).pct === 100) { opsSum += clMoProg(c, nowMk).pct; opsN++; }
+  });
+  const cards = (S.clients||[]).slice().sort((a,b) => (b.start||'').localeCompare(a.start||'')).map(c => {
+    const st = CL_STATUS[c.status] || CL_STATUS.onboarding;
+    const ds = clDates(c);
+    const next = ds.find(r => !r.done && r.d && r.state !== 'grey') || ds.find(r => !r.done && r.d);
+    const ob = clObProg(c); const gt = clGtCalc(c);
+    const day = c.start ? Math.floor((new Date() - new Date(c.start+'T12:00:00'))/86400000) : null;
+    const onb = c.status === 'onboarding' || ob.pct < 100;
+    const mp = clMoProg(c, nowMk);
+    return '<div class="cl-card" onclick="clOpen(\'' + c.id + '\')">' +
+      '<div class="nm"><span>' + clEsc(c.name) + '</span><span class="cl-chip ' + st[1] + '">' + st[0] + '</span></div>' +
+      '<div class="meta">' + (c.pkg||6) + '-month · started ' + (c.start ? clFmtD(new Date(c.start+'T12:00:00')) : '—') + (day!=null ? ' · D+' + day : '') + '</div>' +
+      (next ? '<div class="cl-next"><span class="cl-chip ' + next.state + '">' + clFmtD(next.d) + '</span><b>' + next.l + '</b></div>' : '<div class="cl-next"><b>All milestones done</b></div>') +
+      '<div class="cl-bar"><i style="width:' + (onb ? ob.pct : mp.pct) + '%"></i></div>' +
+      '<div class="foot"><span>' + (onb ? 'Onboarding ' + ob.done + '/' + ob.total : 'Ops ' + clMoLbl(nowMk) + ' · ' + mp.pct + '%') + '</span>' +
+      (gt.base ? '<span class="cl-chip ' + gt.vs + '">' + clEsc(gt.verdict) + '</span>' : '') + '</div></div>';
+  }).join('');
+  root.innerHTML = '<div class="cl-wrap">' +
+    '<div class="cl-head"><div><h1>🏪 Clients</h1><div class="sub">Delivery ops — onboarding, monthly work and the 90-day guarantee, per client. Deals & payments stay in LeadLab.</div></div></div>' +
+    '<div class="cl-tiles">' +
+      '<div class="cl-tile"><div class="l">Active clients</div><div class="v">' + act.length + '</div></div>' +
+      '<div class="cl-tile' + (overdue?' warn':'') + '"><div class="l">Overdue milestones</div><div class="v">' + overdue + '</div></div>' +
+      '<div class="cl-tile"><div class="l">Ops complete · ' + clMoLbl(nowMk) + '</div><div class="v">' + (opsN ? Math.round(opsSum/opsN) + '%' : '—') + '</div></div>' +
+      '<div class="cl-tile' + (atRisk?' warn':' good') + '"><div class="l">Guarantee at risk</div><div class="v">' + atRisk + '</div></div>' +
+    '</div>' +
+    '<div class="cl-grid">' + cards +
+      '<div class="cl-add"><div style="font-size:13px;font-weight:700">+ New client</div>' +
+      '<div class="row"><input id="cl-new-name" placeholder="Restaurant name" style="flex:2;min-width:150px">' +
+      '<input id="cl-new-start" type="date" value="' + clToday() + '" style="flex:1;min-width:130px">' +
+      '<select id="cl-new-pkg" style="flex:1;min-width:110px"><option value="6">6-month</option><option value="12">12-month</option></select>' +
+      '<button class="btn btn-primary btn-sm" onclick="clAddClient()">Add</button></div>' +
+      '<div style="font-size:11px;color:var(--mute2);margin-top:8px">Start date = advance received. Every deadline auto-calculates from it.</div></div>' +
+    '</div></div>';
+}
+function clDetailHTML(c){
+  const st = CL_STATUS[c.status] || CL_STATUS.onboarding;
+  const ob = clObProg(c);
+  const isAdmin = typeof currentUserObj !== 'undefined' && currentUserObj && currentUserObj.role === 'admin';
+  const dates = clDates(c).map(r =>
+    '<div class="cl-date"><div class="l">' + r.l + '</div><div class="v">' + clFmtD(r.d) +
+    (r.chip ? ' <span class="cl-chip ' + r.state + '">' + r.chip + '</span>' : '') + '</div></div>').join('');
+  const tabs = [['ob','Onboarding ' + ob.done + '/' + ob.total], ['mo','Monthly ops'], ['gt','Guarantee']];
+  let body = '';
+  if (clTab === 'ob') body = clObHTML(c);
+  else if (clTab === 'mo') body = clMoHTML(c);
+  else body = clGtHTML(c);
+  return '<div class="cl-wrap">' +
+    '<div class="cl-dhead"><button class="btn btn-ghost btn-sm" onclick="clBack()">‹ Clients</button>' +
+    '<h1>' + clEsc(c.name) + '</h1><span class="cl-chip ' + st[1] + '">' + st[0] + '</span><div style="flex:1"></div>' +
+    (isAdmin ? '<button class="btn btn-danger btn-xs" onclick="clDelete()">Delete</button>' : '') + '</div>' +
+    '<div class="cl-info">' +
+      clF('Name','<input value="' + clEsc(c.name) + '" onchange="clSet(\'name\',this.value)">') +
+      clF('Package','<select onchange="clSet(\'pkg\',+this.value)"><option value="6"' + (+c.pkg!==12?' selected':'') + '>6-month</option><option value="12"' + (+c.pkg===12?' selected':'') + '>12-month</option></select>') +
+      clF('Start (advance received)','<input type="date" value="' + (c.start||'') + '" onchange="clSet(\'start\',this.value)">') +
+      clF('Actual live date','<input type="date" value="' + (c.live||'') + '" onchange="clSet(\'live\',this.value)">') +
+      clF('Client POC','<input value="' + clEsc(c.poc||'') + '" placeholder="Name · phone" onchange="clSet(\'poc\',this.value)">') +
+      clF('Status','<select onchange="clSet(\'status\',this.value)">' + Object.entries(CL_STATUS).map(([k,v]) => '<option value="' + k + '"' + (c.status===k?' selected':'') + '>' + v[0] + '</option>').join('') + '</select>') +
+    '</div>' +
+    '<div class="cl-dates">' + dates + '</div>' +
+    '<div class="cl-tabs">' + tabs.map(t => '<div class="cl-tab' + (clTab===t[0]?' active':'') + '" onclick="clTabSet(\'' + t[0] + '\')">' + t[1] + '</div>').join('') + '</div>' +
+    body + '</div>';
+}
+function clF(l, inner){ return '<div class="f"><label>' + l + '</label>' + inner + '</div>'; }
+function clObHTML(c){
+  const ob = clObProg(c);
+  let rows = '';
+  CL_OB.forEach((x,i) => {
+    if (x.ph) { rows += '<div class="cl-phase">' + x.ph + '</div>'; return; }
+    const rec = (c.ob||{})[i];
+    const on = rec && rec.d;
+    rows += '<div class="cl-ob' + (on?' on':'') + '"><div class="ck' + (on?' on':'') + '" onclick="clToggleOb(' + i + ')"></div>' +
+      '<span class="day">' + x.d + '</span><span class="t">' + clEsc(x.t) + '</span>' +
+      '<span class="ow">' + clEsc(x.o) + '</span><span class="at">' + (on && rec.at ? clFmtD(new Date(rec.at+'T12:00:00')) : '') + '</span></div>';
+  });
+  return '<div class="cl-sec"><h3>Onboarding checklist <small>' + ob.done + ' of ' + ob.total + ' · auto-stamps the date</small></h3>' +
+    '<div class="cl-bar" style="margin:4px 0 10px"><i style="width:' + ob.pct + '%"></i></div>' + rows + '</div>';
+}
+function clMoHTML(c){
+  const keys = clMoKeys(c);
+  if (!clMoView || !keys.includes(clMoView)) clMoView = keys[0];
+  const mk = clMoView; const m = (c.mo||{})[mk] || {}; const done = m.done || {};
+  const p = clMoProg(c, mk);
+  const i0 = keys.indexOf(mk);
+  const rows = CL_MO.map(it => {
+    const on = !!done[it.k];
+    return '<div class="cl-ob' + (on?' on':'') + '"><div class="ck' + (on?' on':'') + '" onclick="clToggleMo(\'' + it.k + '\')"></div>' +
+      '<span class="day">' + it.w + '</span><span class="t">' + clEsc(it.t) + '</span><span class="ow">' + clEsc(it.o) + '</span></div>';
+  }).join('');
+  const postsOk = p.posts >= CL_POSTS_TARGET;
+  return '<div class="cl-sec"><h3>Monthly ops <small>' + p.done + ' of ' + p.total + ' this month</small>' +
+    '<div class="cl-monav"><button onclick="clMoNav(1)"' + (i0>=keys.length-1?' disabled':'') + '>‹</button><b>' + clMoLbl(mk) + '</b><button onclick="clMoNav(-1)"' + (i0<=0?' disabled':'') + '>›</button></div></h3>' +
+    '<div class="cl-bar" style="margin:4px 0 10px"><i style="width:' + p.pct + '%"></i></div>' +
+    '<div class="cl-ob"><div class="ck' + (postsOk?' on':'') + '" style="pointer-events:none"></div><span class="day">2/wk</span>' +
+    '<span class="t">GBP posts published <b style="color:' + (postsOk?'var(--green)':'var(--mute)') + '">' + p.posts + '/' + CL_POSTS_TARGET + '</b></span>' +
+    '<span class="ow">Arshitha · <input type="number" min="0" max="31" value="' + p.posts + '" style="width:52px;padding:3px 6px;font-size:11px" onchange="clSetPosts(this.value)"></span></div>' +
+    rows + '</div>';
+}
+function clGtHTML(c){
+  const g = c.gt || {}; const base = g.base || {}; const calc = clGtCalc(c);
+  const keys = clMoKeys(c);
+  const inp = (mk, f, v, w) => '<input type="number" min="0"' + (w?' class="'+w+'"':'') + ' value="' + (v==null?'':v) + '" onchange="clGtSet(\'' + mk + '\',\'' + f + '\',this.value)">';
+  const sel = (mk, f, v, opts) => '<select onchange="clGtSet(\'' + mk + '\',\'' + f + '\',this.value)"><option value=""></option>' + opts.map(o => '<option' + (v===o?' selected':'') + '>' + o + '</option>').join('') + '</select>';
+  const rows = keys.map(mk => {
+    const r = (g.rows||{})[mk] || {};
+    const met = clRowMet(r);
+    const cur = (r.calls!==''&&r.calls!=null)||(r.dirs!==''&&r.dirs!=null) ? (+r.calls||0)+(+r.dirs||0) : null;
+    const gr = calc.base>0 && cur!=null ? Math.round((cur-calc.base)/calc.base*100) : null;
+    return '<tr><td><b>' + clMoLbl(mk) + '</b></td>' +
+      '<td>' + sel(mk,'qr',r.qr,['Y','N']) + '</td>' +
+      '<td>' + inp(mk,'collabs',r.collabs) + '</td>' +
+      '<td>' + sel(mk,'poster',r.poster,['Y','N']) + '</td>' +
+      '<td>' + sel(mk,'news',r.news,['Y','N','NA']) + '</td>' +
+      '<td>' + (met==null?'<span class="cl-chip">—</span>':met?'<span class="cl-chip green">✓ met</span>':'<span class="cl-chip red">✕ not met</span>') + '</td>' +
+      '<td>' + inp(mk,'calls',r.calls) + '</td>' +
+      '<td>' + inp(mk,'dirs',r.dirs) + '</td>' +
+      '<td>' + inp(mk,'revs',r.revs) + '</td>' +
+      '<td>' + (gr==null?'—':'<span class="cl-chip ' + (gr>0?'green':'red') + '">' + (gr>0?'+':'') + gr + '%</span>') + '</td>' +
+      '<td><input class="wide" value="' + clEsc(r.notes||'') + '" placeholder="proof / notes" onchange="clGtSet(\'' + mk + '\',\'notes\',this.value)"></td></tr>';
+  }).join('');
+  return '<div class="cl-sec cl-gt"><h3>Week-1 baseline <small>from GBP insights — the guarantee is measured against this</small></h3>' +
+    '<div class="cl-gtwrap"><table><thead><tr><th>Snapshot date</th><th>GBP calls</th><th>Directions</th><th>Reviews</th><th>Guarantee status</th></tr></thead><tbody><tr>' +
+    '<td><input type="date" value="' + (base.date||'') + '" onchange="clGtBase(\'date\',this.value)" style="width:130px"></td>' +
+    '<td><input type="number" min="0" value="' + (base.calls==null?'':base.calls) + '" onchange="clGtBase(\'calls\',this.value)"></td>' +
+    '<td><input type="number" min="0" value="' + (base.dirs==null?'':base.dirs) + '" onchange="clGtBase(\'dirs\',this.value)"></td>' +
+    '<td><input type="number" min="0" value="' + (base.revs==null?'':base.revs) + '" onchange="clGtBase(\'revs\',this.value)"></td>' +
+    '<td><span class="cl-chip ' + calc.vs + '">' + clEsc(calc.verdict) + '</span></td></tr></tbody></table></div></div>' +
+    '<div class="cl-sec cl-gt"><h3>Monthly log <small>conditions + GBP numbers · growth auto-calculates vs baseline</small></h3>' +
+    '<div class="cl-gtwrap"><table><thead><tr><th>Month</th><th>QR active</th><th>Collabs</th><th>Poster</th><th>News (qtr)</th><th>Conditions</th><th>Calls</th><th>Directions</th><th>Reviews</th><th>Growth</th><th>Notes</th></tr></thead>' +
+    '<tbody>' + rows + '</tbody></table></div>' +
+    '<div style="font-size:11px;color:var(--mute2);margin-top:10px">Conditions met = QR active + ≥3 collabs + poster up + newspaper (Y or N/A). Growth = (calls + directions) vs Week-1 baseline — the 90-day results guarantee.</div></div>';
+}
+/* mutators */
+function clSaveC(c){ c.updatedAt = Date.now(); persist(); renderClients(); }
+function clOpen(id){ clCur = id; clTab = 'ob'; clMoView = null; renderClients(); }
+function clBack(){ clCur = null; renderClients(); }
+function clTabSet(t){ clTab = t; renderClients(); }
+function clMoNav(dir){ const c = clById(clCur); if (!c) return; const keys = clMoKeys(c); let i = keys.indexOf(clMoView); i = Math.min(keys.length-1, Math.max(0, i+dir)); clMoView = keys[i]; renderClients(); }
+function clSet(f, v){ const c = clById(clCur); if (!c) return; c[f] = v; clSaveC(c); }
+function clToggleOb(i){
+  const c = clById(clCur); if (!c) return;
+  c.ob = c.ob || {};
+  const on = c.ob[i] && c.ob[i].d;
+  c.ob[i] = on ? { d:0 } : { d:1, at: clToday(), by: (typeof currentUserObj!=='undefined' && currentUserObj) ? currentUserObj.name : '' };
+  const key = CL_OB[i] && CL_OB[i].key;
+  if (key) { c.keys = c.keys || {}; c.keys[key] = on ? 0 : 1; } // read by ceo.pixelizt.com
+  if (key === 'live' && !on && !c.live) c.live = clToday();
+  clSaveC(c);
+}
+function clToggleMo(k){
+  const c = clById(clCur); if (!c) return;
+  c.mo = c.mo || {}; const m = c.mo[clMoView] = c.mo[clMoView] || {}; m.done = m.done || {};
+  m.done[k] = !m.done[k];
+  clSaveC(c);
+}
+function clSetPosts(v){
+  const c = clById(clCur); if (!c) return;
+  c.mo = c.mo || {}; const m = c.mo[clMoView] = c.mo[clMoView] || {};
+  m.posts = Math.max(0, +v || 0);
+  clSaveC(c);
+}
+function clGtBase(f, v){ const c = clById(clCur); if (!c) return; c.gt = c.gt || {rows:{}}; c.gt.base = c.gt.base || {}; c.gt.base[f] = v; clSaveC(c); }
+function clGtSet(mk, f, v){ const c = clById(clCur); if (!c) return; c.gt = c.gt || {}; c.gt.rows = c.gt.rows || {}; const r = c.gt.rows[mk] = c.gt.rows[mk] || {}; r[f] = v; clSaveC(c); }
+function clAddClient(){
+  const name = (document.getElementById('cl-new-name')||{}).value || '';
+  if (!name.trim()) { showToast('Give the client a name'); return; }
+  const c = { id: 'cl_' + Date.now().toString(36), name: name.trim(),
+    pkg: +(document.getElementById('cl-new-pkg')||{}).value || 6,
+    start: (document.getElementById('cl-new-start')||{}).value || clToday(),
+    live: '', poc: '', status: 'onboarding', ob: {}, mo: {}, gt: { base:{}, rows:{} }, updatedAt: Date.now() };
+  S.clients.push(c);
+  persist();
+  clOpen(c.id);
+  showToast('Client added — work the onboarding list top to bottom');
+}
+function clDelete(){
+  const c = clById(clCur); if (!c) return;
+  if (!confirm('Delete ' + c.name + ' and all its tracking? This cannot be undone.')) return;
+  S.deleted = S.deleted || {}; S.deleted[c.id] = Date.now();
+  S.clients = S.clients.filter(x => x.id !== c.id);
+  clCur = null;
+  persist(); renderClients();
 }
 
 /* ════════════════════════════════
