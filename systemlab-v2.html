@@ -843,7 +843,7 @@ select option{background:var(--canvas-card)}
       
       <div style="display:flex; justify-content:space-between; align-items:center; margin-top:20px; margin-bottom:12px; padding:0 24px;">
         <div style="font-size:14px; font-weight:600; color:var(--ink)">Daily Tasks</div>
-        <button class="btn btn-xs" style="background:transparent; border:1px solid var(--hairline); color:var(--mute)" onclick="dayToCalendar()" title="One file, every task pre-slotted from login time">📅 Day → Calendar</button>
+        <button class="btn btn-xs" id="gcal-sync-btn" style="display:none;background:transparent; border:1px solid var(--hairline); color:var(--mute)" onclick="slGcalSyncDay()" title="Your tasks go straight into Google Calendar, slotted from your login time">📅 Sync day to Google Calendar</button>
         <button class="btn btn-xs" style="background:transparent; border:1px solid var(--hairline); color:var(--mute)" onclick="openRecurringModal()">↻ Manage Recurring</button>
       </div>
       <div class="task-toolbar">
@@ -3854,6 +3854,7 @@ function addTask() {
   input.value = '';
   persist();
   openEmployee(curEmp);
+  slGcalAutoSync(curEmp);
 }
 
 
@@ -3957,10 +3958,18 @@ function checkCelebration(empId) {
   fireCelebration(empId);
 }
 
-// ─── DAY → CALENDAR ───────────────────────────────────────────────────
-// One tap exports the WHOLE day: every task becomes a calendar event,
-// slots calculated from the member's login time (10:00 fallback), each
-// task starting where the previous one ends. No per-task fiddling.
+// ─── GOOGLE CALENDAR SYNC (direct, no downloads) ─────────────────────
+// Member connects Google once. After that their day syncs straight into
+// Google Calendar: every task an event, slots calculated from login time,
+// re-sync UPDATES the same events (ids stored on tasks) — no duplicates.
+const SL_GCAL_CLIENT_ID = '57833352723-b6gpit1mn4jpj7nh6pmtae5k9hperir6.apps.googleusercontent.com';
+const SL_GCAL_SCOPE = 'https://www.googleapis.com/auth/calendar.events';
+let _slGcalClient = null;
+let _slGcalPendingSync = false;
+let _slGcalTimer = null;
+
+function _slGcalToken(){ return localStorage.getItem('sl_gcal_tok') || null; }
+
 function _parseLoginTime(s) { // "9:48 AM" -> minutes since midnight
   const m = /^(\d{1,2}):(\d{2})\s*(AM|PM)$/i.exec((s||'').trim());
   if (!m) return null;
@@ -3968,43 +3977,110 @@ function _parseLoginTime(s) { // "9:48 AM" -> minutes since midnight
   if (/pm/i.test(m[3])) h += 12;
   return h * 60 + parseInt(m[2]);
 }
-function _icsEsc(s){ return (s||'').replace(/\\/g,'\\\\').replace(/;/g,'\\;').replace(/,/g,'\\,').replace(/\n/g,'\\n'); }
-function dayToCalendar() {
-  if (!curEmp) return;
-  const emp = S.employees.find(e => e.id === curEmp);
-  const tasks = getTasks(curEmp, TT_TODAY);
-  if (!tasks.length) { showToast('No tasks today — add them first'); return; }
-  const att = (S.att[curEmp] || {})[TT_TODAY] || {};
+
+function _slGcalUpdateBtn() {
+  const b = document.getElementById('gcal-sync-btn');
+  if (!b) return;
+  // Only on your OWN day view — syncing someone else's day into your calendar makes no sense
+  const mine = currentUserObj && currentUserObj.empId && currentUserObj.empId === curEmp;
+  b.style.display = mine ? '' : 'none';
+  b.textContent = _slGcalToken() ? '📅 Sync day to Google Calendar' : '📅 Connect Google Calendar';
+}
+
+function _slGcalLoad(cb) {
+  if (typeof google !== 'undefined' && google.accounts) { cb(); return; }
+  const s = document.createElement('script');
+  s.src = 'https://accounts.google.com/gsi/client';
+  s.onload = cb;
+  s.onerror = () => showToast('Could not load Google — check connection');
+  document.head.appendChild(s);
+}
+
+function _slGcalConnect() {
+  _slGcalLoad(() => {
+    if (!_slGcalClient) {
+      _slGcalClient = google.accounts.oauth2.initTokenClient({
+        client_id: SL_GCAL_CLIENT_ID,
+        scope: SL_GCAL_SCOPE,
+        callback: (resp) => {
+          if (!resp || !resp.access_token) { showToast('Google connection failed — try again'); return; }
+          localStorage.setItem('sl_gcal_tok', resp.access_token);
+          _slGcalUpdateBtn();
+          showToast('✅ Google Calendar connected');
+          if (_slGcalPendingSync) { _slGcalPendingSync = false; slGcalSyncDay(); }
+        }
+      });
+    }
+    _slGcalClient.requestAccessToken();
+  });
+}
+
+async function _slGcalCall(method, path, body) {
+  const res = await fetch('https://www.googleapis.com/calendar/v3/calendars/primary/events' + path, {
+    method,
+    headers: { 'Authorization': 'Bearer ' + _slGcalToken(), 'Content-Type': 'application/json' },
+    body: body ? JSON.stringify(body) : undefined
+  });
+  if (res.status === 401) { localStorage.removeItem('sl_gcal_tok'); throw new Error('expired'); }
+  return res;
+}
+
+async function slGcalSyncDay(silent) {
+  const empId = currentUserObj && currentUserObj.empId;
+  if (!empId) return;
+  if (!_slGcalToken()) { _slGcalPendingSync = true; _slGcalConnect(); return; }
+  const tasks = getTasks(empId, TT_TODAY);
+  if (!tasks.length) { if (!silent) showToast('No tasks today yet'); return; }
+  const att = (S.att[empId] || {})[TT_TODAY] || {};
   let cursor = _parseLoginTime(att.loginTime);
   if (cursor === null) cursor = 10 * 60;
+  const tz = Intl.DateTimeFormat().resolvedOptions().timeZone;
   const pad = n => String(n).padStart(2, '0');
-  const d = TT_TODAY.replace(/-/g, '');
-  const stamp = d + 'T' + pad(new Date().getHours()) + pad(new Date().getMinutes()) + '00';
-  const fmt = m => d + 'T' + pad(Math.floor(m/60)%24) + pad(m%60) + '00';
-  let ics = 'BEGIN:VCALENDAR\r\nVERSION:2.0\r\nPRODID:-//SystemLab//Day Plan//EN\r\nCALSCALE:GREGORIAN\r\nMETHOD:PUBLISH\r\n';
-  tasks.forEach(t => {
-    const startM = cursor, endM = cursor + (parseInt(t.mins) || 30);
-    cursor = endM;
-    ics += 'BEGIN:VEVENT\r\n'
-      + 'UID:' + t.id + '-' + TT_TODAY + '@systemlab\r\n'
-      + 'DTSTAMP:' + stamp + '\r\n'
-      + 'DTSTART:' + fmt(startM) + '\r\n'
-      + 'DTEND:' + fmt(endM) + '\r\n'
-      + 'SUMMARY:' + _icsEsc(t.name) + '\r\n'
-      + 'DESCRIPTION:' + _icsEsc('SystemLab · ' + (emp?emp.name:'') + ' · ' + fmtMins(t.mins) + ((S.objective&&S.objective.title)?'\n🏔️ ' + S.objective.title:'')) + '\r\n'
-      + 'BEGIN:VALARM\r\nTRIGGER:-PT5M\r\nACTION:DISPLAY\r\nDESCRIPTION:Task starting\r\nEND:VALARM\r\n'
-      + 'END:VEVENT\r\n';
-  });
-  ics += 'END:VCALENDAR\r\n';
-  const blob = new Blob([ics], { type: 'text/calendar;charset=utf-8' });
-  const a = document.createElement('a');
-  a.href = URL.createObjectURL(blob);
-  a.download = (emp ? emp.name.split(' ')[0].toLowerCase() : 'day') + '-' + TT_TODAY + '.ics';
-  document.body.appendChild(a); a.click(); a.remove();
-  setTimeout(() => URL.revokeObjectURL(a.href), 4000);
-  showToast('📅 ' + tasks.length + ' tasks exported — open the file and your whole day lands in Calendar');
+  const iso = m => TT_TODAY + 'T' + pad(Math.floor(m/60)%24) + ':' + pad(m%60) + ':00';
+  let created = 0, updated = 0, failed = 0;
+  try {
+    for (const t of tasks) {
+      const startM = cursor, endM = cursor + (parseInt(t.mins) || 30);
+      cursor = endM;
+      const ev = {
+        summary: t.name,
+        description: 'SystemLab · ' + fmtMins(t.mins) + ((S.objective && S.objective.title) ? '\n🏔️ ' + S.objective.title : ''),
+        start: { dateTime: iso(startM), timeZone: tz },
+        end:   { dateTime: iso(endM),   timeZone: tz },
+        reminders: { useDefault: false, overrides: [{ method: 'popup', minutes: 5 }] }
+      };
+      let res;
+      if (t.gcal) {
+        res = await _slGcalCall('PATCH', '/' + t.gcal, ev);
+        if (res.status === 404) res = null; // event was deleted in Calendar — recreate
+        else if (res.ok) { updated++; continue; }
+        else { failed++; continue; }
+      }
+      res = await _slGcalCall('POST', '', ev);
+      if (res.ok) {
+        const data = await res.json();
+        t.gcal = data.id;
+        t.updatedAt = Date.now();
+        created++;
+      } else failed++;
+    }
+    persist(); // store event ids so every device knows these tasks are synced
+    if (!silent) showToast('📅 Day in Google Calendar — ' + created + ' added, ' + updated + ' updated' + (failed ? ', ' + failed + ' failed' : ''));
+  } catch(e) {
+    if (e.message === 'expired') { _slGcalUpdateBtn(); if (!silent) { _slGcalPendingSync = true; _slGcalConnect(); } }
+    else if (!silent) showToast('Calendar sync hit a problem — try again');
+  }
 }
-window.dayToCalendar = dayToCalendar;
+window.slGcalSyncDay = slGcalSyncDay;
+
+// Auto re-sync: when a connected member changes their own today's tasks,
+// the calendar quietly follows — no taps, it's just there.
+function slGcalAutoSync(empId) {
+  if (!currentUserObj || !currentUserObj.empId || currentUserObj.empId !== empId) return;
+  if (!_slGcalToken()) return;
+  clearTimeout(_slGcalTimer);
+  _slGcalTimer = setTimeout(() => slGcalSyncDay(true), 6000);
+}
 
 function toggleTask(tid) {
   const t = S.tasks.find(x => x.id === tid);
@@ -4015,14 +4091,22 @@ function toggleTask(tid) {
   persist();
   openEmployee(curEmp);
   if (t.done) checkCelebration(t.empId);
+  slGcalAutoSync(t.empId);
 }
 
+
 function deleteTask(tid) {
+  const t = S.tasks.find(x => x.id === tid);
+  // Task leaves SystemLab → its calendar event goes too (own connected calendar only)
+  if (t && t.gcal && _slGcalToken() && currentUserObj && currentUserObj.empId === t.empId) {
+    _slGcalCall('DELETE', '/' + t.gcal).catch(()=>{});
+  }
   S.tasks = S.tasks.filter(x => x.id !== tid);
   if (!S.deleted) S.deleted = {};
   S.deleted[tid] = Date.now();
   persist();
   openEmployee(curEmp);
+  slGcalAutoSync(t ? t.empId : curEmp);
 }
 
 // Attendance
@@ -4190,6 +4274,7 @@ document.getElementById('empDetailHead').innerHTML = `
   }
   
   showView('employee', document.querySelector('.nav-item[data-view="team"]'));
+  if (typeof _slGcalUpdateBtn === 'function') _slGcalUpdateBtn();
 }
 
 let draggedTaskId = null;
@@ -4215,6 +4300,7 @@ function dropTask(ev, targetTid) {
   
   persist();
   openEmployee(curEmp);
+  slGcalAutoSync(curEmp); // reorder changes the time slots — calendar follows
 }
 window.dragTask = dragTask;
 window.allowDropTask = allowDropTask;
