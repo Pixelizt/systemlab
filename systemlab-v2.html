@@ -578,17 +578,14 @@ select option{background:var(--canvas-card)}
           Goals
           <span class="nav-count" id="cnt-goals" style="display:none">0</span>
         </div>
+        <div class="nav-item" data-view="all" onclick="showView('all',this)">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
+          SOPs
+          <span class="nav-count" id="cnt-all">0</span>
+        </div>
         <div class="nav-item" data-view="reports" onclick="showView('reports',this)">
           <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><path d="M3 21V10M9 21V3M15 21v-8M21 21V7"/></svg>
           Reports
-        </div>
-      </div>
-      <div class="sidebar-section">
-        <div class="sidebar-label">Library</div>
-        <div class="nav-item" data-view="all" onclick="showView('all',this)">
-          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
-          All SOPs
-          <span class="nav-count" id="cnt-all">0</span>
         </div>
       </div>
       <div class="sidebar-section">
@@ -3725,6 +3722,12 @@ function addTask() {
     updatedAt: _now
   });
   input.value = '';
+  // LeadLab behaviour: the moment a timed task is saved, Google Calendar
+  // opens pre-filled with that exact slot — one tap Save and it's booked.
+  if (start && end && !(localStorage.getItem('sl_gcal_tok'))) {
+    const justAdded = S.tasks[S.tasks.length - 1];
+    window.open(taskCalUrl(justAdded), '_blank', 'noopener');
+  }
   persist();
   openEmployee(curEmp);
   slGcalAutoSync(curEmp);
@@ -3836,6 +3839,36 @@ function checkCelebration(empId) {
   fireCelebration(empId);
 }
 
+// ─── TASK → GOOGLE CALENDAR (LeadLab style: opens the real Calendar, pre-filled) ───
+function taskCalUrl(t) {
+  const d = (t.date || TT_TODAY).replace(/-/g, '');
+  let ts = hm2min(t.start), te = hm2min(t.end);
+  if (ts == null || te == null || te <= ts) {
+    // untimed → next sensible slot from login + stacked day
+    const att = (S.att[t.empId] || {})[t.date] || {};
+    let cursor = _parseLoginTime(att.loginTime);
+    if (cursor === null) cursor = 10 * 60;
+    for (const x of getTasks(t.empId, t.date)) {
+      if (x.id === t.id) break;
+      const e = hm2min(x.end);
+      cursor = e != null ? Math.max(cursor, e) : cursor + (parseInt(x.mins) || 0);
+    }
+    ts = cursor; te = cursor + (parseInt(t.mins) || 30);
+  }
+  const pad = n => String(n).padStart(2, '0');
+  const f = m => d + 'T' + pad(Math.floor(m/60)%24) + pad(m%60) + '00';
+  const emp = S.employees.find(e => e.id === t.empId);
+  const details = encodeURIComponent('SystemLab · ' + (emp ? emp.name : '') + ' · ' + fmtMins(t.mins) +
+    ((S.objective && S.objective.title) ? '\n🏔️ ' + S.objective.title : ''));
+  return 'https://calendar.google.com/calendar/r/eventedit?text=' + encodeURIComponent(t.name) +
+    '&dates=' + f(ts) + '/' + f(te) + '&details=' + details + '&sf=true';
+}
+window.openTaskCal = function(tid) {
+  const t = S.tasks.find(x => x.id === tid);
+  if (!t) return;
+  window.open(taskCalUrl(t), '_blank', 'noopener');
+};
+
 // ─── PENDING TASKS — nothing unfinished slips away ────────────────────
 function pendingTasksFor(empId) {
   return (S.tasks||[]).filter(t => t.empId === empId && !t.done && t.date && t.date < getLocalISODate())
@@ -3919,21 +3952,38 @@ function renderReports() {
     tPresent+=present; tLogged+=logged; tDone+=doneMins;
     const c = tt_col(e.ci);
     const comp = totalMins ? Math.round(doneMins/totalMins*100) : 0;
-    return `<div style="background:var(--canvas-card);border:1px solid var(--hairline);border-radius:14px;padding:16px 20px;display:flex;align-items:center;gap:18px;flex-wrap:wrap">
-      <div style="display:flex;align-items:center;gap:12px;min-width:190px">
-        <span style="width:34px;height:34px;border-radius:50%;background:${c.bg};color:${c.fg};display:inline-flex;align-items:center;justify-content:center;font-size:12px;font-weight:800">${tt_initials(e.name)}</span>
-        <div><div style="font-size:14px;font-weight:700;color:var(--ink)">${e.name}</div><div style="font-size:11px;color:var(--mute)">${e.role||''}</div></div>
-      </div>
-      <div style="flex:1;display:grid;grid-template-columns:repeat(auto-fit,minmax(105px,1fr));gap:10px;min-width:320px">
-        <div><div style="font-size:18px;font-weight:800;color:var(--ink)">${present}</div><div style="font-size:9.5px;letter-spacing:.08em;color:var(--mute);text-transform:uppercase">Present days</div></div>
-        <div><div style="font-size:18px;font-weight:800;color:#60a5fa">${(logged/60).toFixed(1)}h</div><div style="font-size:9.5px;letter-spacing:.08em;color:var(--mute);text-transform:uppercase">Hours logged</div></div>
-        <div><div style="font-size:18px;font-weight:800;color:var(--green,#22c55e)">${(doneMins/60).toFixed(1)}h</div><div style="font-size:9.5px;letter-spacing:.08em;color:var(--mute);text-transform:uppercase">Hours completed</div></div>
-        <div><div style="font-size:18px;font-weight:800;color:#f59e0b">${fullDays}</div><div style="font-size:9.5px;letter-spacing:.08em;color:var(--mute);text-transform:uppercase">8h days</div></div>
-        <div><div style="font-size:18px;font-weight:800;color:${comp>=80?'var(--green,#22c55e)':comp>=50?'#f59e0b':'var(--red,#ef4444)'}">${comp}%</div><div style="font-size:9.5px;letter-spacing:.08em;color:var(--mute);text-transform:uppercase">Completion</div></div>
-      </div>
-    </div>`;
+    return `<tr style="border-bottom:1px solid var(--hairline)">
+      <td style="padding:13px 18px">
+        <div style="display:flex;align-items:center;gap:11px">
+          <span style="width:32px;height:32px;border-radius:50%;background:${c.bg};color:${c.fg};display:inline-flex;align-items:center;justify-content:center;font-size:11px;font-weight:800;flex-shrink:0">${tt_initials(e.name)}</span>
+          <div><div style="font-size:13.5px;font-weight:700;color:var(--ink)">${e.name}</div><div style="font-size:11px;color:var(--mute)">${e.role||''}</div></div>
+        </div>
+      </td>
+      <td style="padding:13px 14px;text-align:right;font-size:15px;font-weight:800;color:var(--ink);font-variant-numeric:tabular-nums">${present}</td>
+      <td style="padding:13px 14px;text-align:right;font-size:15px;font-weight:800;color:#60a5fa;font-variant-numeric:tabular-nums">${(logged/60).toFixed(1)}h</td>
+      <td style="padding:13px 14px;text-align:right;font-size:15px;font-weight:800;color:var(--green);font-variant-numeric:tabular-nums">${(doneMins/60).toFixed(1)}h</td>
+      <td style="padding:13px 14px;text-align:right;font-size:15px;font-weight:800;color:#f59e0b;font-variant-numeric:tabular-nums">${fullDays}</td>
+      <td style="padding:13px 18px 13px 14px;text-align:right">
+        <div style="display:inline-flex;align-items:center;gap:8px">
+          <div style="width:52px;height:5px;background:var(--hairline);border-radius:3px;overflow:hidden"><div style="width:${comp}%;height:100%;background:${comp>=80?'var(--green)':comp>=50?'#f59e0b':'var(--red)'}"></div></div>
+          <span style="font-size:13px;font-weight:800;min-width:38px;text-align:right;color:${comp>=80?'var(--green)':comp>=50?'#f59e0b':'var(--red)'};font-variant-numeric:tabular-nums">${comp}%</span>
+        </div>
+      </td>
+    </tr>`;
   }).join('');
-  document.getElementById('rep-body').innerHTML = rows || '<div style="padding:30px;color:var(--mute)">No team members yet.</div>';
+  document.getElementById('rep-body').innerHTML = `<div style="background:var(--canvas-card);border:1px solid var(--hairline);border-radius:14px;overflow:hidden;box-shadow:var(--glass-shadow)">
+    <div style="overflow-x:auto"><table style="width:100%;border-collapse:collapse;min-width:640px">
+      <thead><tr style="border-bottom:1px solid var(--hairline-mid);background:var(--canvas-soft)">
+        <th style="padding:11px 18px;text-align:left;font-size:9.5px;letter-spacing:.09em;text-transform:uppercase;color:var(--mute);font-weight:700">Team member</th>
+        <th style="padding:11px 14px;text-align:right;font-size:9.5px;letter-spacing:.09em;text-transform:uppercase;color:var(--mute);font-weight:700">Present days</th>
+        <th style="padding:11px 14px;text-align:right;font-size:9.5px;letter-spacing:.09em;text-transform:uppercase;color:var(--mute);font-weight:700">Hours logged</th>
+        <th style="padding:11px 14px;text-align:right;font-size:9.5px;letter-spacing:.09em;text-transform:uppercase;color:var(--mute);font-weight:700">Hours completed</th>
+        <th style="padding:11px 14px;text-align:right;font-size:9.5px;letter-spacing:.09em;text-transform:uppercase;color:var(--mute);font-weight:700">8h days</th>
+        <th style="padding:11px 18px 11px 14px;text-align:right;font-size:9.5px;letter-spacing:.09em;text-transform:uppercase;color:var(--mute);font-weight:700">Completion</th>
+      </tr></thead>
+      <tbody>${rows || '<tr><td colspan="6" style="padding:30px;text-align:center;color:var(--mute)">No team members yet.</td></tr>'}</tbody>
+    </table></div>
+  </div>`;
   const sMk = (label,val,color) => `<div class="gl-stat"><div class="gl-stat-top"><span class="gl-stat-label">${label}</span><span class="gl-stat-n" style="color:${color}">${val}</span></div></div>`;
   document.getElementById('rep-strip').innerHTML =
     sMk('Team present days', tPresent, 'var(--ink)') +
@@ -3980,7 +4030,8 @@ function _slGcalUpdateBtn() {
   // Only on your OWN day view — syncing someone else's day into your calendar makes no sense
   const mine = currentUserObj && currentUserObj.empId && currentUserObj.empId === curEmp;
   b.style.display = mine ? '' : 'none';
-  b.textContent = _slGcalToken() ? '📅 Sync day to Google Calendar' : '📅 Connect Google Calendar';
+  b.textContent = _slGcalToken() ? '🔄 Auto-sync: on' : '🔄 Auto-sync calendar';
+  b.title = _slGcalToken() ? 'Connected — your day updates in Google Calendar automatically' : 'Optional: connect once and your day maintains itself in Google Calendar';
 }
 
 function _slGcalLoad(cb) {
@@ -4269,6 +4320,7 @@ document.getElementById('empDetailHead').innerHTML = `
         <div class="tlogged ${t.done?'has':''}">${t.done ? fmtMins(t.mins) : '—'}</div>
         <div class="tdoneat ${t.doneAt?'has':''}">${t.doneAt || '—'}</div>
         <div style="display:flex; gap:4px">
+          <button class="tdel" style="font-size:12px; color:var(--mute)" title="Open in Google Calendar" onclick="openTaskCal('${t.id}')">📅</button>
           <button class="tdel" style="font-size:12px; color:var(--mute)" onclick="openEditTask('${t.id}')">✎</button>
           <button class="tdel" onclick="deleteTask('${t.id}')">×</button>
         </div>
