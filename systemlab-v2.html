@@ -662,6 +662,11 @@ select option{background:var(--canvas-card)}
           SOPs
           <span class="nav-count" id="cnt-all">0</span>
         </div>
+        <div class="nav-item" data-view="requests" onclick="showView('requests',this)">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><path d="M22 11.08V12a10 10 0 11-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>
+          Requests
+          <span class="nav-count" id="cnt-requests" style="display:none">0</span>
+        </div>
         <div class="nav-item" data-view="reports" onclick="showView('reports',this)">
           <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><path d="M3 21V10M9 21V3M15 21v-8M21 21V7"/></svg>
           Reports
@@ -936,6 +941,11 @@ select option{background:var(--canvas-card)}
     <!-- CLIENTS: delivery ops (client master + onboarding + monthly ops + guarantee) -->
     <div id="v-clients" class="view">
       <div id="cl-root" style="flex:1;overflow-y:auto"></div>
+    </div>
+
+    <!-- REQUESTS: leave / expense / other → approved in CEO dashboard -->
+    <div id="v-requests" class="view">
+      <div id="rq-root" style="flex:1;overflow-y:auto"></div>
     </div>
 
     <div id="v-goals" class="view">
@@ -1353,6 +1363,8 @@ let S = {
   leadgen: {},
   goals: [],             // Business goals kanban
   clients: [],           // Client delivery ops: onboarding, monthly ops, guarantee tracker
+  approvals: [],         // Requests: leave / expense / other → founder approves in CEO dashboard
+  announce: [],          // Announcements posted from CEO dashboard (read-only here)
   objective: null,       // The Mission — org-wide objective {title, why, target, updatedAt}
   docs: [],              // Document Vault
   prompts: [],           // Prompt Library
@@ -1440,6 +1452,7 @@ function applyTombstones() {
   if (Array.isArray(S.recurring)) S.recurring = S.recurring.filter(r => !(r && del[r.id]));
   if (Array.isArray(S.goals)) S.goals = S.goals.filter(g => !(g && del[g.id]));
   if (Array.isArray(S.clients)) S.clients = S.clients.filter(c => !(c && del[c.id]));
+  if (Array.isArray(S.approvals)) S.approvals = S.approvals.filter(a => !(a && del[a.id]));
 }
 
 const STARTER = `# SOP Title
@@ -1772,6 +1785,8 @@ function hydrateFromV3(v, { mergeLocal } = { mergeLocal: true }) {
   S.recurring = objVals(v.recurring);
   S.goals = mergeTasks(objVals(v.goals), S.goals);
   S.clients = mergeTasks(objVals(v.clients), S.clients);
+  S.approvals = mergeTasks(objVals(v.approvals), S.approvals);
+  S.announce = objVals(v.announce); // CEO-authored; never merged from local
   const rDocs = objVals(v.docs); if (rDocs.length || !(S.docs||[]).length) S.docs = rDocs;
   const rPrompts = objVals(v.prompts); if (rPrompts.length || !(S.prompts||[]).length) S.prompts = rPrompts;
   const rPC = objVals(v.promptCategories); if (rPC.length) S.promptCategories = rPC;
@@ -1816,6 +1831,7 @@ async function connectToWorkspace(workspaceId, userName) {
       S.leadgen = safeMerge(d.leadgen, S.leadgen, {});
       S.goals = d.goals || [];
       S.clients = d.clients || [];
+      S.approvals = d.approvals || [];
       S.objective = d.objective || null;
       S.docs = d.docs || [];
       S.prompts = d.prompts || [];
@@ -2242,6 +2258,7 @@ function buildPayloadStr() {
     recurring: S.recurring||[], leadgen: S.leadgen||{},
     goals: S.goals||[],
     clients: S.clients||[],
+    approvals: S.approvals||[],
     objective: S.objective||null,
     docs: S.docs||[], prompts: S.prompts||[],
     promptCategories: S.promptCategories||[],
@@ -2409,6 +2426,7 @@ function persist() {
   putAll('recurring', S.recurring);
   putAll('goals', S.goals);
   putAll('clients', S.clients);
+  putAll('approvals', S.approvals);
   putAll('docs', S.docs);
   putAll('prompts', S.prompts);
   putAll('promptCategories', S.promptCategories);
@@ -2432,6 +2450,7 @@ function persist() {
     u['prompts/' + id] = null;
     u['goals/' + id] = null;
     u['clients/' + id] = null;
+    u['approvals/' + id] = null;
   }
   u['meta/workspaceName'] = S.workspaceName || 'My Workspace';
   u['meta/objective'] = S.objective ? clean(S.objective) : null;
@@ -2536,7 +2555,9 @@ function showView(id, navEl) {
   if (id==='all') { S.deptFilter=null; renderListView(S.sops,'All SOPs','var(--mute)'); }
   if (id==='goals') { if (typeof renderGoals === 'function') renderGoals(); }
   if (id==='clients') { if (typeof renderClients === 'function') renderClients(); }
+  if (id==='requests') { if (typeof renderRequests === 'function') renderRequests(); }
   if (id==='reports') { if (typeof renderReports === 'function') renderReports(); }
+  if (typeof renderAnnounceBar === 'function') renderAnnounceBar();
 }
 
 function showDept(id, navEl) {
@@ -5077,6 +5098,110 @@ function clDelete(){
   S.clients = S.clients.filter(x => x.id !== c.id);
   clCur = null;
   persist(); renderClients();
+}
+
+/* ════════════════════════════════
+   REQUESTS — leave / expense / other. Team submits here,
+   founder approves in ceo.pixelizt.com (or inline here as admin).
+   ════════════════════════════════ */
+if (!S.approvals) S.approvals = [];
+const RQ_TYPES = { leave:'🌴 Leave', expense:'💸 Expense', other:'📌 Other' };
+const RQ_ST = { pending:['Pending','amber'], approved:['Approved','green'], rejected:['Rejected','red'] };
+function renderRequests(){
+  const root = document.getElementById('rq-root'); if (!root) return;
+  const isAdmin = currentUserObj && currentUserObj.role === 'admin';
+  const mine = (S.approvals||[]).filter(a => a && (isAdmin || a.uid === (currentUserObj&&currentUserObj.id)))
+    .sort((a,b) => (b.at||0) - (a.at||0));
+  const pend = (S.approvals||[]).filter(a => a && a.status === 'pending').length;
+  const cnt = document.getElementById('cnt-requests');
+  if (cnt) { cnt.textContent = pend; cnt.style.display = (isAdmin && pend) ? '' : 'none'; }
+  const rows = mine.length ? mine.map(a => {
+    const st = RQ_ST[a.status] || RQ_ST.pending;
+    return '<div class="cl-ob" style="align-items:flex-start">' +
+      '<span class="day" style="width:70px">' + (RQ_TYPES[a.type]||a.type) + '</span>' +
+      '<span class="t"><b>' + clEsc(a.title) + '</b>' +
+      (a.detail ? '<div style="font-size:11px;color:var(--mute2);margin-top:1px">' + clEsc(a.detail) + '</div>' : '') +
+      '<div style="font-size:10.5px;color:var(--mute2);margin-top:2px">' + clEsc(a.by||'') +
+      (a.from ? ' · ' + a.from + (a.to && a.to!==a.from ? ' → ' + a.to : '') : '') +
+      (a.amt ? ' · ₹' + (+a.amt).toLocaleString('en-IN') : '') +
+      (a.note ? ' · <i>' + clEsc(a.note) + '</i>' : '') + '</div></span>' +
+      '<span class="cl-chip ' + st[1] + '">' + st[0] + '</span>' +
+      (isAdmin && a.status === 'pending'
+        ? '<button class="btn btn-xs" style="color:var(--green)" onclick="rqDecide(\'' + a.id + '\',\'approved\')">✓</button>' +
+          '<button class="btn btn-xs btn-danger" onclick="rqDecide(\'' + a.id + '\',\'rejected\')">✕</button>'
+        : (a.status === 'pending' && a.uid === (currentUserObj&&currentUserObj.id)
+            ? '<button class="btn btn-xs btn-ghost" onclick="rqCancel(\'' + a.id + '\')">Cancel</button>' : '')) +
+      '</div>';
+  }).join('') : '<div class="cl-empty">No requests yet</div>';
+  root.innerHTML = '<div class="cl-wrap" style="max-width:860px">' +
+    '<div class="cl-head"><div><h1>✅ Requests</h1><div class="sub">Leave, expenses and anything needing a founder decision. Nithin sees these instantly on the CEO dashboard.</div></div></div>' +
+    '<div class="cl-add" style="margin-bottom:16px"><div style="font-size:13px;font-weight:700">New request</div>' +
+    '<div class="row">' +
+      '<select id="rq-type" onchange="rqTypeUI()" style="min-width:120px"><option value="leave">🌴 Leave</option><option value="expense">💸 Expense</option><option value="other">📌 Other</option></select>' +
+      '<input id="rq-title" placeholder="What / why (one line)" style="flex:2;min-width:180px">' +
+    '</div><div class="row" id="rq-extra">' +
+      '<span id="rq-f-leave" style="display:flex;gap:10px;flex-wrap:wrap"><input id="rq-from" type="date"><input id="rq-to" type="date"></span>' +
+      '<input id="rq-amt" type="number" min="0" placeholder="Amount ₹" style="display:none;width:130px">' +
+      '<button class="btn btn-primary btn-sm" onclick="rqSubmit()">Submit</button>' +
+    '</div></div>' +
+    '<div class="cl-sec"><h3>' + (isAdmin ? 'All requests' : 'My requests') + (isAdmin && pend ? ' <span class="cl-chip amber">' + pend + ' pending</span>' : '') + '</h3>' + rows + '</div></div>';
+}
+function rqTypeUI(){
+  const t = document.getElementById('rq-type').value;
+  document.getElementById('rq-f-leave').style.display = t === 'leave' ? 'flex' : 'none';
+  document.getElementById('rq-amt').style.display = t === 'expense' ? '' : 'none';
+}
+function rqSubmit(){
+  const t = document.getElementById('rq-type').value;
+  const title = (document.getElementById('rq-title').value||'').trim();
+  if (!title) { showToast('Say what the request is'); return; }
+  const a = { id:'ap_' + Date.now().toString(36), type:t, title,
+    uid: currentUserObj ? currentUserObj.id : '', by: currentUserObj ? currentUserObj.name : '',
+    empId: currentUserObj ? (currentUserObj.empId||'') : '',
+    from: t==='leave' ? (document.getElementById('rq-from').value||'') : '',
+    to: t==='leave' ? (document.getElementById('rq-to').value||'') : '',
+    amt: t==='expense' ? (+document.getElementById('rq-amt').value||0) : 0,
+    detail:'', status:'pending', at: Date.now(), updatedAt: Date.now() };
+  S.approvals.push(a); persist(); renderRequests();
+  showToast('Sent — Nithin will see it on the CEO dashboard');
+}
+function rqDecide(id, st){
+  const a = (S.approvals||[]).find(x => x && x.id === id); if (!a) return;
+  a.status = st; a.decidedAt = Date.now(); a.updatedAt = Date.now();
+  persist(); renderRequests();
+}
+function rqCancel(id){
+  S.deleted = S.deleted || {}; S.deleted[id] = Date.now();
+  S.approvals = (S.approvals||[]).filter(x => x.id !== id);
+  persist(); renderRequests();
+}
+
+/* ── Announcement bar — CEO-authored, shown to everyone, dismiss per id ── */
+function renderAnnounceBar(){
+  try{
+    const seen = JSON.parse(localStorage.getItem('sl_ann_seen')||'[]');
+    const live = (S.announce||[]).filter(a => a && a.text && !seen.includes(a.id) &&
+      (Date.now() - (a.at||0)) < 14*86400000).sort((a,b)=>(b.at||0)-(a.at||0));
+    let bar = document.getElementById('ann-bar');
+    if (!live.length) { if (bar) bar.remove(); return; }
+    const a = live[0];
+    if (!bar) {
+      bar = document.createElement('div'); bar.id = 'ann-bar';
+      bar.style.cssText = 'position:fixed;left:50%;transform:translateX(-50%);bottom:18px;z-index:90;background:var(--canvas-mid);border:1px solid var(--hairline-mid);border-radius:14px;padding:11px 16px;display:flex;gap:12px;align-items:center;max-width:min(600px,92vw);box-shadow:var(--glass-shadow);font-size:12.5px';
+      document.body.appendChild(bar);
+    }
+    bar.dataset.aid = a.id;
+    bar.innerHTML = '<span style="flex:none">📣</span><span style="flex:1">' + clEsc(a.text) + '</span>' +
+      '<button class="btn btn-xs btn-ghost" style="flex:none" onclick="annDismiss(\'' + a.id + '\')">Got it</button>';
+  }catch(e){}
+}
+function annDismiss(id){
+  try{
+    const seen = JSON.parse(localStorage.getItem('sl_ann_seen')||'[]');
+    if (!seen.includes(id)) seen.push(id);
+    localStorage.setItem('sl_ann_seen', JSON.stringify(seen.slice(-50)));
+  }catch(e){}
+  renderAnnounceBar();
 }
 
 /* ════════════════════════════════
